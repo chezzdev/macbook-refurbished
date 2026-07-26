@@ -127,8 +127,8 @@ SHA-256. Cloudflare CLI зафиксирован в `package-lock.json` и за�
 из локального `node_modules`.
 Оба рынка используют существующий checkout `work/gh-pages-site` и один remote;
 публикуемые файлы изолированы как `markets/sg/index.html` и
-`markets/us/index.html`. Старый корневой `index.html` SG удаляется при следующей
-канонической синхронизации. Каждый профиль выбирает собственный артефакт и
+`markets/us/index.html`. Старый корневой `index.html` SG уже удалён и не
+является publication target. Каждый профиль выбирает собственный артефакт и
 отдельный Cloudflare Pages project, поэтому постоянный SG URL не зависит от
 расположения файла в repository. Полный US workflow использует тот же общий
 путь без отдельного hosting-кода:
@@ -157,8 +157,10 @@ Namespace layout намеренно строгий и lowercase ASCII: кажд�
 `work/daily-update.zsh` вызывает `work/update-all-markets.zsh`, сохраняет общий
 отчёт в
 `outputs/latest-update-summary.txt` и показывает macOS notification.
-Codex automation в 08:00 Europe/Minsk использует тот же registry-driven
-entrypoint. Добавление enabled market не требует отдельной scheduled-команды.
+Активная Codex automation `MacBook Refurbished Markets — daily update` в 08:00
+Europe/Minsk использует тот же registry-driven entrypoint. Старый LaunchAgent
+оставлен на диске, но выгружен, чтобы не существовало второго активного
+scheduler. Добавление enabled market не требует отдельной scheduled-команды.
 All-market entrypoint фиксирует один Git HEAD, читает registry из его archive
 snapshot и передаёт тот же SHA каждому рынку; SG и US в одном batch не могут
 быть собраны из разных commits.
@@ -167,3 +169,22 @@ Production UI существует в одном варианте:
 `work/build-expanded-standalone.mjs`. `npm run build` валидирует и собирает
 этот общий путь для каждого enabled-профиля; отдельного Vinext/Sites starter
 в проекте нет.
+
+## Добавление следующего рынка
+
+Новый рынок добавляется конфигурацией, а не копированием pipeline или UI:
+
+1. Создать `config/markets/<id>.json` и
+   `config/ranking-policy.<id>.json`.
+2. Задать storefront, currency/tax policy, ranking reference, симметричные
+   `data/markets/<id>` и `outputs/markets/<id>` paths, а также отдельный
+   publication target.
+3. До явного одобрения внешнего hosting project оставить публикацию
+   approval-gated; не переиспользовать SG или US project.
+4. Добавить market id в `config/markets/registry.json`. После этого общий
+   switcher, build и daily batch подхватят рынок без bespoke-кода.
+5. Покрыть специфичную currency/tax policy synthetic profile-тестом и
+   выполнить `npm test` и `npm run build` до канонического refresh.
+
+README в publication checkout синхронизируется только общим каноническим
+workflow; его не нужно редактировать отдельно.
