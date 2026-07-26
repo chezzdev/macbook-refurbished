@@ -1671,6 +1671,64 @@
       "configurationKey": "air|13|standard|m5|10|8|16gb|512gb"
     },
     {
+      "productCode": "FDH74LL/A",
+      "sourceUrl": "https://www.apple.com/shop/product/fdh74ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-8%E2%80%91Core-GPU-Silver",
+      "title": "Refurbished 13-inch MacBook Air Apple M5 chip with 10‑Core CPU and 8‑Core GPU - Silver",
+      "family": "Air",
+      "model": "MacBook Air",
+      "screen": "13″",
+      "display": "Standard",
+      "chip": "M5",
+      "cpuCores": 10,
+      "gpuCores": 8,
+      "colour": "Silver",
+      "releaseYear": 2026,
+      "memory": "16GB",
+      "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-8-core-gpu-16gb-memory-512gb-storage",
+      "priceUsd": 1099,
+      "newPriceUsd": 1299,
+      "taxInclusivePriceUsd": 1218.4,
+      "taxInclusivePricing": {
+        "status": "estimated",
+        "amount": 1218.4,
+        "currency": "USD",
+        "preTaxAmount": 1099,
+        "salesTaxRate": 0.105,
+        "salesTaxAmount": 115.4,
+        "recyclingFeeAmount": 4,
+        "locationId": "apple-beverly-center",
+        "provenance": {
+          "provider": "Calculated estimate",
+          "method": "verified-fixed-location",
+          "sourceUrl": "https://www.apple.com/shop/help/payments",
+          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+        },
+        "reason": null
+      },
+      "newTaxInclusivePriceUsd": 1439.4,
+      "newTaxInclusivePricing": {
+        "status": "estimated",
+        "amount": 1439.4,
+        "currency": "USD",
+        "preTaxAmount": 1299,
+        "salesTaxRate": 0.105,
+        "salesTaxAmount": 136.4,
+        "recyclingFeeAmount": 4,
+        "locationId": "apple-beverly-center",
+        "provenance": {
+          "provider": "Calculated estimate",
+          "method": "verified-fixed-location",
+          "sourceUrl": "https://www.apple.com/shop/help/payments",
+          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+        },
+        "reason": null
+      },
+      "configurationKey": "air|13|standard|m5|10|8|16gb|512gb"
+    },
+    {
       "productCode": "FDHH4LL/A",
       "sourceUrl": "https://www.apple.com/shop/product/fdhh4ll/a/refurbished-13-inch-macbook-air-apple-m5-chip-with-10%E2%80%91core-cpu-and-8%E2%80%91core-gpu-sky-blue",
       "title": "Refurbished 13-inch MacBook Air Apple M5 chip with 10‑Core CPU and 8‑Core GPU - Sky Blue",
