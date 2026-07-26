@@ -7,10 +7,13 @@ default_publish_dir="${script_dir}/gh-pages-site"
 lock_dir="${script_dir}/.catalog-update.lock"
 temporary_root="${TMPDIR:-/tmp}"
 deployment_dir=""
+metadata_dir=""
 production_url="https://macbook-sg-refurbished.pages.dev"
 cloudflare_project="macbook-sg-refurbished"
 allowed_ssh_remote="git@github.com:chezzdev/macbook-refurbished-sg.git"
 allowed_https_remote="https://github.com/chezzdev/macbook-refurbished-sg.git"
+allowed_https_remote_short="https://github.com/chezzdev/macbook-refurbished-sg"
+allowed_ssh_url_remote="ssh://git@github.com/chezzdev/macbook-refurbished-sg.git"
 
 publish_owned_paths=(
   .gitignore
@@ -51,6 +54,10 @@ cleanup() {
   if [[ -n "$deployment_dir" && -d "$deployment_dir" && \
         "$deployment_dir" == "${temporary_root%/}/macbook-pages."* ]]; then
     rm -rf -- "$deployment_dir"
+  fi
+  if [[ -n "$metadata_dir" && -d "$metadata_dir" && \
+        "$metadata_dir" == "${temporary_root%/}/macbook-deploy-git."* ]]; then
+    rm -rf -- "$metadata_dir"
   fi
   rmdir "$lock_dir" 2>/dev/null || true
 }
@@ -117,7 +124,7 @@ fi
 print "6/8 Syncing the private GitHub repository"
 remote_url="$(git -C "$publish_dir" remote get-url origin)"
 case "$remote_url" in
-  "$allowed_ssh_remote"|"$allowed_https_remote") ;;
+  "$allowed_ssh_remote"|"$allowed_https_remote"|"$allowed_https_remote_short"|"$allowed_ssh_url_remote") ;;
   *)
     print -u2 "Unexpected GitHub remote: $remote_url"
     exit 1
@@ -163,8 +170,8 @@ if [[ "$publish_dir" != "$workspace_dir" ]]; then
     mkdir -p "${publish_dir}/${relative_file:h}"
     cp "${workspace_dir}/${relative_file}" "${publish_dir}/${relative_file}"
   done
-  cp "${workspace_dir}/config/publish.gitignore" "${publish_dir}/.gitignore"
 fi
+cp "${workspace_dir}/config/publish.gitignore" "${publish_dir}/.gitignore"
 cp "$artifact_file" "${publish_dir}/index.html"
 
 git -C "$publish_dir" add -- "${publish_owned_paths[@]}"
@@ -176,13 +183,14 @@ fi
 publish_commit="$(git -C "$publish_dir" rev-parse HEAD)"
 
 print "7/8 Deploying the tested artifact to the existing Cloudflare Pages project"
-git -C "$deployment_dir" init --quiet
-git -C "$deployment_dir" fetch --quiet --no-tags "$publish_dir" "$publish_commit"
-git -C "$deployment_dir" update-ref refs/heads/main "$publish_commit"
-git -C "$deployment_dir" symbolic-ref HEAD refs/heads/main
+metadata_dir="$(mktemp -d "${temporary_root%/}/macbook-deploy-git.XXXXXX")"
+git -C "$metadata_dir" init --quiet
+git -C "$metadata_dir" fetch --quiet --no-tags "$publish_dir" "$publish_commit"
+git -C "$metadata_dir" update-ref refs/heads/main "$publish_commit"
+git -C "$metadata_dir" symbolic-ref HEAD refs/heads/main
 (
-  cd "$deployment_dir"
-  npx --yes wrangler@4.92.0 pages deploy . \
+  cd "$metadata_dir"
+  npx --yes wrangler@4.92.0 pages deploy "$deployment_dir" \
     --project-name "$cloudflare_project" \
     --branch main \
     --commit-hash "$publish_commit" \
