@@ -198,6 +198,14 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     "outputs/markets/sg",
   );
   assert.equal(
+    sg.namespace.catalog,
+    "data/markets/sg/catalog.json",
+  );
+  assert.equal(
+    sg.ranking.policyPath,
+    "config/ranking-policy.sg.json",
+  );
+  assert.equal(
     us.namespace.artifactDirectory,
     "outputs/markets/us",
   );
@@ -212,6 +220,14 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
   assert.equal(
     sg.namespace.artifactDirectory.replace("/sg", "/<market>"),
     us.namespace.artifactDirectory.replace("/us", "/<market>"),
+  );
+  assert.equal(
+    sg.namespace.catalog.replace("/sg/", "/<market>/"),
+    us.namespace.catalog.replace("/us/", "/<market>/"),
+  );
+  assert.equal(
+    sg.ranking.policyPath.replace(".sg.", ".<market>."),
+    us.ranking.policyPath.replace(".us.", ".<market>."),
   );
   assert.equal(
     sg.publication.artifactDirectory.replace("/sg", "/<market>"),
@@ -320,6 +336,9 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
   );
   assert.doesNotMatch(perMarketWorkflow, /npx --yes/);
   assert.match(perMarketWorkflow, /--immutable-source/);
+  assert.match(perMarketWorkflow, /--retired/);
+  assert.match(perMarketWorkflow, /retired_publication_paths/);
+  assert.match(perMarketWorkflow, /ls-files --error-unmatch/);
   assert.match(
     perMarketWorkflow,
     /Live publication refuses uncommitted source\/config changes/,
@@ -340,6 +359,7 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
 test("publication manifest derives every market path from enabled profiles", () => {
   const futureProfile = structuredClone(us);
   futureProfile.id = "ca";
+  futureProfile.publication.projectSlug = "macbook-ca-refurbished";
   futureProfile.ranking.policyPath = "config/ranking-policy.ca.json";
   futureProfile.namespace = {
     catalog: "data/markets/ca/catalog.json",
@@ -365,6 +385,19 @@ test("publication manifest derives every market path from enabled profiles", () 
       manifest.publicationPaths.includes(expectedPath),
       `missing ${expectedPath}`,
     );
+  }
+  for (const retiredPath of [
+    "config/ranking-policy.json",
+    "data/catalog.json",
+    "data/changelog.json",
+    "data/featured.json",
+    "data/site.json",
+    "data/update-delta.json",
+    "data/update-status.json",
+    "index.html",
+  ]) {
+    assert.ok(manifest.retiredPublicationPaths.includes(retiredPath));
+    assert.ok(manifest.publicationPaths.includes(retiredPath));
   }
   assert.ok(
     manifest.immutableSourcePaths.includes("config/markets/ca.json"),
@@ -407,6 +440,7 @@ test("enabled market profiles cannot share state or policy paths", () => {
 
   const baseFutureMarket = structuredClone(us);
   baseFutureMarket.id = "ca";
+  baseFutureMarket.publication.projectSlug = "macbook-ca-refurbished";
   baseFutureMarket.ranking.policyPath = "config/ranking-policy.ca.json";
   baseFutureMarket.namespace = {
     catalog: "data/markets/ca/catalog.json",
@@ -460,7 +494,7 @@ test("enabled market profiles cannot share state or policy paths", () => {
   caseAliasMarket.namespace.catalog = "DATA/CATALOG.JSON";
   assert.throws(
     () => validateMarketProfile(caseAliasMarket),
-    /sg\.namespace\.catalog must be data\/catalog\.json/,
+    /sg\.namespace\.catalog must be data\/markets\/sg\/catalog\.json/,
   );
 
   const splitRepositoryMarket = structuredClone(baseFutureMarket);
@@ -484,6 +518,17 @@ test("staging preserves complete profile-relative namespace paths", async () => 
   assert.equal(
     stagedContext.paths.artifact,
     join(stagingRoot, "outputs/markets/us/index.html"),
+  );
+  const stagedSgContext = await loadMarketContext("sg", {
+    namespaceRoot: stagingRoot,
+  });
+  assert.equal(
+    stagedSgContext.paths.catalog,
+    join(stagingRoot, "data/markets/sg/catalog.json"),
+  );
+  assert.equal(
+    stagedSgContext.paths.artifact,
+    join(stagingRoot, "outputs/markets/sg/index.html"),
   );
 });
 

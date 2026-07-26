@@ -27,13 +27,12 @@
 
 Singapore и US проходят через одни и те же parser, exact-new matcher, tax
 adapter, validator, ranker, changelog, builder и publication workflow.
-Singapore сохраняет исторические `data/*` как собственный namespace профиля —
-это совместимость данных, а не отдельный кодовый путь.
-Выходные артефакты при этом полностью симметричны:
+Данные и выходные артефакты полностью симметричны:
+`data/markets/sg/*` и `data/markets/us/*`,
 `outputs/markets/sg/index.html` и `outputs/markets/us/index.html`.
 
 Эталон обоих первых профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
-Политики изолированы: `config/ranking-policy.json` для SG и
+Политики изолированы: `config/ranking-policy.sg.json` для SG и
 `config/ranking-policy.us.json` для US. Цветовые дубли одной точной
 `configurationKey` не занимают несколько featured-мест; различия display,
 CPU/GPU, памяти или SSD считаются отдельными конфигурациями. Порядок полностью
@@ -141,8 +140,7 @@ ranking-policy paths между рынками или внутри одного 
 нормализованные фактические цели, включая локальный `index.html`; outputs не
 могут пересекать immutable source directories. Staging сохраняет полные
 profile paths и не сплющивает одинаковые basename.
-Namespace layout намеренно строгий и lowercase ASCII: SG сохраняет legacy
-`data/*.json`, остальные рынки используют
+Namespace layout намеренно строгий и lowercase ASCII: каждый рынок использует
 `data/markets/<id>/*.json`; локальный HTML всегда
 `outputs/markets/<id>/index.html`, publication HTML —
 `markets/<id>/index.html`. Это исключает APFS case/Unicode aliases и

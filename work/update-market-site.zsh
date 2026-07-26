@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir="${0:A:h}"
 workspace_dir="${MACBOOK_WORKSPACE_DIR:-${script_dir:h}}"
-market_id="sg"
+market_id=""
 prepare_only=false
 while (( $# > 0 )); do
   case "$1" in
@@ -25,6 +25,10 @@ while (( $# > 0 )); do
       ;;
   esac
 done
+if [[ -z "$market_id" ]]; then
+  print -u2 "Usage: $0 --market <enabled-market> [--prepare-only]"
+  exit 2
+fi
 
 temporary_root="${TMPDIR:-/tmp}"
 temporary_root="${temporary_root:A}"
@@ -101,6 +105,7 @@ allowed_ssh_url_remote="${repository_url/git@github.com:/ssh://git@github.com/}"
 source_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --source)}")
 immutable_source_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --immutable-source)}")
 publish_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --publish)}")
+retired_publication_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --retired)}")
 
 if [[ -d "${workspace_dir}/.git" && \
       -f "${workspace_dir}/scripts/update-apple-catalog.mjs" && \
@@ -368,6 +373,17 @@ if ! git -C "$publish_dir" merge-base --is-ancestor "origin/${publication_branch
 fi
 
 if [[ "$publish_dir" != "$workspace_dir" ]]; then
+  for relative_file in "${retired_publication_paths[@]}"; do
+    retired_target="${publish_dir}/${relative_file}"
+    case "$retired_target" in
+      "${publish_dir}/"*) ;;
+      *)
+        print -u2 "Retired publication path escaped the checkout: $relative_file"
+        exit 1
+        ;;
+    esac
+    rm -rf -- "$retired_target"
+  done
   for relative_file in "${source_owned_paths[@]}"; do
     if [[ "${immutable_source_set[$relative_file]:-}" == "true" ]]; then
       source_file="${execution_root}/${relative_file}"
@@ -383,11 +399,19 @@ if [[ "$publish_dir" != "$workspace_dir" ]]; then
   done
 fi
 cp "${execution_root}/config/publish.gitignore" "${publish_dir}/.gitignore"
-rm -f "${publish_dir}/index.html"
 mkdir -p "${publish_dir}/${publication_artifact_directory}"
 cp "$artifact_file" "${publish_dir}/${publication_artifact_directory}/index.html"
 
-git -C "$publish_dir" add -A -- "${publish_owned_paths[@]}"
+git -C "$publish_dir" add -A -- \
+  ".gitignore" \
+  "${source_owned_paths[@]}" \
+  "${publication_artifact_directory}/index.html"
+for relative_file in "${retired_publication_paths[@]}"; do
+  if git -C "$publish_dir" ls-files --error-unmatch -- \
+      "$relative_file" >/dev/null 2>&1; then
+    git -C "$publish_dir" add -A -- "$relative_file"
+  fi
+done
 
 if ! git -C "$publish_dir" diff --cached --quiet; then
   git -C "$publish_dir" commit -m "Refresh ${site_name} catalog"

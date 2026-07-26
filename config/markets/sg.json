@@ -39,7 +39,7 @@
     "filterByDeliveryOrPickup": false
   },
   "ranking": {
-    "policyPath": "config/ranking-policy.json",
+    "policyPath": "config/ranking-policy.sg.json",
     "reference": {
       "family": "Air",
       "screen": "13″",
@@ -48,12 +48,12 @@
     }
   },
   "namespace": {
-    "catalog": "data/catalog.json",
-    "featured": "data/featured.json",
-    "site": "data/site.json",
-    "updateStatus": "data/update-status.json",
-    "updateDelta": "data/update-delta.json",
-    "changelog": "data/changelog.json",
+    "catalog": "data/markets/sg/catalog.json",
+    "featured": "data/markets/sg/featured.json",
+    "site": "data/markets/sg/site.json",
+    "updateStatus": "data/markets/sg/update-status.json",
+    "updateDelta": "data/markets/sg/update-delta.json",
+    "changelog": "data/markets/sg/changelog.json",
     "artifactDirectory": "outputs/markets/sg"
   },
   "publication": {

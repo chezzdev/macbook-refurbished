@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { writeJsonAtomic } from "./apple-catalog-lib.mjs";
 import {
+  DEFAULT_MARKET_ID,
   loadMarketContext,
   loadMarketProfile,
 } from "./market-profile.mjs";
 
-const workspaceRoot = resolve(import.meta.dirname, "..");
-const defaultMarketProfile = await loadMarketProfile("sg");
+const defaultMarketProfile = await loadMarketProfile(DEFAULT_MARKET_ID);
 const configurationFields = [
   "family",
   "screen",
@@ -203,25 +202,16 @@ export async function updateChangelog({
   updateStatusPath,
   changelogPath,
   deltaPath,
-  marketId = "sg",
+  marketId = DEFAULT_MARKET_ID,
   marketProfile,
 } = {}) {
-  const context = marketProfile
-    ? null
-    : await loadMarketContext(marketId);
+  const context = await loadMarketContext(marketProfile?.id ?? marketId);
   const activeProfile = marketProfile ?? context.profile;
-  currentCatalogPath ??=
-    context?.paths.catalog ?? resolve(workspaceRoot, "data/catalog.json");
-  currentFeaturedPath ??=
-    context?.paths.featured ?? resolve(workspaceRoot, "data/featured.json");
-  updateStatusPath ??=
-    context?.paths.updateStatus ??
-    resolve(workspaceRoot, "data/update-status.json");
-  changelogPath ??=
-    context?.paths.changelog ?? resolve(workspaceRoot, "data/changelog.json");
-  deltaPath ??=
-    context?.paths.updateDelta ??
-    resolve(workspaceRoot, "data/update-delta.json");
+  currentCatalogPath ??= context.paths.catalog;
+  currentFeaturedPath ??= context.paths.featured;
+  updateStatusPath ??= context.paths.updateStatus;
+  changelogPath ??= context.paths.changelog;
+  deltaPath ??= context.paths.updateDelta;
   const [
     previousCatalog,
     previousFeatured,
@@ -345,7 +335,7 @@ if (process.argv[1] === import.meta.filename) {
     options: {
       "previous-catalog": { type: "string" },
       "previous-featured": { type: "string" },
-      market: { type: "string", default: "sg" },
+      market: { type: "string", default: DEFAULT_MARKET_ID },
     },
   });
   const { delta } = await updateChangelog({

@@ -86,7 +86,7 @@ function validateNamespacePath(value, label) {
 }
 
 function assertCanonicalProfileLayout(profile) {
-  const dataPrefix = profile.id === "sg" ? "data" : `data/markets/${profile.id}`;
+  const dataPrefix = `data/markets/${profile.id}`;
   const expectedNamespace = {
     catalog: `${dataPrefix}/catalog.json`,
     featured: `${dataPrefix}/featured.json`,
@@ -103,10 +103,7 @@ function assertCanonicalProfileLayout(profile) {
       );
     }
   }
-  const expectedPolicyPath =
-    profile.id === "sg"
-      ? "config/ranking-policy.json"
-      : `config/ranking-policy.${profile.id}.json`;
+  const expectedPolicyPath = `config/ranking-policy.${profile.id}.json`;
   if (profile.ranking?.policyPath !== expectedPolicyPath) {
     throw new Error(
       `${profile.id}.ranking.policyPath must be ${expectedPolicyPath}`,
@@ -128,6 +125,14 @@ function assertCanonicalProfileLayout(profile) {
   ) {
     throw new Error(
       `${profile.id}.publication must use the unified Cloudflare publication repository`,
+    );
+  }
+  if (
+    profile.publication?.projectSlug !==
+      `macbook-${profile.id}-refurbished`
+  ) {
+    throw new Error(
+      `${profile.id}.publication.projectSlug must be macbook-${profile.id}-refurbished`,
     );
   }
 }
@@ -353,6 +358,9 @@ export function validateMarketProfile(profile) {
   requireString(profile.publication?.repository, "publication.repository");
   requireString(profile.publication?.branch, "publication.branch");
   requireHttpsUrl(profile.publication?.canonicalUrl, "publication.canonicalUrl");
+  if (profile.publication?.plannedUrl !== null) {
+    requireHttpsUrl(profile.publication?.plannedUrl, "publication.plannedUrl");
+  }
   validateNamespacePath(
     profile.publication?.checkoutPath,
     "publication.checkoutPath",
@@ -372,63 +380,42 @@ export function validateMarketProfile(profile) {
       "market artifact directories must use symmetric outputs/markets/<id> and markets/<id> paths",
     );
   }
-  if (profile.id === "sg") {
+  if (profile.publication.status === "active") {
     if (
-      profile.siteName !== "MacBook SG Refurbished" ||
+      profile.publication.approvalRequired !== false ||
       profile.publication.productionUrl !==
-        "https://macbook-sg-refurbished.pages.dev/" ||
-      profile.publication.projectSlug !== "macbook-sg-refurbished" ||
-      profile.publication.repository !==
-        "git@github.com:chezzdev/macbook-refurbished-sg.git" ||
-      profile.publication.checkoutPath !== "work/gh-pages-site" ||
-      profile.publication.artifactDirectory !== "markets/sg" ||
-      profile.publication.canonicalUrl !==
-        "https://macbook-sg-refurbished.pages.dev/" ||
-      profile.publication.approvalRequired !== false
-    ) {
-      throw new Error("Singapore publication identity is immutable");
-    }
-  }
-  if (profile.id === "us") {
-    if (
-      profile.siteName !== "MacBook US Refurbished" ||
-      profile.publication.repository !==
-        "git@github.com:chezzdev/macbook-refurbished-sg.git" ||
-      profile.publication.checkoutPath !== "work/gh-pages-site" ||
-      profile.publication.artifactDirectory !== "markets/us" ||
-      profile.publication.projectSlug !== "macbook-us-refurbished" ||
-      profile.publication.provider !== "cloudflare-pages" ||
-      profile.publication.canonicalUrl !==
-        "https://macbook-us-refurbished.pages.dev/"
-    ) {
-      throw new Error("US publication identity does not match its approved plan");
-    }
-    if (profile.publication.approvalRequired === true) {
-      if (
-        profile.publication.status !== "approval-required" ||
-        profile.publication.productionUrl !== null
-      ) {
-        throw new Error("Unapproved US publication must remain fail-closed");
-      }
-    } else if (profile.publication.status === "approved-pending-provision") {
-      if (
-        profile.publication.provider !== "cloudflare-pages" ||
-        profile.publication.productionUrl !== null
-      ) {
-        throw new Error(
-          "US provision-pending publication must use Cloudflare Pages without a production URL",
-        );
-      }
-    } else if (
-      profile.publication.status !== "active" ||
-      profile.publication.productionUrl !==
-        "https://macbook-us-refurbished.pages.dev/" ||
-      profile.publication.canonicalUrl !== profile.publication.productionUrl
+        profile.publication.canonicalUrl
     ) {
       throw new Error(
-        "Approved US publication must declare an active repository and production URL",
+        `${profile.id} active publication must use its canonical production URL without an approval gate`,
       );
     }
+    requireHttpsUrl(
+      profile.publication.productionUrl,
+      "publication.productionUrl",
+    );
+  } else if (profile.publication.status === "approval-required") {
+    if (
+      profile.publication.approvalRequired !== true ||
+      profile.publication.productionUrl !== null
+    ) {
+      throw new Error(
+        `${profile.id} approval-required publication must remain fail-closed`,
+      );
+    }
+  } else if (profile.publication.status === "approved-pending-provision") {
+    if (
+      profile.publication.approvalRequired !== false ||
+      profile.publication.productionUrl !== null
+    ) {
+      throw new Error(
+        `${profile.id} provision-pending publication must have approval and no production URL`,
+      );
+    }
+  } else {
+    throw new Error(
+      `${profile.id}.publication.status is unsupported: ${profile.publication.status}`,
+    );
   }
   return true;
 }

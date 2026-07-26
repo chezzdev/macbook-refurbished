@@ -9,10 +9,18 @@ import {
 const retiredPublicationPaths = [
   "app",
   "build",
+  "config/ranking-policy.json",
+  "data/catalog.json",
+  "data/changelog.json",
+  "data/featured.json",
+  "data/site.json",
+  "data/update-delta.json",
+  "data/update-status.json",
   "db",
   "drizzle",
   "worker",
   "drizzle.config.ts",
+  "index.html",
   "postcss.config.mjs",
   "tests/rendered-html.test.mjs",
   "tsconfig.json",
@@ -26,6 +34,7 @@ function uniqueSorted(paths) {
       typeof path !== "string" ||
       path.length === 0 ||
       path.startsWith("/") ||
+      path.split("/").includes(".") ||
       path.split("/").includes("..") ||
       path.includes("\r") ||
       path.includes("\n") ||
@@ -72,6 +81,7 @@ export function buildPublicationManifest(profiles) {
       ".gitignore",
       ...sourcePaths,
       ...publicationArtifacts,
+      ...retiredPublicationPaths,
     ]),
   };
 }

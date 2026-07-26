@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import { fetchText, writeJsonAtomic } from "./apple-catalog-lib.mjs";
 import {
+  DEFAULT_MARKET_ID,
   loadMarketContext,
   loadMarketProfile,
   marketIdFromArgv,
 } from "./market-profile.mjs";
 
-const defaultMarketProfile = await loadMarketProfile("sg");
+const defaultMarketProfile = await loadMarketProfile(DEFAULT_MARKET_ID);
 
 export const CBR_DAILY_XML_URL =
   "https://www.cbr.ru/scripts/XML_daily.asp";
@@ -87,12 +87,13 @@ export function parseCbrCrossRate(
 
 export async function updateExchangeRate({
   fetchTextImpl = fetchText,
-  sitePath = resolve(import.meta.dirname, "../data/site.json"),
+  sitePath,
   marketProfile = defaultMarketProfile,
 } = {}) {
+  sitePath ??= (await loadMarketContext(marketProfile.id)).paths.site;
   const currentSite = JSON.parse(await readFile(sitePath, "utf8"));
   if (currentSite?.schemaVersion !== 1) {
-    throw new Error("data/site.json schemaVersion must be 1");
+    throw new Error(`${sitePath} schemaVersion must be 1`);
   }
   if (marketProfile.currency.conversion.type === "identity") {
     const updatedSite = {

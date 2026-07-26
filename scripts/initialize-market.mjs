@@ -2,7 +2,10 @@
 
 import { access, readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
-import { loadMarketContext } from "./market-profile.mjs";
+import {
+  DEFAULT_MARKET_ID,
+  loadMarketContext,
+} from "./market-profile.mjs";
 import { writeJsonAtomic } from "./apple-catalog-lib.mjs";
 
 export function buildInitialSiteDocument(profile) {
@@ -60,11 +63,6 @@ export async function initializeMarketNamespace({
     }
     await writeJsonAtomic(paths.site, buildInitialSiteDocument(profile));
   } else if (
-    profile.id === "sg" &&
-    existingSite.productionUrl !== profile.publication.productionUrl
-  ) {
-    throw new Error("Singapore site migration cannot change its production URL");
-  } else if (
     profile.publication.status === "active" &&
     (
       existingSite.productionUrl !== profile.publication.productionUrl ||
@@ -103,7 +101,7 @@ export async function initializeMarketNamespace({
 if (process.argv[1] === import.meta.filename) {
   const { values } = parseArgs({
     options: {
-      market: { type: "string", default: "sg" },
+      market: { type: "string", default: DEFAULT_MARKET_ID },
       check: { type: "boolean", default: false },
     },
   });

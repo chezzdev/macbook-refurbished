@@ -12,7 +12,7 @@ import {
 
 const policy = JSON.parse(
   await readFile(
-    new URL("../config/ranking-policy.json", import.meta.url),
+    new URL("../config/ranking-policy.sg.json", import.meta.url),
     "utf8",
   ),
 );

@@ -9,12 +9,13 @@ import {
   writeJsonAtomic,
 } from "./apple-catalog-lib.mjs";
 import {
+  DEFAULT_MARKET_ID,
   loadMarketContext,
   marketIdFromArgv,
 } from "./market-profile.mjs";
 
 export async function updateCatalog({
-  marketId = "sg",
+  marketId = DEFAULT_MARKET_ID,
   fetchTextImpl = fetchText,
   quoteTaxInclusivePrice,
 } = {}) {

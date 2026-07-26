@@ -2,19 +2,14 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 import {
+  DEFAULT_MARKET_ID,
   loadMarketContext,
   loadMarketProfile,
 } from "./market-profile.mjs";
 
-const projectRoot = fileURLToPath(new URL("../", import.meta.url));
-const defaultMarketProfile = await loadMarketProfile("sg");
-const defaultPaths = {
-  catalog: resolve(projectRoot, "data/catalog.json"),
-  policy: resolve(projectRoot, "config/ranking-policy.json"),
-  output: resolve(projectRoot, "data/featured.json"),
-};
+const defaultMarketProfile = await loadMarketProfile(DEFAULT_MARKET_ID);
 
 const identityFields = [
   "family",
@@ -607,19 +602,14 @@ export async function runRanking({
   policyPath,
   outputPath,
   check = false,
-  marketId = "sg",
+  marketId = DEFAULT_MARKET_ID,
   marketProfile,
 } = {}) {
-  const context = marketProfile
-    ? null
-    : await loadMarketContext(marketId);
+  const context = await loadMarketContext(marketProfile?.id ?? marketId);
   const activeProfile = marketProfile ?? context.profile;
-  catalogPath ??=
-    context?.paths.catalog ?? defaultPaths.catalog;
-  policyPath ??=
-    context?.policyPath ?? defaultPaths.policy;
-  outputPath ??=
-    context?.paths.featured ?? defaultPaths.output;
+  catalogPath ??= context.paths.catalog;
+  policyPath ??= context.policyPath;
+  outputPath ??= context.paths.featured;
   const [catalogText, policyText] = await Promise.all([
     readFile(catalogPath, "utf8"),
     readFile(policyPath, "utf8"),

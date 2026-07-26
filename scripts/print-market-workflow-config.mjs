@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 
-import { loadMarketContext } from "./market-profile.mjs";
+import {
+  DEFAULT_MARKET_ID,
+  loadMarketContext,
+} from "./market-profile.mjs";
 
-const marketId = process.argv[2] ?? "sg";
+const marketId = process.argv[2] ?? DEFAULT_MARKET_ID;
 const { profile } = await loadMarketContext(marketId);
 const values = [
   profile.id,

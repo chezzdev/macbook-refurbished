@@ -1,9 +1,13 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { loadMarketProfile } from "./market-profile.mjs";
+import {
+  DEFAULT_MARKET_ID,
+  loadMarketProfile,
+} from "./market-profile.mjs";
 
 export const SCHEMA_VERSION = 1;
-export const DEFAULT_MARKET_PROFILE = await loadMarketProfile("sg");
+export const DEFAULT_MARKET_PROFILE =
+  await loadMarketProfile(DEFAULT_MARKET_ID);
 export const REFURBISHED_CATALOG_URL =
   DEFAULT_MARKET_PROFILE.storefront.refurbishedCatalogUrl;
 export const NEW_CATALOG_BASE_URL =
@@ -969,9 +973,7 @@ export function buildSuccessStatus(
       pricedProducts: pricedProducts.length,
       pricedConfigurations: pricedConfigurationCount,
       unavailableCurrentConfigurations: unavailableConfigurationCount,
-      ...(marketProfile.id === "sg"
-        ? { unpricedLegacyProducts: products.length - pricedProducts.length }
-        : { unpricedCurrentProducts: products.length - pricedProducts.length }),
+      unpricedCurrentProducts: products.length - pricedProducts.length,
       ...(hasReferenceLocationTax(marketProfile)
         ? {
             taxInclusiveAppleResolvedProducts: taxResolvedCount,
