@@ -9,7 +9,35 @@ temporary_root="${TMPDIR:-/tmp}"
 deployment_dir=""
 production_url="https://macbook-sg-refurbished.pages.dev"
 cloudflare_project="macbook-sg-refurbished"
-expected_remote_fragment="chezzdev/macbook-refurbished-sg"
+allowed_ssh_remote="git@github.com:chezzdev/macbook-refurbished-sg.git"
+allowed_https_remote="https://github.com/chezzdev/macbook-refurbished-sg.git"
+
+publish_owned_paths=(
+  .gitignore
+  README.md
+  index.html
+  package.json
+  package-lock.json
+  config/publish.gitignore
+  config/ranking-policy.json
+  data/catalog.json
+  data/featured.json
+  data/site.json
+  data/update-status.json
+  scripts/apple-catalog-lib.mjs
+  scripts/apple-catalog-lib.test.mjs
+  scripts/html-escape.mjs
+  scripts/update-apple-catalog.mjs
+  scripts/update-exchange-rate.mjs
+  scripts/validate-apple-catalog.mjs
+  scripts/rank-models.mjs
+  tests/exchange-rate.test.mjs
+  tests/html-escape.test.mjs
+  tests/rank-models.test.mjs
+  tests/standalone-catalog.test.mjs
+  work/build-expanded-standalone.mjs
+  work/update-published-site.zsh
+)
 
 if [[ -d "${workspace_dir}/.git" && \
       -f "${workspace_dir}/scripts/update-apple-catalog.mjs" && \
@@ -33,6 +61,20 @@ if ! mkdir "$lock_dir" 2>/dev/null; then
 fi
 trap cleanup EXIT INT TERM
 
+if [[ ! -d "${publish_dir}/.git" ]]; then
+  print -u2 "Private GitHub checkout is missing: $publish_dir"
+  exit 1
+fi
+preexisting_changes="$(
+  git -C "$publish_dir" status --porcelain --untracked-files=all -- \
+    "${publish_owned_paths[@]}"
+)"
+if [[ -n "$preexisting_changes" ]]; then
+  print -u2 "The private checkout has pre-existing changes in pipeline-owned files:"
+  print -u2 "$preexisting_changes"
+  exit 1
+fi
+
 cd "$workspace_dir"
 
 print "1/8 Fetching Apple Singapore prices and the current SGD to USD rate"
@@ -48,6 +90,7 @@ print "3/8 Running parser, currency, and ranking tests"
 node --test \
   scripts/apple-catalog-lib.test.mjs \
   tests/exchange-rate.test.mjs \
+  tests/html-escape.test.mjs \
   tests/rank-models.test.mjs
 
 print "4/8 Building the standalone page twice"
@@ -72,22 +115,17 @@ if [[ "$deployment_hash" != "$second_hash" ]]; then
 fi
 
 print "6/8 Syncing the private GitHub repository"
-if [[ ! -d "${publish_dir}/.git" ]]; then
-  print -u2 "Private GitHub checkout is missing: $publish_dir"
-  exit 1
-fi
 remote_url="$(git -C "$publish_dir" remote get-url origin)"
-if [[ "$remote_url" != *"$expected_remote_fragment"* ]]; then
-  print -u2 "Unexpected GitHub remote: $remote_url"
-  exit 1
-fi
+case "$remote_url" in
+  "$allowed_ssh_remote"|"$allowed_https_remote") ;;
+  *)
+    print -u2 "Unexpected GitHub remote: $remote_url"
+    exit 1
+    ;;
+esac
 current_branch="$(git -C "$publish_dir" branch --show-current)"
 if [[ "$current_branch" != "main" ]]; then
   print -u2 "Expected the private checkout to be on main, found: $current_branch"
-  exit 1
-fi
-if ! git -C "$publish_dir" diff --cached --quiet; then
-  print -u2 "The private checkout already contains staged changes; refusing to mix them"
   exit 1
 fi
 git -C "$publish_dir" fetch origin main
@@ -101,6 +139,7 @@ if [[ "$publish_dir" != "$workspace_dir" ]]; then
     README.md
     package.json
     package-lock.json
+    config/publish.gitignore
     config/ranking-policy.json
     data/catalog.json
     data/featured.json
@@ -108,12 +147,14 @@ if [[ "$publish_dir" != "$workspace_dir" ]]; then
     data/update-status.json
     scripts/apple-catalog-lib.mjs
     scripts/apple-catalog-lib.test.mjs
+    scripts/html-escape.mjs
     scripts/update-exchange-rate.mjs
     scripts/update-apple-catalog.mjs
     scripts/validate-apple-catalog.mjs
     scripts/rank-models.mjs
     tests/rank-models.test.mjs
     tests/exchange-rate.test.mjs
+    tests/html-escape.test.mjs
     tests/standalone-catalog.test.mjs
     work/build-expanded-standalone.mjs
     work/update-published-site.zsh
@@ -122,41 +163,23 @@ if [[ "$publish_dir" != "$workspace_dir" ]]; then
     mkdir -p "${publish_dir}/${relative_file:h}"
     cp "${workspace_dir}/${relative_file}" "${publish_dir}/${relative_file}"
   done
+  cp "${workspace_dir}/config/publish.gitignore" "${publish_dir}/.gitignore"
 fi
 cp "$artifact_file" "${publish_dir}/index.html"
 
-git -C "$publish_dir" add \
-  .gitignore \
-  README.md \
-  index.html \
-  package.json \
-  package-lock.json \
-  config/ranking-policy.json \
-  data/catalog.json \
-  data/featured.json \
-  data/site.json \
-  data/update-status.json \
-  scripts/apple-catalog-lib.mjs \
-  scripts/apple-catalog-lib.test.mjs \
-  scripts/update-exchange-rate.mjs \
-  scripts/update-apple-catalog.mjs \
-  scripts/validate-apple-catalog.mjs \
-  scripts/rank-models.mjs \
-  tests/rank-models.test.mjs \
-  tests/exchange-rate.test.mjs \
-  tests/standalone-catalog.test.mjs \
-  work/build-expanded-standalone.mjs \
-  work/update-published-site.zsh
+git -C "$publish_dir" add -- "${publish_owned_paths[@]}"
 
 if ! git -C "$publish_dir" diff --cached --quiet; then
   git -C "$publish_dir" commit -m "Refresh deterministic MacBook catalog"
   git -C "$publish_dir" push origin main
 fi
+publish_commit="$(git -C "$publish_dir" rev-parse HEAD)"
 
 print "7/8 Deploying the tested artifact to the existing Cloudflare Pages project"
 npx --yes wrangler@4.92.0 pages deploy "$deployment_dir" \
   --project-name "$cloudflare_project" \
   --branch main \
+  --commit-hash "$publish_commit" \
   --commit-dirty=true
 
 print "8/8 Verifying that the permanent URL serves the exact tested artifact"

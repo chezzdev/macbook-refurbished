@@ -23,6 +23,7 @@ function product(overrides = {}) {
     productCode: "IDEAL-A",
     family: "Air",
     screen: "13″",
+    display: "Standard",
     chip: "M2",
     cpuCores: 8,
     gpuCores: 10,

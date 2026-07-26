@@ -66,6 +66,16 @@ test("retains exact Apple new-price links and the permanent canonical URL", () =
       escapeRegex(`<link rel="canonical" href="${site.productionUrl}">`),
     ),
   );
+  for (const product of pricedProducts.filter(
+    (item) => item.family === "Pro",
+  )) {
+    assert.match(
+      product.newSourceUrl,
+      product.display === "Nano-texture"
+        ? /nano-texture-display/
+        : /standard-display/,
+    );
+  }
 });
 
 test("contains syntactically valid inline JavaScript", () => {

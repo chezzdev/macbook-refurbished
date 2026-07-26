@@ -14,6 +14,7 @@ const defaultPaths = {
 const identityFields = [
   "family",
   "screen",
+  "display",
   "chip",
   "cpuCores",
   "gpuCores",
@@ -234,6 +235,7 @@ function validateCatalog(catalog, policy) {
       "productCode",
       "family",
       "screen",
+      "display",
       "chip",
       "memory",
       "storage",
@@ -419,7 +421,9 @@ function russianCapacity(capacity) {
 }
 
 function headlineFor(product) {
-  return `MacBook ${product.family} ${product.screen} · ${
+  const displaySuffix =
+    product.display === "Nano-texture" ? " · Nano-texture display" : "";
+  return `MacBook ${product.family} ${product.screen}${displaySuffix} · ${
     product.chip
   } (${product.cpuCores}-ядерный CPU, ${
     product.gpuCores

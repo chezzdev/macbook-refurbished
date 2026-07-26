@@ -11,7 +11,7 @@
     {
       "rank": 1,
       "recommendationKey": "Air|13″|M2|24GB|1TB",
-      "configurationKey": "air|13|m2|8|10|24gb|1tb",
+      "configurationKey": "air|13|standard|m2|8|10|24gb|1tb",
       "productCode": "G15T6ZP/A",
       "score": 98671,
       "scoreBreakdown": {
@@ -36,7 +36,7 @@
     {
       "rank": 2,
       "recommendationKey": "Air|13″|M5|24GB|512GB",
-      "configurationKey": "air|13|m5|10|10|24gb|512gb",
+      "configurationKey": "air|13|standard|m5|10|10|24gb|512gb",
       "productCode": "G1L61ZP/A",
       "score": 98064,
       "scoreBreakdown": {
@@ -62,7 +62,7 @@
     {
       "rank": 3,
       "recommendationKey": "Air|15″|M5|24GB|1TB",
-      "configurationKey": "air|15|m5|10|10|24gb|1tb",
+      "configurationKey": "air|15|standard|m5|10|10|24gb|1tb",
       "productCode": "FDVN4ZP/A",
       "score": 97547,
       "scoreBreakdown": {

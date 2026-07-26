@@ -1,4 +1,5 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { escapeHtml } from "../scripts/html-escape.mjs";
 
 const readJson = async (fileName, { optional = false } = {}) => {
   try {
@@ -60,15 +61,10 @@ const usdPrice = (amountSgd) => usd.format(amountSgd * rate);
 const capacityNumber = (value) => Number(value.replace(/\D/g, "")) * (value.endsWith("TB") ? 1024 : 1);
 const chipNumber = (value) => Number(value.match(/\d+/)?.[0] || 0);
 const chipTier = (value) => (value.includes("Max") ? 2 : value.includes("Pro") ? 1 : 0);
-const escapeHtml = (value) => String(value ?? "")
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll('"', "&quot;")
-  .replaceAll("'", "&#39;");
 const configurationKeyFor = (product) => product.configurationKey || [
   product.family,
   product.screen,
+  product.display,
   product.chip,
   product.cpuCores,
   product.gpuCores,
@@ -167,6 +163,7 @@ const embeddedFeatured = JSON.stringify(featured.map((item) => ({
 }))).replaceAll("<", "\\u003c");
 const recommendedCodes = featured.map((item) => item.product.productCode);
 const formatScore = (score) => (score / 1000).toFixed(1);
+const embeddedEscapeHtml = escapeHtml.toString();
 
 const card = ({ product, label, heading, body, score, highlighted = false }) =>
   `<article class="pick-card${highlighted ? " featured" : ""}" data-score="${escapeHtml(score)}">
@@ -374,6 +371,7 @@ const html = `<!doctype html>
     const rate=${rate};
     const featured=${embeddedFeatured};
     const recommendedCodes=${JSON.stringify(recommendedCodes)};
+    const escapeHtml=${embeddedEscapeHtml};
     const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
     const classes={Silver:"silver",Midnight:"midnight","Space Grey":"space-grey","Space Black":"space-black",Starlight:"starlight","Sky Blue":"sky-blue"};
     const usd=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
@@ -385,7 +383,7 @@ const html = `<!doctype html>
     const storageNumber=value=>Number(value.replace(/\\D/g,""))*(value.endsWith("TB")?1024:1);
     const chipNumber=value=>Number(value.match(/\\d+/)?.[0]||0);
     const chipTier=value=>value.includes("Max")?2:value.includes("Pro")?1:0;
-    const configurationKeyFor=p=>p.configurationKey||[p.family,p.screen,p.chip,p.cpuCores,p.gpuCores,p.memory,p.storage].join("|");
+    const configurationKeyFor=p=>p.configurationKey||[p.family,p.screen,p.display,p.chip,p.cpuCores,p.gpuCores,p.memory,p.storage].join("|");
     const featuredFor=p=>featured.find(item=>
       item.productCode===p.productCode||
       (!item.productCode&&item.configurationKey===configurationKeyFor(p))
@@ -420,18 +418,20 @@ const html = `<!doctype html>
           \`<span class="overpay">+\${tablePrice(-difference)} · \${Math.round(-difference/p.newPriceSgd*100)}%</span>\`;
         const rowClass=recommendedCodes.includes(p.productCode)?"recommended":"";
         const chipClass=p.chip.startsWith("M5")?"chip-m5":"";
+        const colourClass=classes[p.colour]||"";
+        const colourName=names[p.colour]||p.colour;
         return \`<tr class="\${rowClass}">
-          <td><div class="model"><span class="model-mark">\${p.family==="Air"?"A":"P"}</span><div><strong>MacBook \${p.family}</strong><small>\${p.releaseYear} · \${p.productCode}</small></div></div></td>
-          <td><strong>\${p.screen}</strong></td>
-          <td><span class="chip-name \${chipClass}">\${p.chip}</span></td>
-          <td><strong>\${p.memory}</strong></td>
-          <td><strong>\${p.storage}</strong></td>
-          <td>\${p.cpuCores} / \${p.gpuCores} ядер</td>
-          <td><span class="dot \${classes[p.colour]||""}"></span>\${names[p.colour]||p.colour}</td>
+          <td><div class="model"><span class="model-mark">\${p.family==="Air"?"A":"P"}</span><div><strong>MacBook \${escapeHtml(p.family)}</strong><small>\${escapeHtml(p.releaseYear)} · \${escapeHtml(p.productCode)}\${p.display==="Nano-texture"?" · Nano-texture":""}</small></div></div></td>
+          <td><strong>\${escapeHtml(p.screen)}</strong></td>
+          <td><span class="chip-name \${chipClass}">\${escapeHtml(p.chip)}</span></td>
+          <td><strong>\${escapeHtml(p.memory)}</strong></td>
+          <td><strong>\${escapeHtml(p.storage)}</strong></td>
+          <td>\${escapeHtml(p.cpuCores)} / \${escapeHtml(p.gpuCores)} ядер</td>
+          <td><span class="dot \${colourClass}"></span>\${escapeHtml(colourName)}</td>
           <td>\${tablePrice(p.priceSgd)}</td>
-          <td>\${p.newPriceSgd?\`<a class="price-link" href="\${p.newSourceUrl}" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">\${tablePrice(p.newPriceSgd)}</a>\`:'<span class="na">—</span>'}</td>
+          <td>\${p.newPriceSgd?\`<a class="price-link" href="\${escapeHtml(p.newSourceUrl)}" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">\${tablePrice(p.newPriceSgd)}</a>\`:'<span class="na">—</span>'}</td>
           <td>\${discount}</td>
-          <td><a class="open" href="\${p.sourceUrl}" target="_blank" rel="noreferrer" aria-label="Открыть \${p.productCode} у Apple">↗</a></td>
+          <td><a class="open" href="\${escapeHtml(p.sourceUrl)}" target="_blank" rel="noreferrer" aria-label="Открыть \${escapeHtml(p.productCode)} у Apple">↗</a></td>
         </tr>\`;
       }).join("");
     };

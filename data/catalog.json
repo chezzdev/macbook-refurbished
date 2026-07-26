@@ -12,6 +12,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -22,7 +23,7 @@
       "priceSgd": 1999,
       "newPriceSgd": 2199,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
-      "configurationKey": "air|13|m5|10|10|24gb|512gb"
+      "configurationKey": "air|13|standard|m5|10|10|24gb|512gb"
     },
     {
       "productCode": "G1L91ZP/A",
@@ -31,6 +32,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -41,7 +43,7 @@
       "priceSgd": 1999,
       "newPriceSgd": 2199,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
-      "configurationKey": "air|13|m5|10|10|24gb|512gb"
+      "configurationKey": "air|13|standard|m5|10|10|24gb|512gb"
     },
     {
       "productCode": "G1617ZP/A",
@@ -50,6 +52,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -60,7 +63,7 @@
       "priceSgd": 2779,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|24gb|2tb"
+      "configurationKey": "air|13|standard|m2|8|10|24gb|2tb"
     },
     {
       "productCode": "G15X7ZP/A",
@@ -69,6 +72,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -79,7 +83,7 @@
       "priceSgd": 2779,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|24gb|2tb"
+      "configurationKey": "air|13|standard|m2|8|10|24gb|2tb"
     },
     {
       "productCode": "G15Z7ZP/A",
@@ -88,6 +92,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -98,7 +103,7 @@
       "priceSgd": 2779,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|24gb|2tb"
+      "configurationKey": "air|13|standard|m2|8|10|24gb|2tb"
     },
     {
       "productCode": "G15X6ZP/A",
@@ -107,6 +112,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -117,7 +123,7 @@
       "priceSgd": 2149,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|24gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|10|24gb|1tb"
     },
     {
       "productCode": "G15T6ZP/A",
@@ -126,6 +132,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -136,7 +143,7 @@
       "priceSgd": 2149,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|24gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|10|24gb|1tb"
     },
     {
       "productCode": "G15Z6ZP/A",
@@ -145,6 +152,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -155,7 +163,7 @@
       "priceSgd": 2149,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|24gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|10|24gb|1tb"
     },
     {
       "productCode": "G15Z4ZP/A",
@@ -164,6 +172,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -174,7 +183,7 @@
       "priceSgd": 2529,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|16gb|2tb"
+      "configurationKey": "air|13|standard|m2|8|10|16gb|2tb"
     },
     {
       "productCode": "G1613ZP/A",
@@ -183,6 +192,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -193,7 +203,7 @@
       "priceSgd": 1889,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|16gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|10|16gb|1tb"
     },
     {
       "productCode": "G15T3ZP/A",
@@ -202,6 +212,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -212,7 +223,7 @@
       "priceSgd": 1889,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|16gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|10|16gb|1tb"
     },
     {
       "productCode": "G15Z3ZP/A",
@@ -221,6 +232,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -231,7 +243,7 @@
       "priceSgd": 1889,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|16gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|10|16gb|1tb"
     },
     {
       "productCode": "G1611ZP/A",
@@ -240,6 +252,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -250,7 +263,7 @@
       "priceSgd": 2269,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|8gb|2tb"
+      "configurationKey": "air|13|standard|m2|8|10|8gb|2tb"
     },
     {
       "productCode": "G15T1ZP/A",
@@ -259,6 +272,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -269,7 +283,7 @@
       "priceSgd": 2269,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|8gb|2tb"
+      "configurationKey": "air|13|standard|m2|8|10|8gb|2tb"
     },
     {
       "productCode": "G1610ZP/A",
@@ -278,6 +292,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -288,7 +303,7 @@
       "priceSgd": 1639,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|10|8gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|10|8gb|1tb"
     },
     {
       "productCode": "G15YAZP/A",
@@ -297,6 +312,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 8,
@@ -307,7 +323,7 @@
       "priceSgd": 2779,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|8|24gb|2tb"
+      "configurationKey": "air|13|standard|m2|8|8|24gb|2tb"
     },
     {
       "productCode": "G1609ZP/A",
@@ -316,6 +332,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 8,
@@ -326,7 +343,7 @@
       "priceSgd": 2149,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|8|24gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|8|24gb|1tb"
     },
     {
       "productCode": "G15Y9ZP/A",
@@ -335,6 +352,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 8,
@@ -345,7 +363,7 @@
       "priceSgd": 2149,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|8|24gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|8|24gb|1tb"
     },
     {
       "productCode": "G15S5ZP/A",
@@ -354,6 +372,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 8,
@@ -364,7 +383,7 @@
       "priceSgd": 1889,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|8|16gb|1tb"
+      "configurationKey": "air|13|standard|m2|8|8|16gb|1tb"
     },
     {
       "productCode": "G15S2ZP/A",
@@ -373,6 +392,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M2",
       "cpuCores": 8,
       "gpuCores": 8,
@@ -383,7 +403,7 @@
       "priceSgd": 2269,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m2|8|8|8gb|2tb"
+      "configurationKey": "air|13|standard|m2|8|8|8gb|2tb"
     },
     {
       "productCode": "G1280ZP/A",
@@ -392,6 +412,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "13″",
+      "display": "Standard",
       "chip": "M1",
       "cpuCores": 8,
       "gpuCores": 8,
@@ -402,7 +423,7 @@
       "priceSgd": 1569,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|13|m1|8|8|8gb|1tb"
+      "configurationKey": "air|13|standard|m1|8|8|8gb|1tb"
     },
     {
       "productCode": "G1LS3ZP/A",
@@ -411,6 +432,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -421,7 +443,7 @@
       "priceSgd": 3399,
       "newPriceSgd": 3999,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-2tb-storage",
-      "configurationKey": "air|15|m5|10|10|32gb|2tb"
+      "configurationKey": "air|15|standard|m5|10|10|32gb|2tb"
     },
     {
       "productCode": "G1LZ1ZP/A",
@@ -430,6 +452,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -440,7 +463,7 @@
       "priceSgd": 2369,
       "newPriceSgd": 2799,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-512gb-storage",
-      "configurationKey": "air|15|m5|10|10|32gb|512gb"
+      "configurationKey": "air|15|standard|m5|10|10|32gb|512gb"
     },
     {
       "productCode": "FDVN4ZP/A",
@@ -449,6 +472,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -459,7 +483,7 @@
       "priceSgd": 2509,
       "newPriceSgd": 2949,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
-      "configurationKey": "air|15|m5|10|10|24gb|1tb"
+      "configurationKey": "air|15|standard|m5|10|10|24gb|1tb"
     },
     {
       "productCode": "FDVU4ZP/A",
@@ -468,6 +492,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -478,7 +503,7 @@
       "priceSgd": 2509,
       "newPriceSgd": 2949,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
-      "configurationKey": "air|15|m5|10|10|24gb|1tb"
+      "configurationKey": "air|15|standard|m5|10|10|24gb|1tb"
     },
     {
       "productCode": "G1LW0ZP/A",
@@ -487,6 +512,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -497,7 +523,7 @@
       "priceSgd": 2109,
       "newPriceSgd": 2499,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
-      "configurationKey": "air|15|m5|10|10|24gb|512gb"
+      "configurationKey": "air|15|standard|m5|10|10|24gb|512gb"
     },
     {
       "productCode": "FDVK4ZP/A",
@@ -506,6 +532,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -516,7 +543,7 @@
       "priceSgd": 2249,
       "newPriceSgd": 2649,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
-      "configurationKey": "air|15|m5|10|10|16gb|1tb"
+      "configurationKey": "air|15|standard|m5|10|10|16gb|1tb"
     },
     {
       "productCode": "FDVT4ZP/A",
@@ -525,6 +552,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -535,7 +563,7 @@
       "priceSgd": 2249,
       "newPriceSgd": 2649,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
-      "configurationKey": "air|15|m5|10|10|16gb|1tb"
+      "configurationKey": "air|15|standard|m5|10|10|16gb|1tb"
     },
     {
       "productCode": "FDVH4ZP/A",
@@ -544,6 +572,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -554,7 +583,7 @@
       "priceSgd": 1859,
       "newPriceSgd": 2199,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
-      "configurationKey": "air|15|m5|10|10|16gb|512gb"
+      "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
     },
     {
       "productCode": "FDV94ZP/A",
@@ -563,6 +592,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -573,7 +603,7 @@
       "priceSgd": 1859,
       "newPriceSgd": 2199,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
-      "configurationKey": "air|15|m5|10|10|16gb|512gb"
+      "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
     },
     {
       "productCode": "FDVQ4ZP/A",
@@ -582,6 +612,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -592,7 +623,7 @@
       "priceSgd": 1859,
       "newPriceSgd": 2199,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
-      "configurationKey": "air|15|m5|10|10|16gb|512gb"
+      "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
     },
     {
       "productCode": "FC7D4ZP/A",
@@ -601,6 +632,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -611,7 +643,7 @@
       "priceSgd": 1999,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m4|10|10|24gb|512gb"
+      "configurationKey": "air|15|standard|m4|10|10|24gb|512gb"
     },
     {
       "productCode": "FC6K4ZP/A",
@@ -620,6 +652,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -630,7 +663,7 @@
       "priceSgd": 1999,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m4|10|10|24gb|512gb"
+      "configurationKey": "air|15|standard|m4|10|10|24gb|512gb"
     },
     {
       "productCode": "G1DH0ZP/A",
@@ -639,6 +672,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -649,7 +683,7 @@
       "priceSgd": 2129,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m4|10|10|16gb|1tb"
+      "configurationKey": "air|15|standard|m4|10|10|16gb|1tb"
     },
     {
       "productCode": "G1HE0ZP/A",
@@ -658,6 +692,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -668,7 +703,7 @@
       "priceSgd": 2129,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m4|10|10|16gb|1tb"
+      "configurationKey": "air|15|standard|m4|10|10|16gb|1tb"
     },
     {
       "productCode": "G1DF0ZP/A",
@@ -677,6 +712,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -687,7 +723,7 @@
       "priceSgd": 2129,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m4|10|10|16gb|1tb"
+      "configurationKey": "air|15|standard|m4|10|10|16gb|1tb"
     },
     {
       "productCode": "FC7C4ZP/A",
@@ -696,6 +732,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -706,7 +743,7 @@
       "priceSgd": 1749,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m4|10|10|16gb|512gb"
+      "configurationKey": "air|15|standard|m4|10|10|16gb|512gb"
     },
     {
       "productCode": "FW1J3ZP/A",
@@ -715,6 +752,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -725,7 +763,7 @@
       "priceSgd": 1489,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m4|10|10|16gb|256gb"
+      "configurationKey": "air|15|standard|m4|10|10|16gb|256gb"
     },
     {
       "productCode": "G1BW6ZP/A",
@@ -734,6 +772,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -744,7 +783,7 @@
       "priceSgd": 2449,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|24gb|1tb"
+      "configurationKey": "air|15|standard|m3|8|10|24gb|1tb"
     },
     {
       "productCode": "G1BS6ZP/A",
@@ -753,6 +792,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -763,7 +803,7 @@
       "priceSgd": 2449,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|24gb|1tb"
+      "configurationKey": "air|15|standard|m3|8|10|24gb|1tb"
     },
     {
       "productCode": "G1BW5ZP/A",
@@ -772,6 +812,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -782,7 +823,7 @@
       "priceSgd": 2069,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|24gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|24gb|512gb"
     },
     {
       "productCode": "G1BS5ZP/A",
@@ -791,6 +832,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -801,7 +843,7 @@
       "priceSgd": 2069,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|24gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|24gb|512gb"
     },
     {
       "productCode": "G1BQ5ZP/A",
@@ -810,6 +852,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -820,7 +863,7 @@
       "priceSgd": 2069,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|24gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|24gb|512gb"
     },
     {
       "productCode": "G1BU5ZP/A",
@@ -829,6 +872,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -839,7 +883,7 @@
       "priceSgd": 2069,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|24gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|24gb|512gb"
     },
     {
       "productCode": "G1BW3ZP/A",
@@ -848,6 +892,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -858,7 +903,7 @@
       "priceSgd": 2199,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|16gb|1tb"
+      "configurationKey": "air|15|standard|m3|8|10|16gb|1tb"
     },
     {
       "productCode": "G1BU3ZP/A",
@@ -867,6 +912,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -877,7 +923,7 @@
       "priceSgd": 2199,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|16gb|1tb"
+      "configurationKey": "air|15|standard|m3|8|10|16gb|1tb"
     },
     {
       "productCode": "G1BS2ZP/A",
@@ -886,6 +932,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -896,7 +943,7 @@
       "priceSgd": 1809,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|16gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|16gb|512gb"
     },
     {
       "productCode": "G1BQ2ZP/A",
@@ -905,6 +952,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -915,7 +963,7 @@
       "priceSgd": 1809,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|16gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|16gb|512gb"
     },
     {
       "productCode": "G1BV0ZP/A",
@@ -924,6 +972,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -934,7 +983,7 @@
       "priceSgd": 1559,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|16gb|256gb"
+      "configurationKey": "air|15|standard|m3|8|10|16gb|256gb"
     },
     {
       "productCode": "G1BR0ZP/A",
@@ -943,6 +992,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -953,7 +1003,7 @@
       "priceSgd": 1559,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|16gb|256gb"
+      "configurationKey": "air|15|standard|m3|8|10|16gb|256gb"
     },
     {
       "productCode": "G1BT0ZP/A",
@@ -962,6 +1012,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -972,7 +1023,7 @@
       "priceSgd": 1559,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|16gb|256gb"
+      "configurationKey": "air|15|standard|m3|8|10|16gb|256gb"
     },
     {
       "productCode": "G1BW0ZP/A",
@@ -981,6 +1032,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -991,7 +1043,7 @@
       "priceSgd": 1939,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|8gb|1tb"
+      "configurationKey": "air|15|standard|m3|8|10|8gb|1tb"
     },
     {
       "productCode": "FRYV3ZP/A",
@@ -1000,6 +1052,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -1010,7 +1063,7 @@
       "priceSgd": 1559,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|8gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|8gb|512gb"
     },
     {
       "productCode": "FRYQ3ZP/A",
@@ -1019,6 +1072,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -1029,7 +1083,7 @@
       "priceSgd": 1559,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|8gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|8gb|512gb"
     },
     {
       "productCode": "FRYN3ZP/A",
@@ -1038,6 +1092,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -1048,7 +1103,7 @@
       "priceSgd": 1559,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|8gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|8gb|512gb"
     },
     {
       "productCode": "FRYT3ZP/A",
@@ -1057,6 +1112,7 @@
       "family": "Air",
       "model": "MacBook Air",
       "screen": "15″",
+      "display": "Standard",
       "chip": "M3",
       "cpuCores": 8,
       "gpuCores": 10,
@@ -1067,7 +1123,7 @@
       "priceSgd": 1559,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "air|15|m3|8|10|8gb|512gb"
+      "configurationKey": "air|15|standard|m3|8|10|8gb|512gb"
     },
     {
       "productCode": "FGDQ4ZP/A",
@@ -1076,6 +1132,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M5 Max",
       "cpuCores": 18,
       "gpuCores": 32,
@@ -1086,7 +1143,7 @@
       "priceSgd": 4919,
       "newPriceSgd": 5799,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
-      "configurationKey": "pro|14|m5-max|18|32|36gb|2tb"
+      "configurationKey": "pro|14|standard|m5-max|18|32|36gb|2tb"
     },
     {
       "productCode": "FGDU4ZP/A",
@@ -1095,6 +1152,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M5 Max",
       "cpuCores": 18,
       "gpuCores": 32,
@@ -1105,7 +1163,7 @@
       "priceSgd": 4919,
       "newPriceSgd": 5799,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
-      "configurationKey": "pro|14|m5-max|18|32|36gb|2tb"
+      "configurationKey": "pro|14|standard|m5-max|18|32|36gb|2tb"
     },
     {
       "productCode": "G1MJAZP/A",
@@ -1114,6 +1172,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M5 Pro",
       "cpuCores": 18,
       "gpuCores": 20,
@@ -1124,7 +1183,7 @@
       "priceSgd": 5089,
       "newPriceSgd": 5999,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-4tb-storage",
-      "configurationKey": "pro|14|m5-pro|18|20|24gb|4tb"
+      "configurationKey": "pro|14|standard|m5-pro|18|20|24gb|4tb"
     },
     {
       "productCode": "FGDT4ZP/A",
@@ -1133,6 +1192,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M5 Pro",
       "cpuCores": 18,
       "gpuCores": 20,
@@ -1143,7 +1203,7 @@
       "priceSgd": 3819,
       "newPriceSgd": 4499,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-2tb-storage",
-      "configurationKey": "pro|14|m5-pro|18|20|24gb|2tb"
+      "configurationKey": "pro|14|standard|m5-pro|18|20|24gb|2tb"
     },
     {
       "productCode": "G1MH1ZP/A",
@@ -1152,6 +1212,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Nano-texture",
       "chip": "M5 Pro",
       "cpuCores": 15,
       "gpuCores": 16,
@@ -1160,9 +1221,9 @@
       "memory": "48GB",
       "storage": "2TB",
       "priceSgd": 4559,
-      "newPriceSgd": 5149,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-48gb-memory-2tb-storage",
-      "configurationKey": "pro|14|m5-pro|15|16|48gb|2tb"
+      "newPriceSgd": 5374,
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-nano-texture-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-48gb-memory-2tb-storage",
+      "configurationKey": "pro|14|nano-texture|m5-pro|15|16|48gb|2tb"
     },
     {
       "productCode": "FGDN4ZP/A",
@@ -1171,6 +1232,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M5 Pro",
       "cpuCores": 15,
       "gpuCores": 16,
@@ -1181,7 +1243,7 @@
       "priceSgd": 2969,
       "newPriceSgd": 3499,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
-      "configurationKey": "pro|14|m5-pro|15|16|24gb|1tb"
+      "configurationKey": "pro|14|standard|m5-pro|15|16|24gb|1tb"
     },
     {
       "productCode": "FGDR4ZP/A",
@@ -1190,6 +1252,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M5 Pro",
       "cpuCores": 15,
       "gpuCores": 16,
@@ -1200,7 +1263,7 @@
       "priceSgd": 2969,
       "newPriceSgd": 3499,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
-      "configurationKey": "pro|14|m5-pro|15|16|24gb|1tb"
+      "configurationKey": "pro|14|standard|m5-pro|15|16|24gb|1tb"
     },
     {
       "productCode": "G1KN4ZP/A",
@@ -1209,6 +1272,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M5",
       "cpuCores": 10,
       "gpuCores": 10,
@@ -1219,7 +1283,7 @@
       "priceSgd": 4719,
       "newPriceSgd": 5549,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-4tb-storage",
-      "configurationKey": "pro|14|m5|10|10|32gb|4tb"
+      "configurationKey": "pro|14|standard|m5|10|10|32gb|4tb"
     },
     {
       "productCode": "FX2G3ZP/A",
@@ -1228,6 +1292,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M4 Max",
       "cpuCores": 14,
       "gpuCores": 32,
@@ -1238,7 +1303,7 @@
       "priceSgd": 4199,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m4-max|14|32|36gb|1tb"
+      "configurationKey": "pro|14|standard|m4-max|14|32|36gb|1tb"
     },
     {
       "productCode": "FX2K3ZP/A",
@@ -1247,6 +1312,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M4 Max",
       "cpuCores": 14,
       "gpuCores": 32,
@@ -1257,7 +1323,7 @@
       "priceSgd": 4199,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m4-max|14|32|36gb|1tb"
+      "configurationKey": "pro|14|standard|m4-max|14|32|36gb|1tb"
     },
     {
       "productCode": "G1FF9ZP/A",
@@ -1266,6 +1332,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Nano-texture",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1276,7 +1343,7 @@
       "priceSgd": 4699,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m4-pro|14|20|48gb|2tb"
+      "configurationKey": "pro|14|nano-texture|m4-pro|14|20|48gb|2tb"
     },
     {
       "productCode": "G1FC0ZP/A",
@@ -1285,6 +1352,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1295,7 +1363,7 @@
       "priceSgd": 3749,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m4-pro|14|20|24gb|2tb"
+      "configurationKey": "pro|14|standard|m4-pro|14|20|24gb|2tb"
     },
     {
       "productCode": "FX2F3ZP/A",
@@ -1304,6 +1372,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1314,7 +1383,7 @@
       "priceSgd": 3109,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m4-pro|14|20|24gb|1tb"
+      "configurationKey": "pro|14|standard|m4-pro|14|20|24gb|1tb"
     },
     {
       "productCode": "FX2J3ZP/A",
@@ -1323,6 +1392,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1333,7 +1403,7 @@
       "priceSgd": 3109,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m4-pro|14|20|24gb|1tb"
+      "configurationKey": "pro|14|standard|m4-pro|14|20|24gb|1tb"
     },
     {
       "productCode": "FX2E3ZP/A",
@@ -1342,6 +1412,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 12,
       "gpuCores": 16,
@@ -1352,7 +1423,7 @@
       "priceSgd": 2489,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m4-pro|12|16|24gb|512gb"
+      "configurationKey": "pro|14|standard|m4-pro|12|16|24gb|512gb"
     },
     {
       "productCode": "FX2H3ZP/A",
@@ -1361,6 +1432,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 12,
       "gpuCores": 16,
@@ -1371,7 +1443,7 @@
       "priceSgd": 2489,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m4-pro|12|16|24gb|512gb"
+      "configurationKey": "pro|14|standard|m4-pro|12|16|24gb|512gb"
     },
     {
       "productCode": "G1AY0ZP/A",
@@ -1380,6 +1452,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M3 Pro",
       "cpuCores": 12,
       "gpuCores": 18,
@@ -1390,7 +1463,7 @@
       "priceSgd": 3449,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m3-pro|12|18|18gb|2tb"
+      "configurationKey": "pro|14|standard|m3-pro|12|18|18gb|2tb"
     },
     {
       "productCode": "G17JCZP/A",
@@ -1399,6 +1472,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "14″",
+      "display": "Standard",
       "chip": "M2 Max",
       "cpuCores": 12,
       "gpuCores": 38,
@@ -1409,7 +1483,7 @@
       "priceSgd": 5049,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|14|m2-max|12|38|64gb|2tb"
+      "configurationKey": "pro|14|standard|m2-max|12|38|64gb|2tb"
     },
     {
       "productCode": "FGE94ZP/A",
@@ -1418,6 +1492,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M5 Max",
       "cpuCores": 18,
       "gpuCores": 40,
@@ -1428,7 +1503,7 @@
       "priceSgd": 5949,
       "newPriceSgd": 6999,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
-      "configurationKey": "pro|16|m5-max|18|40|48gb|2tb"
+      "configurationKey": "pro|16|standard|m5-max|18|40|48gb|2tb"
     },
     {
       "productCode": "FGEE4ZP/A",
@@ -1437,6 +1512,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M5 Max",
       "cpuCores": 18,
       "gpuCores": 40,
@@ -1447,7 +1523,7 @@
       "priceSgd": 5949,
       "newPriceSgd": 6999,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
-      "configurationKey": "pro|16|m5-max|18|40|48gb|2tb"
+      "configurationKey": "pro|16|standard|m5-max|18|40|48gb|2tb"
     },
     {
       "productCode": "FGE74ZP/A",
@@ -1456,6 +1532,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M5 Max",
       "cpuCores": 18,
       "gpuCores": 32,
@@ -1466,7 +1543,7 @@
       "priceSgd": 5099,
       "newPriceSgd": 5999,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
-      "configurationKey": "pro|16|m5-max|18|32|36gb|2tb"
+      "configurationKey": "pro|16|standard|m5-max|18|32|36gb|2tb"
     },
     {
       "productCode": "FGED4ZP/A",
@@ -1475,6 +1552,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M5 Max",
       "cpuCores": 18,
       "gpuCores": 32,
@@ -1485,7 +1563,7 @@
       "priceSgd": 5099,
       "newPriceSgd": 5999,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
-      "configurationKey": "pro|16|m5-max|18|32|36gb|2tb"
+      "configurationKey": "pro|16|standard|m5-max|18|32|36gb|2tb"
     },
     {
       "productCode": "FGE64ZP/A",
@@ -1494,6 +1572,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M5 Pro",
       "cpuCores": 18,
       "gpuCores": 20,
@@ -1504,7 +1583,7 @@
       "priceSgd": 4159,
       "newPriceSgd": 4899,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-1tb-storage",
-      "configurationKey": "pro|16|m5-pro|18|20|48gb|1tb"
+      "configurationKey": "pro|16|standard|m5-pro|18|20|48gb|1tb"
     },
     {
       "productCode": "FGEC4ZP/A",
@@ -1513,6 +1592,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M5 Pro",
       "cpuCores": 18,
       "gpuCores": 20,
@@ -1523,7 +1603,7 @@
       "priceSgd": 4159,
       "newPriceSgd": 4899,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-1tb-storage",
-      "configurationKey": "pro|16|m5-pro|18|20|48gb|1tb"
+      "configurationKey": "pro|16|standard|m5-pro|18|20|48gb|1tb"
     },
     {
       "productCode": "FGE44ZP/A",
@@ -1532,6 +1612,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M5 Pro",
       "cpuCores": 18,
       "gpuCores": 20,
@@ -1542,7 +1623,7 @@
       "priceSgd": 3399,
       "newPriceSgd": 3999,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
-      "configurationKey": "pro|16|m5-pro|18|20|24gb|1tb"
+      "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb"
     },
     {
       "productCode": "FGEA4ZP/A",
@@ -1551,6 +1632,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M5 Pro",
       "cpuCores": 18,
       "gpuCores": 20,
@@ -1561,7 +1643,7 @@
       "priceSgd": 3399,
       "newPriceSgd": 3999,
       "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
-      "configurationKey": "pro|16|m5-pro|18|20|24gb|1tb"
+      "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb"
     },
     {
       "productCode": "FX2W3ZP/A",
@@ -1570,6 +1652,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Max",
       "cpuCores": 16,
       "gpuCores": 40,
@@ -1580,7 +1663,7 @@
       "priceSgd": 5229,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-max|16|40|48gb|1tb"
+      "configurationKey": "pro|16|standard|m4-max|16|40|48gb|1tb"
     },
     {
       "productCode": "FX313ZP/A",
@@ -1589,6 +1672,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Max",
       "cpuCores": 16,
       "gpuCores": 40,
@@ -1599,7 +1683,7 @@
       "priceSgd": 5229,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-max|16|40|48gb|1tb"
+      "configurationKey": "pro|16|standard|m4-max|16|40|48gb|1tb"
     },
     {
       "productCode": "FX2V3ZP/A",
@@ -1608,6 +1692,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Max",
       "cpuCores": 14,
       "gpuCores": 32,
@@ -1618,7 +1703,7 @@
       "priceSgd": 4399,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-max|14|32|36gb|1tb"
+      "configurationKey": "pro|16|standard|m4-max|14|32|36gb|1tb"
     },
     {
       "productCode": "FX303ZP/A",
@@ -1627,6 +1712,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Max",
       "cpuCores": 14,
       "gpuCores": 32,
@@ -1637,7 +1723,7 @@
       "priceSgd": 4399,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-max|14|32|36gb|1tb"
+      "configurationKey": "pro|16|standard|m4-max|14|32|36gb|1tb"
     },
     {
       "productCode": "FX2U3ZP/A",
@@ -1646,6 +1732,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1656,7 +1743,7 @@
       "priceSgd": 3699,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-pro|14|20|48gb|512gb"
+      "configurationKey": "pro|16|standard|m4-pro|14|20|48gb|512gb"
     },
     {
       "productCode": "FX2Y3ZP/A",
@@ -1665,6 +1752,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1675,7 +1763,7 @@
       "priceSgd": 3699,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-pro|14|20|48gb|512gb"
+      "configurationKey": "pro|16|standard|m4-pro|14|20|48gb|512gb"
     },
     {
       "productCode": "G1FP1ZP/A",
@@ -1684,6 +1772,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1694,7 +1783,7 @@
       "priceSgd": 3969,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-pro|14|20|24gb|2tb"
+      "configurationKey": "pro|16|standard|m4-pro|14|20|24gb|2tb"
     },
     {
       "productCode": "FX2T3ZP/A",
@@ -1703,6 +1792,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1713,7 +1803,7 @@
       "priceSgd": 2949,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-pro|14|20|24gb|512gb"
+      "configurationKey": "pro|16|standard|m4-pro|14|20|24gb|512gb"
     },
     {
       "productCode": "FX2X3ZP/A",
@@ -1722,6 +1812,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M4 Pro",
       "cpuCores": 14,
       "gpuCores": 20,
@@ -1732,7 +1823,7 @@
       "priceSgd": 2949,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m4-pro|14|20|24gb|512gb"
+      "configurationKey": "pro|16|standard|m4-pro|14|20|24gb|512gb"
     },
     {
       "productCode": "G1AG1ZP/A",
@@ -1741,6 +1832,7 @@
       "family": "Pro",
       "model": "MacBook Pro",
       "screen": "16″",
+      "display": "Standard",
       "chip": "M3 Pro",
       "cpuCores": 12,
       "gpuCores": 18,
@@ -1751,7 +1843,7 @@
       "priceSgd": 4309,
       "newPriceSgd": null,
       "newSourceUrl": null,
-      "configurationKey": "pro|16|m3-pro|12|18|36gb|2tb"
+      "configurationKey": "pro|16|standard|m3-pro|12|18|36gb|2tb"
     }
   ]
 }

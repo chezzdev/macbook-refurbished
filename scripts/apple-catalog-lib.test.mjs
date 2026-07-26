@@ -46,6 +46,7 @@ test("refurbished catalog parsing preserves required normalized fields", () => {
     family: "Air",
     model: "MacBook Air",
     screen: "13″",
+    display: "Standard",
     chip: "M5",
     cpuCores: 10,
     gpuCores: 10,
@@ -56,7 +57,7 @@ test("refurbished catalog parsing preserves required normalized fields", () => {
     priceSgd: 1999,
     newPriceSgd: null,
     newSourceUrl: null,
-    configurationKey: "air|13|m5|10|10|24gb|512gb",
+    configurationKey: "air|13|standard|m5|10|10|24gb|512gb",
   });
 });
 
@@ -107,6 +108,41 @@ test("only newest-generation exact configurations receive new prices", async () 
   assert.equal(result.products[0].newPriceSgd, null);
   assert.equal(result.products[0].newSourceUrl, null);
   assert.equal(result.products[1].newPriceSgd, 2199);
+});
+
+test("matches nano-texture MacBook Pro prices as a distinct exact configuration", () => {
+  const nanoProduct = {
+    family: "Pro",
+    screen: "14″",
+    display: "Nano-texture",
+    chip: "M5 Pro",
+    cpuCores: 15,
+    gpuCores: 16,
+    memory: "48GB",
+    storage: "2TB",
+  };
+  assert.match(buildNewProductUrl(nanoProduct), /nano-texture-display/);
+  assert.equal(
+    parseExactNewPriceHtml(
+      "<title>Buy MacBook Pro, 14-inch, M5 Pro Chip, 15-core CPU, " +
+        "16-core GPU, Silver, Nano-texture display, 48GB memory, " +
+        "2TB storage - Apple (SG)</title>" +
+        '<script>{"priceCurrency":"SGD","price":5374.00}</script>',
+      nanoProduct,
+    ),
+    5374,
+  );
+  assert.throws(
+    () =>
+      parseExactNewPriceHtml(
+        "<title>Buy MacBook Pro, 14-inch, M5 Pro Chip, 15-core CPU, " +
+          "16-core GPU, Silver, Standard display, 48GB memory, " +
+          "2TB storage - Apple (SG)</title>" +
+          '<script>{"priceCurrency":"SGD","price":5149.00}</script>',
+        nanoProduct,
+      ),
+    /nano-texture display/,
+  );
 });
 
 test("catalog validation enforces stable ordering and rejects timestamps", () => {

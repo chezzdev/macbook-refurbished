@@ -14,6 +14,7 @@ const REQUIRED_STRING_FIELDS = [
   "family",
   "model",
   "screen",
+  "display",
   "chip",
   "colour",
   "memory",
@@ -119,6 +120,7 @@ export function buildConfigurationKey(product) {
   return [
     product.family.toLowerCase(),
     product.screen.replace(/\D/g, ""),
+    normalizeForMatch(product.display).replaceAll(" ", "-"),
     normalizeForMatch(product.chip).replaceAll(" ", "-"),
     product.cpuCores,
     product.gpuCores,
@@ -150,6 +152,9 @@ export function parseRefurbishedTile(tile) {
     family,
     model: `MacBook ${family}`,
     screen: `${dimensions.dimensionScreensize?.match(/\d+/)?.[0] || ""}″`,
+    display: /nano-texture display/i.test(title)
+      ? "Nano-texture"
+      : "Standard",
     chip: normalizeSpaces(
       title.match(/Apple\s+(M\d+(?:\s+(?:Pro|Max))?)\s+(?:Chip|chip)/i)?.[1] ||
         "",
@@ -194,7 +199,11 @@ export function buildNewProductUrl(product) {
     return `${NEW_CATALOG_BASE_URL}/macbook-air/${screen}-inch-midnight-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
   }
 
-  return `${NEW_CATALOG_BASE_URL}/macbook-pro/${screen}-inch-silver-standard-display-apple-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
+  const display =
+    product.display === "Nano-texture"
+      ? "nano-texture-display"
+      : "standard-display";
+  return `${NEW_CATALOG_BASE_URL}/macbook-pro/${screen}-inch-silver-${display}-apple-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
 }
 
 export function parseExactNewPriceHtml(html, product) {
@@ -210,6 +219,13 @@ export function parseExactNewPriceHtml(html, product) {
     `${product.memory.toLowerCase()} memory`,
     `${product.storage.toLowerCase()} storage`,
   ];
+  if (product.family === "Pro") {
+    expectedFragments.push(
+      product.display === "Nano-texture"
+        ? "nano-texture display"
+        : "standard display",
+    );
+  }
   const missingFragment = expectedFragments.find(
     (fragment) => !title.includes(fragment),
   );
@@ -382,6 +398,16 @@ export function validateProducts(products) {
     }
     if (product.model !== `MacBook ${product.family}`) {
       throw new Error(`products[${index}].model does not match family`);
+    }
+    if (!["Standard", "Nano-texture"].includes(product.display)) {
+      throw new Error(
+        `products[${index}].display must be Standard or Nano-texture`,
+      );
+    }
+    if (product.family === "Air" && product.display !== "Standard") {
+      throw new Error(
+        `products[${index}].display must be Standard for MacBook Air`,
+      );
     }
     if (seenProductCodes.has(product.productCode)) {
       throw new Error(`Duplicate productCode: ${product.productCode}`);
