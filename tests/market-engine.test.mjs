@@ -270,6 +270,42 @@ test("workflow config selects one shared checkout and each market artifact", asy
   assert.equal(usWorkflow[12], "cloudflare-pages");
 });
 
+test("publication workflow shares one lock and keeps prepare-only non-canonical", async () => {
+  const [perMarketWorkflow, allMarketsWorkflow] = await Promise.all([
+    readFile(
+      join(projectRoot, "work/update-market-site.zsh"),
+      "utf8",
+    ),
+    readFile(
+      join(projectRoot, "work/update-all-markets.zsh"),
+      "utf8",
+    ),
+  ]);
+  assert.match(perMarketWorkflow, /\.publication-update\.lock/);
+  assert.match(allMarketsWorkflow, /\.publication-update\.lock/);
+  assert.match(
+    perMarketWorkflow,
+    /MACBOOK_PUBLICATION_LOCK_OWNER:-market-\$\{market_id\}-\$\$/,
+  );
+  assert.match(
+    allMarketsWorkflow,
+    /export MACBOOK_PUBLICATION_LOCK_OWNER=/,
+  );
+
+  const prepareOnlyBranch = perMarketWorkflow.slice(
+    perMarketWorkflow.indexOf('if [[ "$prepare_only" == "true" ]]'),
+    perMarketWorkflow.indexOf('print "6/8 Syncing'),
+  );
+  assert.ok(prepareOnlyBranch.length > 0);
+  assert.doesNotMatch(prepareOnlyBranch, /promote_staged_outputs/);
+  assert.match(prepareOnlyBranch, /Prepared artifact:/);
+  assert.match(
+    perMarketWorkflow,
+    /node_modules\/\.bin\/wrangler/,
+  );
+  assert.doesNotMatch(perMarketWorkflow, /npx --yes/);
+});
+
 test("publication manifest derives every market path from enabled profiles", () => {
   const futureProfile = structuredClone(us);
   futureProfile.id = "ca";

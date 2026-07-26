@@ -6,6 +6,7 @@ import {
   loadMarketContext,
   marketIdFromArgv,
 } from "../scripts/market-profile.mjs";
+import { sourceToDisplayRateFromSite } from "../scripts/update-exchange-rate.mjs";
 
 const { profile, paths } = await loadMarketContext(marketIdFromArgv());
 const { profiles: enabledMarketProfiles } =
@@ -67,13 +68,7 @@ if (
   throw new Error(`${paths.changelog} must contain latestRun and entries`);
 }
 
-const rate =
-  profile.currency.conversion.type === "identity"
-    ? 1
-    : Number(site?.currency?.[profile.currency.conversion.siteField]);
-if (!Number.isFinite(rate) || rate <= 0) {
-  throw new Error(`${paths.site} must contain a positive currency rate`);
-}
+const rate = sourceToDisplayRateFromSite(site, profile);
 
 const rateDate = site?.currency?.rateDate;
 const rateSourceUrl = site?.currency?.sourceUrl;
@@ -332,10 +327,12 @@ const changelogHtml = changelogDocument.entries
 const cardPrice = (product) =>
   hasVerifiedTaxEstimate
     ? `<strong>${taxDisplayPrice(product[taxInclusivePriceField])}</strong><span>total · расчёт</span><small class="price-formula">${taxFormula(product.taxInclusivePricing)}</small>`
-    : `<strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>`;
+    : profile.tax.model === "included-in-list-price"
+      ? `<strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb · налог включён</span>`
+      : `<strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>`;
 const card = ({ product, label, heading, body, score, highlighted = false }) =>
   `<article class="pick-card${highlighted ? " featured" : ""}" data-score="${escapeHtml(score)}">
-    <span class="pick-label">${escapeHtml(label)} · ${escapeHtml(formatScore(score))} / 100</span>
+    <span class="pick-label">${escapeHtml(label)} · рейтинг ${escapeHtml(formatScore(score))}</span>
     <div class="pick-chip">${escapeHtml(product.chip)}</div>
     <h3>${escapeHtml(heading)}</h3>
     <p>${escapeHtml(body)}</p>

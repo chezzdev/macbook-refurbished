@@ -5,6 +5,10 @@
   "checkedDateFallback": "2026-07-26",
   "currency": {
     "sgdToUsd": 0.7738739062011412,
+    "sourceCurrency": "SGD",
+    "displayCurrency": "USD",
+    "conversionType": "cbr-cross-rate",
+    "sourceToDisplayRate": 0.7738739062011412,
     "rateDate": "2026-07-25",
     "sourceUrl": "https://www.cbr.ru/currency_base/daily/?UniDbQuery.Posted=True&UniDbQuery.To=25.07.2026"
   },

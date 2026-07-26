@@ -36,7 +36,7 @@ IFS=$'\x1f' read -r \
   production_url repository_url publish_checkout_relative publication_artifact_directory \
   publication_branch approval_required <<< "$workflow_config"
 
-if [[ "$approval_required" == "true" ]]; then
+if [[ "$approval_required" == "true" && "$prepare_only" != "true" ]]; then
   print -u2 "${site_name} publication is approval-gated."
   print -u2 "Approve the hosting project and final URL in config/markets/${market_id}.json before a live refresh or deployment."
   exit 1
@@ -51,7 +51,10 @@ if [[ "$prepare_only" != "true" && ( -z "$production_url" || -z "$repository_url
 fi
 
 default_publish_dir="${workspace_dir}/${publish_checkout_relative}"
-lock_dir="${script_dir}/.${market_id}-catalog-update.lock"
+publication_lock_dir="${script_dir}/.publication-update.lock"
+publication_lock_owner_file="${publication_lock_dir}/owner"
+publication_lock_owner="${MACBOOK_PUBLICATION_LOCK_OWNER:-market-${market_id}-$$}"
+publication_lock_owned=false
 temporary_root="${TMPDIR:-/tmp}"
 deployment_dir=""
 metadata_dir=""
@@ -119,30 +122,54 @@ cleanup() {
         "$staging_dir" == "${temporary_root%/}/macbook-market-stage."* ]]; then
     rm -rf -- "$staging_dir"
   fi
-  rmdir "$lock_dir" 2>/dev/null || true
+  if [[ "$publication_lock_owned" == "true" ]]; then
+    current_lock_owner=""
+    if [[ -f "$publication_lock_owner_file" ]]; then
+      current_lock_owner="$(<"$publication_lock_owner_file")"
+    fi
+    if [[ "$current_lock_owner" == "$publication_lock_owner" ]]; then
+      rm -f -- "$publication_lock_owner_file"
+      rmdir "$publication_lock_dir" 2>/dev/null || true
+    fi
+  fi
   return "$exit_code"
 }
 
-if ! mkdir "$lock_dir" 2>/dev/null; then
-  print -u2 "Another catalog update is already running: $lock_dir"
-  exit 1
+if [[ -n "${MACBOOK_PUBLICATION_LOCK_OWNER:-}" ]]; then
+  inherited_lock_owner=""
+  if [[ -f "$publication_lock_owner_file" ]]; then
+    inherited_lock_owner="$(<"$publication_lock_owner_file")"
+  fi
+  if [[ "$inherited_lock_owner" != "$publication_lock_owner" ]]; then
+    print -u2 "The inherited publication lock is not owned by this workflow."
+    exit 1
+  fi
+else
+  if ! mkdir "$publication_lock_dir" 2>/dev/null; then
+    print -u2 "Another publication update is already running: $publication_lock_dir"
+    exit 1
+  fi
+  print -r -- "$publication_lock_owner" > "$publication_lock_owner_file"
+  publication_lock_owned=true
 fi
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-if [[ ! -d "${publish_dir}/.git" ]]; then
-  print -u2 "Private GitHub checkout is missing: $publish_dir"
-  exit 1
-fi
-preexisting_changes="$(
-  git -C "$publish_dir" status --porcelain --untracked-files=all -- \
-    "${publish_owned_paths[@]}"
-)"
-if [[ -n "$preexisting_changes" ]]; then
-  print -u2 "The private checkout has pre-existing changes in pipeline-owned files:"
-  print -u2 "$preexisting_changes"
-  exit 1
+if [[ "$prepare_only" != "true" ]]; then
+  if [[ ! -d "${publish_dir}/.git" ]]; then
+    print -u2 "Private GitHub checkout is missing: $publish_dir"
+    exit 1
+  fi
+  preexisting_changes="$(
+    git -C "$publish_dir" status --porcelain --untracked-files=all -- \
+      "${publish_owned_paths[@]}"
+  )"
+  if [[ -n "$preexisting_changes" ]]; then
+    print -u2 "The private checkout has pre-existing changes in pipeline-owned files:"
+    print -u2 "$preexisting_changes"
+    exit 1
+  fi
 fi
 
 cd "$workspace_dir"
@@ -253,11 +280,14 @@ if [[ "$deployment_hash" != "$second_hash" ]]; then
 fi
 
 if [[ "$prepare_only" == "true" ]]; then
-  promote_staged_outputs
+  prepared_artifact_dir="$deployment_dir"
+  deployment_dir=""
   workflow_succeeded=true
-  print "Validated ${site_name} without syncing or deploying."
+  print "Validated ${site_name} without changing canonical state or publishing."
+  print "Prepared artifact: ${prepared_artifact_dir}/index.html"
   print "Artifact SHA-256: $second_hash"
-  node scripts/summarize-update.mjs --market "$market_id"
+  MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+    node scripts/summarize-update.mjs --market "$market_id"
   exit 0
 fi
 
@@ -313,7 +343,7 @@ git -C "$metadata_dir" update-ref "refs/heads/${publication_branch}" "$publish_c
 git -C "$metadata_dir" symbolic-ref HEAD "refs/heads/${publication_branch}"
 (
   cd "$metadata_dir"
-  npx --yes wrangler@4.92.0 pages deploy "$deployment_dir" \
+  "${workspace_dir}/node_modules/.bin/wrangler" pages deploy "$deployment_dir" \
     --project-name "$cloudflare_project" \
     --branch "$publication_branch" \
     --commit-hash "$publish_commit" \

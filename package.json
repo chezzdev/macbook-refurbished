@@ -20,11 +20,11 @@
     "refresh:publish": "./work/update-all-markets.zsh",
     "lint": "eslint ."
   },
-  "dependencies": {},
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "eslint": "10.8.0",
-    "globals": "17.7.0"
+    "globals": "17.7.0",
+    "wrangler": "4.114.0"
   },
   "type": "module"
 }

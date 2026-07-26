@@ -40,6 +40,8 @@ test("embeds the complete catalog and exactly three ranked cards", () => {
   for (const item of featured.items) {
     assert.match(html, new RegExp(escapeRegex(item.productCode)));
   }
+  assert.doesNotMatch(shortlist, /\/ 100/);
+  assert.equal((shortlist?.match(/· рейтинг /g) ?? []).length, 3);
 });
 
 test("keeps secondary source currency inside the table only", () => {
@@ -196,6 +198,8 @@ test("keeps Singapore on its existing list-price display contract", () => {
   assert.equal(profile.currency.priceFields.newTaxInclusive, null);
   assert.doesNotMatch(html, /Refurb total · расчёт|Новый total · расчёт/);
   assert.doesNotMatch(html, /priceFormula\(p\.(?:tax|newTax)InclusivePricing\)/);
+  assert.match(shortlist, /refurb · налог включён/);
+  assert.doesNotMatch(shortlist, /refurb до налога/);
 });
 
 function escapeRegex(value) {

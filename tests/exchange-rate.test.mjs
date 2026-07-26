@@ -6,6 +6,7 @@ import test from "node:test";
 
 import {
   parseCbrCrossRate,
+  sourceToDisplayRateFromSite,
   updateExchangeRate,
 } from "../scripts/update-exchange-rate.mjs";
 
@@ -21,16 +22,65 @@ const fixture = `<?xml version="1.0" encoding="windows-1251"?>
     <CharCode>SGD</CharCode>
     <Value>60,8099</Value>
   </Valute>
+  <Valute ID="R01350">
+    <Nominal>1</Nominal>
+    <CharCode>CAD</CharCode>
+    <Value>57,2500</Value>
+  </Valute>
 </ValCurs>`;
 
 test("calculates a deterministic SGD to USD cross-rate", () => {
   assert.deepEqual(parseCbrCrossRate(fixture), {
     sgdToUsd: 60.8099 / 78.5796,
+    sourceCurrency: "SGD",
+    displayCurrency: "USD",
+    conversionType: "cbr-cross-rate",
+    sourceToDisplayRate: 60.8099 / 78.5796,
     rateDate: "2026-07-25",
     sourceUrl:
       "https://www.cbr.ru/currency_base/daily/" +
       "?UniDbQuery.Posted=True&UniDbQuery.To=25.07.2026",
   });
+});
+
+test("drives a future market conversion and builder lookup from its profile", async () => {
+  const temporaryDirectory = await mkdtemp(
+    join(tmpdir(), "exchange-rate-market-test-"),
+  );
+  const sitePath = join(temporaryDirectory, "site.json");
+  const marketProfile = {
+    id: "ca",
+    currency: {
+      source: "CAD",
+      display: "USD",
+      conversion: {
+        type: "cbr-cross-rate",
+        siteField: "cadToUsd",
+      },
+    },
+  };
+
+  try {
+    await writeFile(
+      sitePath,
+      JSON.stringify({ schemaVersion: 1, siteName: "MacBook CA Refurbished" }),
+      "utf8",
+    );
+    const updatedSite = await updateExchangeRate({
+      sitePath,
+      marketProfile,
+      fetchTextImpl: async () => ({ html: fixture }),
+    });
+    assert.equal(updatedSite.currency.cadToUsd, 57.25 / 78.5796);
+    assert.equal(
+      sourceToDisplayRateFromSite(updatedSite, marketProfile),
+      57.25 / 78.5796,
+    );
+    assert.equal(updatedSite.currency.sourceCurrency, "CAD");
+    assert.equal(updatedSite.currency.displayCurrency, "USD");
+  } finally {
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  }
 });
 
 test("updates only the currency-owned part of site data", async () => {

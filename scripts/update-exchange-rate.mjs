@@ -14,7 +14,14 @@ const defaultMarketProfile = await loadMarketProfile("sg");
 export const CBR_DAILY_XML_URL =
   "https://www.cbr.ru/scripts/XML_daily.asp";
 
-export function parseCbrCrossRate(xml) {
+export function parseCbrCrossRate(
+  xml,
+  {
+    sourceCurrency = "SGD",
+    displayCurrency = "USD",
+    siteField = "sgdToUsd",
+  } = {},
+) {
   const dateMatch = xml.match(/<ValCurs[^>]*\bDate="(\d{2})\.(\d{2})\.(\d{4})"/i);
   if (!dateMatch) {
     throw new Error("CBR response does not contain a daily rate date");
@@ -35,9 +42,14 @@ export function parseCbrCrossRate(xml) {
     ),
   );
 
-  const usd = currencies.get("USD");
-  const sgd = currencies.get("SGD");
-  for (const [code, currency] of [["USD", usd], ["SGD", sgd]]) {
+  const currencyRate = (code) =>
+    code === "RUB" ? { nominal: 1, value: 1 } : currencies.get(code);
+  const source = currencyRate(sourceCurrency);
+  const display = currencyRate(displayCurrency);
+  for (const [code, currency] of [
+    [sourceCurrency, source],
+    [displayCurrency, display],
+  ]) {
     if (
       !currency ||
       !Number.isFinite(currency.nominal) ||
@@ -51,13 +63,21 @@ export function parseCbrCrossRate(xml) {
 
   const [, day, month, year] = dateMatch;
   const rateDate = `${year}-${month}-${day}`;
-  const sgdToUsd = (sgd.value / sgd.nominal) / (usd.value / usd.nominal);
-  if (!Number.isFinite(sgdToUsd) || sgdToUsd <= 0 || sgdToUsd >= 2) {
-    throw new Error(`Calculated SGD to USD rate is implausible: ${sgdToUsd}`);
+  const sourceToDisplayRate =
+    (source.value / source.nominal) / (display.value / display.nominal);
+  if (!Number.isFinite(sourceToDisplayRate) || sourceToDisplayRate <= 0) {
+    throw new Error(
+      `Calculated ${sourceCurrency} to ${displayCurrency} rate is invalid: ` +
+        sourceToDisplayRate,
+    );
   }
 
   return {
-    sgdToUsd,
+    [siteField]: sourceToDisplayRate,
+    sourceCurrency,
+    displayCurrency,
+    conversionType: "cbr-cross-rate",
+    sourceToDisplayRate,
     rateDate,
     sourceUrl:
       "https://www.cbr.ru/currency_base/daily/" +
@@ -88,13 +108,29 @@ export async function updateExchangeRate({
     return updatedSite;
   }
   const { html } = await fetchTextImpl(CBR_DAILY_XML_URL);
-  const currency = parseCbrCrossRate(html);
+  const currency = parseCbrCrossRate(html, {
+    sourceCurrency: marketProfile.currency.source,
+    displayCurrency: marketProfile.currency.display,
+    siteField: marketProfile.currency.conversion.siteField,
+  });
   const updatedSite = {
     ...currentSite,
     currency,
   };
   await writeJsonAtomic(sitePath, updatedSite);
   return updatedSite;
+}
+
+export function sourceToDisplayRateFromSite(site, marketProfile) {
+  if (marketProfile.currency.conversion.type === "identity") return 1;
+  const siteField = marketProfile.currency.conversion.siteField;
+  const rate = Number(site?.currency?.[siteField]);
+  if (!Number.isFinite(rate) || rate <= 0) {
+    throw new Error(
+      `Missing positive currency conversion ${siteField} for ${marketProfile.id}`,
+    );
+  }
+  return rate;
 }
 
 function parseLocalizedNumber(value) {
@@ -110,8 +146,10 @@ if (process.argv[1] === import.meta.filename) {
   if (profile.currency.conversion.type === "identity") {
     console.log(`Confirmed identity USD display conversion for ${profile.siteName}.`);
   } else {
+    const siteField = profile.currency.conversion.siteField;
     console.log(
-      `Updated SGD to USD rate: ${site.currency.sgdToUsd} ` +
+      `Updated ${profile.currency.source} to ${profile.currency.display} rate: ` +
+        `${site.currency[siteField]} ` +
         `for ${site.currency.rateDate}.`,
     );
   }

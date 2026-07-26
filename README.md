@@ -108,6 +108,12 @@ validation, ranking, changelog, двойную детерминированну�
 private-repository sync, Cloudflare Pages deployment и live hash verification.
 Новые данные сначала собираются в отдельном staging namespace; canonical JSON
 и HTML продвигаются только после успешных проверок и live verification.
+Прямые per-market запуски и общий ежедневный запуск используют один
+publication lock, потому что все рынки синхронизируются через общий checkout.
+Для провайдера без автоматического deploy `--prepare-only` оставляет canonical
+state неизменным и возвращает путь к проверенному временному артефакту и его
+SHA-256. Cloudflare CLI зафиксирован в `package-lock.json` и запускается только
+из локального `node_modules`.
 Оба рынка используют существующий checkout `work/gh-pages-site` и один remote;
 публикуемые файлы изолированы как `markets/sg/index.html` и
 `markets/us/index.html`. Старый корневой `index.html` SG удаляется при следующей
@@ -122,6 +128,8 @@ private-repository sync, Cloudflare Pages deployment и live hash verification.
 
 Workflow выбирает артефакт и Cloudflare Pages project только из выбранного
 market profile, поэтому данные и deployment targets SG и US не смешиваются.
+Cross-rate adapter также берёт source/display валюты и имя поля результата из
+профиля; новый рынок не требует валютного кода в общем скрипте.
 
 ## Ежедневное обновление всех рынков
 
