@@ -96,13 +96,13 @@ node scripts/initialize-market.mjs --market sg --check
 ./work/update-all-markets.zsh
 ```
 
-Singapore compatibility-команда сохраняется:
+Для запуска только Singapore используется:
 
 ```zsh
 ./work/update-published-site.zsh
 ```
 
-Она является тонким compatibility wrapper над общим workflow:
+Команда делегирует общему workflow выбранный market profile:
 
 ```zsh
 ./work/update-market-site.zsh --market sg
@@ -127,8 +127,7 @@ SHA-256. Cloudflare CLI зафиксирован в `package-lock.json` и за�
 из локального `node_modules`.
 Оба рынка используют существующий checkout `work/gh-pages-site` и один remote;
 публикуемые файлы изолированы как `markets/sg/index.html` и
-`markets/us/index.html`. Старый корневой `index.html` SG уже удалён и не
-является publication target. Каждый профиль выбирает собственный артефакт и
+`markets/us/index.html`. Каждый профиль выбирает собственный артефакт и
 отдельный Cloudflare Pages project, поэтому постоянный SG URL не зависит от
 расположения файла в repository. Полный US workflow использует тот же общий
 путь без отдельного hosting-кода:
@@ -160,9 +159,9 @@ Namespace layout намеренно строгий и lowercase ASCII: кажд�
 отчёт в
 `outputs/latest-update-summary.txt` и показывает macOS notification.
 Активная Codex automation `MacBook Refurbished Markets — daily update` в 08:00
-Europe/Minsk использует тот же registry-driven entrypoint. Старый LaunchAgent
-оставлен на диске, но выгружен, чтобы не существовало второго активного
-scheduler. Добавление enabled market не требует отдельной scheduled-команды.
+Europe/Minsk использует тот же registry-driven entrypoint и является
+единственным scheduler. Добавление enabled market не требует отдельной
+scheduled-команды.
 All-market entrypoint фиксирует один Git HEAD, читает registry из его archive
 snapshot и передаёт тот же SHA каждому рынку; SG и US в одном batch не могут
 быть собраны из разных commits.
