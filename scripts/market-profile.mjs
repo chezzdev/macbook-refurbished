@@ -153,6 +153,7 @@ export function validateMarketProfile(profile) {
     throw new Error(`invalid market profile id: ${profile.id}`);
   }
   requireString(profile.siteName, "market profile siteName");
+  requireString(profile.pageTitle, "market profile pageTitle");
   requireString(profile.language, "market profile language");
   requireString(profile.locale, "market profile locale");
   requireString(profile.storefront?.countryCode, "storefront.countryCode");

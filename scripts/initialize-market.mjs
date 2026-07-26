@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { access, readFile } from "node:fs/promises";
-import { parseArgs } from "node:util";
+import { isDeepStrictEqual, parseArgs } from "node:util";
 import {
   DEFAULT_MARKET_ID,
   loadMarketContext,
@@ -12,7 +12,7 @@ export function buildInitialSiteDocument(profile) {
   return {
     schemaVersion: 1,
     siteName: profile.siteName,
-    pageTitle: `${profile.siteName} — refurbished MacBook comparison`,
+    pageTitle: profile.pageTitle,
     productionUrl: profile.publication.productionUrl,
     canonicalUrl: profile.publication.canonicalUrl,
     plannedProductionUrl: profile.publication.plannedUrl ?? null,
@@ -45,11 +45,56 @@ export function buildInitialSiteDocument(profile) {
   };
 }
 
+export function reconcileSiteDocument(profile, existingSite = null) {
+  const initialSite = buildInitialSiteDocument(profile);
+  return {
+    ...initialSite,
+    currency:
+      profile.currency.conversion.type === "identity"
+        ? initialSite.currency
+        : existingSite?.currency ?? null,
+  };
+}
+
+function validateDynamicCurrency(profile, site) {
+  const currency = site.currency;
+  if (profile.currency.conversion.type === "identity") {
+    if (
+      !isDeepStrictEqual(
+        currency,
+        buildInitialSiteDocument(profile).currency,
+      )
+    ) {
+      throw new Error(
+        `${profile.id} site currency does not match its identity profile`,
+      );
+    }
+    return;
+  }
+  const siteField = profile.currency.conversion.siteField;
+  if (
+    currency?.sourceCurrency !== profile.currency.source ||
+    currency?.displayCurrency !== profile.currency.display ||
+    currency?.conversionType !== profile.currency.conversion.type ||
+    !Number.isFinite(currency?.sourceToDisplayRate) ||
+    currency.sourceToDisplayRate <= 0 ||
+    !Number.isFinite(currency?.[siteField]) ||
+    currency[siteField] <= 0
+  ) {
+    throw new Error(
+      `${profile.id} site currency does not match its conversion profile`,
+    );
+  }
+}
+
 export async function initializeMarketNamespace({
   marketId,
   check = false,
+  namespaceRoot,
 } = {}) {
-  const { profile, paths } = await loadMarketContext(marketId);
+  const { profile, paths } = await loadMarketContext(marketId, {
+    namespaceRoot,
+  });
   let existingSite = null;
   try {
     existingSite = JSON.parse(await readFile(paths.site, "utf8"));
@@ -57,34 +102,20 @@ export async function initializeMarketNamespace({
     if (error?.code !== "ENOENT") throw error;
   }
 
+  const reconciledSite = reconcileSiteDocument(profile, existingSite);
   if (!existingSite) {
     if (check) {
       throw new Error(`${paths.site} is not initialized`);
     }
-    await writeJsonAtomic(paths.site, buildInitialSiteDocument(profile));
-  } else if (
-    profile.publication.status === "active" &&
-    (
-      existingSite.productionUrl !== profile.publication.productionUrl ||
-      existingSite.canonicalUrl !== profile.publication.canonicalUrl ||
-      existingSite.plannedProductionUrl !==
-        (profile.publication.plannedUrl ?? null) ||
-      JSON.stringify(existingSite.tax) !==
-        JSON.stringify(buildInitialSiteDocument(profile).tax)
-    )
-  ) {
+    await writeJsonAtomic(paths.site, reconciledSite);
+  } else if (!isDeepStrictEqual(existingSite, reconciledSite)) {
     if (check) {
-      throw new Error(`${paths.site} does not match its active publication`);
+      throw new Error(`${paths.site} does not match its market profile`);
     }
-    existingSite = {
-      ...existingSite,
-      productionUrl: profile.publication.productionUrl,
-      canonicalUrl: profile.publication.canonicalUrl,
-      plannedProductionUrl: profile.publication.plannedUrl ?? null,
-      tax: buildInitialSiteDocument(profile).tax,
-    };
-    await writeJsonAtomic(paths.site, existingSite);
+    await writeJsonAtomic(paths.site, reconciledSite);
+    existingSite = reconciledSite;
   }
+  if (check) validateDynamicCurrency(profile, reconciledSite);
 
   for (const requiredPath of [paths.catalog, paths.featured]) {
     try {

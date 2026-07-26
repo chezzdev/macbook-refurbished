@@ -889,6 +889,7 @@ export function validateCatalog(
     throw new Error(`Catalog schemaVersion must be ${SCHEMA_VERSION}`);
   }
   if (
+    catalog?.marketId !== marketProfile.id ||
     catalog?.source?.refurbishedCatalogUrl !==
       marketProfile.storefront.refurbishedCatalogUrl ||
     catalog?.source?.newCatalogBaseUrl !==
@@ -896,6 +897,14 @@ export function validateCatalog(
   ) {
     throw new Error(
       `Catalog source metadata does not match Apple ${marketProfile.storefront.countryName}`,
+    );
+  }
+  if (
+    JSON.stringify(catalog.source.tax) !==
+      JSON.stringify(buildCatalogTaxMetadata(marketProfile))
+  ) {
+    throw new Error(
+      `Catalog tax metadata does not match ${marketProfile.id} profile`,
     );
   }
   const serialized = JSON.stringify(catalog);
@@ -907,6 +916,25 @@ export function validateCatalog(
   return validateProducts(catalog.products, marketProfile);
 }
 
+function buildCatalogTaxMetadata(marketProfile) {
+  return {
+    model: marketProfile.tax.model,
+    acquisition: marketProfile.tax.acquisition,
+    referenceLocation: marketProfile.tax.referenceLocation,
+    ...(marketProfile.tax.taxInclusiveSourcePolicy
+      ? {
+          taxInclusiveSourcePolicy:
+            marketProfile.tax.taxInclusiveSourcePolicy,
+        }
+      : {}),
+    ...(marketProfile.tax.estimate
+      ? { estimate: marketProfile.tax.estimate }
+      : {}),
+    availabilityPolicy: marketProfile.tax.availabilityPolicy,
+    filterByDeliveryOrPickup: marketProfile.tax.filterByDeliveryOrPickup,
+  };
+}
+
 export function buildCatalog(
   products,
   marketProfile = DEFAULT_MARKET_PROFILE,
@@ -916,27 +944,14 @@ export function buildCatalog(
   );
   const catalog = {
     schemaVersion: SCHEMA_VERSION,
+    marketId: marketProfile.id,
     source: {
       refurbishedCatalogUrl: marketProfile.storefront.refurbishedCatalogUrl,
       newCatalogBaseUrl: marketProfile.storefront.newCatalogBaseUrl,
+      tax: buildCatalogTaxMetadata(marketProfile),
     },
     products: sortedProducts,
   };
-  if (marketProfile.id !== "sg") {
-    catalog.marketId = marketProfile.id;
-    catalog.source.tax = {
-      model: marketProfile.tax.model,
-      acquisition: marketProfile.tax.acquisition,
-      referenceLocation: marketProfile.tax.referenceLocation,
-      taxInclusiveSourcePolicy:
-        marketProfile.tax.taxInclusiveSourcePolicy,
-      ...(marketProfile.tax.estimate
-        ? { estimate: marketProfile.tax.estimate }
-        : {}),
-      availabilityPolicy: marketProfile.tax.availabilityPolicy,
-      filterByDeliveryOrPickup: marketProfile.tax.filterByDeliveryOrPickup,
-    };
-  }
   validateCatalog(catalog, marketProfile);
   return catalog;
 }

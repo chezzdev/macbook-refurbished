@@ -202,6 +202,14 @@ test("catalog validation enforces stable ordering and rejects timestamps", () =>
     colour: "Sky Blue",
   };
   const catalog = buildCatalog([other, product]);
+  assert.equal(catalog.marketId, "sg");
+  assert.deepEqual(catalog.source.tax, {
+    model: "included-in-list-price",
+    acquisition: null,
+    referenceLocation: null,
+    availabilityPolicy: "catalog-wide",
+    filterByDeliveryOrPickup: false,
+  });
   assert.equal(catalog.products[0].colour, "Midnight");
   assert.equal(validateCatalog(catalog), true);
   assert.throws(

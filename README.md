@@ -22,8 +22,8 @@
 - моделью налога и фиксированной reference location;
 - ссылкой на собственную ranking policy и идеальную конфигурацию;
 - путями данных и выходного HTML;
-- именем сайта, hosting slug, общим publication repository, каноническим и
-  production URL.
+- именем сайта, page title, hosting slug, общим publication repository,
+  каноническим и production URL.
 
 Singapore и US проходят через одни и те же parser, exact-new matcher, tax
 adapter, validator, ranker, changelog, builder и publication workflow.

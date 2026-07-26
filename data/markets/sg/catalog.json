@@ -1,8 +1,16 @@
 {
   "schemaVersion": 1,
+  "marketId": "sg",
   "source": {
     "refurbishedCatalogUrl": "https://www.apple.com/sg/shop/refurbished/mac/macbook-pro",
-    "newCatalogBaseUrl": "https://www.apple.com/sg/shop/buy-mac"
+    "newCatalogBaseUrl": "https://www.apple.com/sg/shop/buy-mac",
+    "tax": {
+      "model": "included-in-list-price",
+      "acquisition": null,
+      "referenceLocation": null,
+      "availabilityPolicy": "catalog-wide",
+      "filterByDeliveryOrPickup": false
+    }
   },
   "products": [
     {

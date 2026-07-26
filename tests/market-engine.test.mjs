@@ -20,7 +20,10 @@ import {
   parseRefurbishedCatalog,
   validateCatalog,
 } from "../scripts/apple-catalog-lib.mjs";
-import { buildInitialSiteDocument } from "../scripts/initialize-market.mjs";
+import {
+  buildInitialSiteDocument,
+  initializeMarketNamespace,
+} from "../scripts/initialize-market.mjs";
 import {
   assertUniqueProfileOwnedPaths,
   loadEnabledMarketProfiles,
@@ -163,6 +166,14 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
   );
   assert.equal(sg.siteName, "MacBook SG Refurbished");
   assert.equal(us.siteName, "MacBook US Refurbished");
+  assert.equal(
+    buildInitialSiteDocument(sg).pageTitle,
+    sg.pageTitle,
+  );
+  assert.equal(
+    buildInitialSiteDocument(us).pageTitle,
+    us.pageTitle,
+  );
   assert.equal(
     sg.publication.productionUrl,
     "https://macbook-sg-refurbished.pages.dev/",
@@ -593,6 +604,26 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
   const estimated = await hydrateTaxInclusivePrices(products, {
     marketProfile: us,
   });
+  const sgCatalog = buildCatalog(
+    parseTiles(
+      [tile({ productCode: "SG-SCHEMA", marketId: "sg", price: 1500 })],
+      sg,
+    ),
+    sg,
+  );
+  const usCatalog = buildCatalog(estimated.products, us);
+  assert.deepEqual(
+    Object.keys(sgCatalog).sort(),
+    Object.keys(usCatalog).sort(),
+  );
+  assert.deepEqual(
+    Object.keys(sgCatalog.source).sort(),
+    Object.keys(usCatalog.source).sort(),
+  );
+  assert.equal(sgCatalog.marketId, "sg");
+  assert.equal(usCatalog.marketId, "us");
+  assert.equal(sgCatalog.source.tax.model, sg.tax.model);
+  assert.equal(usCatalog.source.tax.model, us.tax.model);
   assert.equal(estimated.products.length, products.length);
   assert.equal(estimated.estimatedCount, products.length);
   assert.equal(estimated.resolvedCount, 0);
@@ -622,7 +653,13 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
       "Calculated estimate",
     );
   }
-  assert.equal(validateCatalog(buildCatalog(estimated.products, us), us), true);
+  assert.equal(validateCatalog(usCatalog, us), true);
+  const tamperedTax = structuredClone(usCatalog);
+  tamperedTax.source.tax.model = "included-in-list-price";
+  assert.throws(
+    () => validateCatalog(tamperedTax, us),
+    /tax metadata does not match/,
+  );
 
   const checkoutExample = {
     ...products[0],
@@ -671,6 +708,71 @@ test("US namespace migration seeds identity currency and active hosting", () => 
   assert.equal(site.currency.sourceToDisplayRate, 1);
   assert.deepEqual(site.tax.referenceLocation, us.tax.referenceLocation);
   assert.equal(site.tax.filterByDeliveryOrPickup, false);
+});
+
+test("existing market site documents are normalized through one schema", async () => {
+  const fixtureRoot = await mkdtemp(join(tmpdir(), "macbook-site-schema-"));
+  const context = await loadMarketContext("sg", {
+    namespaceRoot: fixtureRoot,
+  });
+  const legacySite = {
+    schemaVersion: 1,
+    pageTitle: sg.pageTitle,
+    productionUrl: sg.publication.productionUrl,
+    checkedDateFallback: "2026-07-26",
+    currency: {
+      sgdToUsd: 0.75,
+      sourceCurrency: "SGD",
+      displayCurrency: "USD",
+      conversionType: "cbr-cross-rate",
+      sourceToDisplayRate: 0.75,
+    },
+    canonicalUrl: sg.publication.canonicalUrl,
+    plannedProductionUrl: null,
+    tax: { model: "included-in-list-price" },
+  };
+  try {
+    await Promise.all(
+      [context.paths.catalog, context.paths.featured].map(async (filePath) => {
+        await mkdir(dirname(filePath), { recursive: true });
+        await writeFile(filePath, "{}\n", "utf8");
+      }),
+    );
+    await mkdir(dirname(context.paths.site), { recursive: true });
+    await writeFile(
+      context.paths.site,
+      `${JSON.stringify(legacySite, null, 2)}\n`,
+      "utf8",
+    );
+    await assert.rejects(
+      initializeMarketNamespace({
+        marketId: "sg",
+        namespaceRoot: fixtureRoot,
+        check: true,
+      }),
+      /does not match its market profile/,
+    );
+    await initializeMarketNamespace({
+      marketId: "sg",
+      namespaceRoot: fixtureRoot,
+    });
+    const normalized = JSON.parse(
+      await readFile(context.paths.site, "utf8"),
+    );
+    assert.equal(normalized.siteName, sg.siteName);
+    assert.equal(normalized.pageTitle, sg.pageTitle);
+    assert.equal("checkedDateFallback" in normalized, false);
+    assert.deepEqual(normalized.currency, legacySite.currency);
+    await assert.doesNotReject(
+      initializeMarketNamespace({
+        marketId: "sg",
+        namespaceRoot: fixtureRoot,
+        check: true,
+      }),
+    );
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
 });
 
 test("US currency adapter is an identity conversion and performs no rate fetch", async () => {
