@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-07-26T17:50:40.839Z",
-  "hasChanges": true,
+  "checkedAt": "2026-07-26T18:00:49.968Z",
+  "hasChanges": false,
   "counts": {
     "added": 0,
-    "removed": 1,
+    "removed": 0,
     "refurbPriceChanges": 0,
     "newPriceChanges": 0,
     "configurationChanges": 0,
@@ -12,40 +12,7 @@
     "featuredChanges": 0
   },
   "added": [],
-  "removed": [
-    {
-      "productCode": "G1MH9LL/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Nano-texture",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "memory": "64GB",
-      "storage": "1TB",
-      "priceUsd": 3269,
-      "newPriceUsd": 3849,
-      "taxInclusivePriceUsd": 3616.25,
-      "taxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3616.25,
-        "currency": "USD",
-        "preTaxAmount": 3269,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 343.25,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      }
-    }
-  ],
+  "removed": [],
   "refurbPriceChanges": [],
   "newPriceChanges": [],
   "configurationChanges": [],
