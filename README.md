@@ -180,9 +180,11 @@ pipeline-generated JSON/HTML не блокируют preflight.
 Publication checkout при этом должен быть полностью чистым, находиться на
 ожидаемой ветке и после `fetch` побайтово указывать тем же `HEAD`, что
 `origin/<branch>`. Перед commit workflow повторно проверяет remote HEAD и
-отклоняет любой staged path вне publication manifest, поэтому локальный
-ahead-коммит или заранее подготовленный посторонний файл не может попасть в
-публичную ветку.
+разрешает изменения только точных source/artifact paths из publication
+manifest. Устаревшие directory roots можно только удалять вместе с их
+содержимым: staged additions или modifications под ними отклоняются. Поэтому
+локальный ahead-коммит или заранее подготовленный посторонний файл не может
+попасть в публичную ветку.
 Для провайдера без автоматического deploy `--prepare-only` оставляет canonical
 state неизменным и возвращает путь к проверенному временному артефакту и его
 SHA-256. Оба рынка используют checkout `work/gh-pages-site`, один public remote
@@ -210,13 +212,16 @@ MACBOOK_PUBLISH_DIR=/absolute/path/to/work/gh-pages-site \
 ```
 
 Fallback-команда использует тот же общий publication lock, требует полностью
-чистый checkout на ожидаемых remote/branch и точное `HEAD == origin/main`.
-Она фиксирует этот commit, читает enabled markets и их artifact routes из
-registry-driven publication manifest внутри `git archive`, а затем публикует
-именно распакованный immutable archive в каждый проект. Для каждого enabled
-market проверяется точный SHA-256 его страницы; dirty-checkout override не
-используется. Поэтому новый enabled market автоматически появляется на обоих
-fallback-доменах без отдельной правки deploy-скрипта.
+чистый checkout именно канонического repository/branch и точное
+`HEAD == origin/main`. Канонический remote/branch проверяется по доверенному
+source-controlled contract до создания `git archive` и до запуска кода из
+publication checkout. После этого команда фиксирует commit, читает enabled
+markets и их artifact routes из registry-driven publication manifest внутри
+архива, а затем публикует именно распакованный immutable archive в каждый
+проект. Для каждого enabled market проверяется точный SHA-256 его страницы;
+dirty-checkout override не используется. Поэтому новый enabled market
+автоматически появляется на обоих fallback-доменах без отдельной правки
+deploy-скрипта.
 
 Workflow выбирает артефакт и market URL только из выбранного профиля, поэтому
 данные SG и US не смешиваются, хотя публикуются на одном сайте.

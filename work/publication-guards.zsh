@@ -85,8 +85,21 @@ publication_cached_path_is_allowed() {
   local allowed_entry
 
   for allowed_entry in "$@"; do
-    if [[ "$relative_file" == "$allowed_entry" || \
-          "$relative_file" == "${allowed_entry}/"* ]]; then
+    if [[ "$relative_file" == "$allowed_entry" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+publication_cached_path_is_retired() {
+  local relative_file="$1"
+  shift
+  local retired_entry
+
+  for retired_entry in "$@"; do
+    if [[ "$relative_file" == "$retired_entry" || \
+          "$relative_file" == "${retired_entry}/"* ]]; then
       return 0
     fi
   done
@@ -96,11 +109,24 @@ publication_cached_path_is_allowed() {
 publication_require_cached_paths() {
   local checkout_dir="$1"
   shift
-  local -a allowed_entries=("$@")
+  local -a allowed_entries=()
+  local -a retired_entries=()
+  local entry_group="allowed"
+  local manifest_entry
   local unstaged_changes
   local untracked_files
+  local cached_change_code
   local relative_file
 
+  for manifest_entry in "$@"; do
+    if [[ "$manifest_entry" == "--retired" ]]; then
+      entry_group="retired"
+    elif [[ "$entry_group" == "allowed" ]]; then
+      allowed_entries+=("$manifest_entry")
+    else
+      retired_entries+=("$manifest_entry")
+    fi
+  done
   unstaged_changes="$(git -C "$checkout_dir" diff --name-status)"
   if [[ -n "$unstaged_changes" ]]; then
     print -u2 "Publication checkout has unstaged changes:"
@@ -119,14 +145,25 @@ publication_require_cached_paths() {
     print -u2 "Publication index contains whitespace errors."
     return 1
   fi
-  while IFS= read -r -d '' relative_file; do
-    if ! publication_cached_path_is_allowed \
+  while IFS= read -r -d '' cached_change_code; do
+    if ! IFS= read -r -d '' relative_file; then
+      print -u2 "Publication index contains malformed cached path data."
+      return 1
+    fi
+    if publication_cached_path_is_retired \
+        "$relative_file" "${retired_entries[@]}"; then
+      if [[ "$cached_change_code" != "D" ]]; then
+        print -u2 \
+          "Publication index may only delete retired paths: $relative_file"
+        return 1
+      fi
+    elif ! publication_cached_path_is_allowed \
         "$relative_file" "${allowed_entries[@]}"; then
       print -u2 \
         "Publication index contains a path outside the manifest: $relative_file"
       return 1
     fi
   done < <(
-    git -C "$checkout_dir" diff --cached --name-only -z
+    git -C "$checkout_dir" diff --cached --name-status -z --no-renames
   )
 }

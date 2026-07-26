@@ -72,7 +72,7 @@ async function runGit(cwd, args) {
   return execFileAsync("git", args, { cwd });
 }
 
-async function createPublicationGuardFixture() {
+async function createPublicationGuardFixture(extraFiles = {}) {
   const fixtureRoot = await mkdtemp(
     join(tmpdir(), "macbook-publication-guard-"),
   );
@@ -91,7 +91,23 @@ async function createPublicationGuardFixture() {
     "initial\n",
     "utf8",
   );
-  await runGit(checkoutDirectory, ["add", "allowed.txt"]);
+  await mkdir(join(checkoutDirectory, "app"), { recursive: true });
+  await writeFile(
+    join(checkoutDirectory, "app/legacy.js"),
+    "legacy\n",
+    "utf8",
+  );
+  for (const [relativeFile, contents] of Object.entries(extraFiles)) {
+    await mkdir(dirname(join(checkoutDirectory, relativeFile)), {
+      recursive: true,
+    });
+    await writeFile(
+      join(checkoutDirectory, relativeFile),
+      contents,
+      "utf8",
+    );
+  }
+  await runGit(checkoutDirectory, ["add", "-A"]);
   await runGit(checkoutDirectory, ["commit", "-m", "Initial"]);
   await runGit(checkoutDirectory, ["branch", "-M", "main"]);
   await runGit(checkoutDirectory, [
@@ -131,6 +147,7 @@ async function runCleanPublicationGuard({
 async function runCachedPublicationGuard(
   checkoutDirectory,
   allowedEntries,
+  retiredEntries = [],
 ) {
   return execFileAsync(
     "/bin/zsh",
@@ -141,6 +158,8 @@ async function runCachedPublicationGuard(
       publicationGuardScript,
       checkoutDirectory,
       ...allowedEntries,
+      "--retired",
+      ...retiredEntries,
     ],
     { cwd: projectRoot },
   );
@@ -985,6 +1004,17 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
   assert.match(fallbackWorkflow, /macbook-us-refurbished/);
   assert.match(fallbackWorkflow, /\.publication-update\.lock/);
   assert.match(fallbackWorkflow, /publication_require_clean_synced_checkout/);
+  assert.match(
+    fallbackWorkflow,
+    /expected_remote="git@github\.com:chezzdev\/macbook-refurbished\.git"/,
+  );
+  assert.match(fallbackWorkflow, /expected_branch="main"/);
+  assert.doesNotMatch(fallbackWorkflow, /bootstrap_remote/);
+  assert.doesNotMatch(fallbackWorkflow, /bootstrap_branch/);
+  assert.ok(
+    fallbackWorkflow.indexOf("publication_require_clean_synced_checkout") <
+      fallbackWorkflow.indexOf('git -C "$publish_dir" archive'),
+  );
   assert.match(fallbackWorkflow, /git -C "\$publish_dir" archive "\$publish_commit"/);
   assert.match(fallbackWorkflow, /--market-artifacts/);
   assert.match(fallbackWorkflow, /route_by_market/);
@@ -1096,12 +1126,126 @@ test("publication checkout guards fail closed on dirty, ahead, and over-staged s
         return true;
       },
     );
+
+    const retiredAdditionFixture = await createPublicationGuardFixture();
+    fixtures.push(retiredAdditionFixture.fixtureRoot);
+    await writeFile(
+      join(
+        retiredAdditionFixture.checkoutDirectory,
+        "app/unexpected-secret.json",
+      ),
+      '{"secret":"must fail"}\n',
+      "utf8",
+    );
+    await runGit(retiredAdditionFixture.checkoutDirectory, [
+      "add",
+      "app/unexpected-secret.json",
+    ]);
+    await assert.rejects(
+      () =>
+        runCachedPublicationGuard(
+          retiredAdditionFixture.checkoutDirectory,
+          ["allowed.txt", "app"],
+          ["app"],
+        ),
+      (error) => {
+        assert.match(
+          error.stderr,
+          /may only delete retired paths: app\/unexpected-secret\.json/,
+        );
+        return true;
+      },
+    );
+
+    const retiredModificationFixture = await createPublicationGuardFixture();
+    fixtures.push(retiredModificationFixture.fixtureRoot);
+    await writeFile(
+      join(retiredModificationFixture.checkoutDirectory, "app/legacy.js"),
+      "modified legacy\n",
+      "utf8",
+    );
+    await runGit(retiredModificationFixture.checkoutDirectory, [
+      "add",
+      "app/legacy.js",
+    ]);
+    await assert.rejects(
+      () =>
+        runCachedPublicationGuard(
+          retiredModificationFixture.checkoutDirectory,
+          ["allowed.txt", "app"],
+          ["app"],
+        ),
+      (error) => {
+        assert.match(
+          error.stderr,
+          /may only delete retired paths: app\/legacy\.js/,
+        );
+        return true;
+      },
+    );
+
+    const retiredDeletionFixture = await createPublicationGuardFixture();
+    fixtures.push(retiredDeletionFixture.fixtureRoot);
+    await runGit(retiredDeletionFixture.checkoutDirectory, [
+      "rm",
+      "app/legacy.js",
+    ]);
+    await assert.doesNotReject(() =>
+      runCachedPublicationGuard(
+        retiredDeletionFixture.checkoutDirectory,
+        ["allowed.txt", "app"],
+        ["app"],
+      ),
+    );
   } finally {
     await Promise.all(
       fixtures.map((fixtureRoot) =>
         rm(fixtureRoot, { recursive: true, force: true }),
       ),
     );
+  }
+});
+
+test("fallback rejects a clean foreign repository before executing its manifest", async () => {
+  const markerFile = join(
+    tmpdir(),
+    `macbook-foreign-manifest-${process.pid}-${Date.now()}`,
+  );
+  const maliciousManifest = [
+    'import { writeFileSync } from "node:fs";',
+    `writeFileSync(${JSON.stringify(markerFile)}, "executed\\n");`,
+    'process.stdout.write("main\\n");',
+    "",
+  ].join("\n");
+  const fixture = await createPublicationGuardFixture({
+    "scripts/publication-manifest.mjs": maliciousManifest,
+  });
+  try {
+    await assert.rejects(
+      () =>
+        execFileAsync(
+          "/bin/zsh",
+          [join(projectRoot, "work/deploy-unified-cloudflare-fallback.zsh")],
+          {
+            cwd: projectRoot,
+            env: {
+              ...process.env,
+              MACBOOK_PUBLISH_DIR: fixture.checkoutDirectory,
+            },
+          },
+        ),
+      (error) => {
+        assert.match(error.stderr, /Unexpected publication remote/);
+        return true;
+      },
+    );
+    await assert.rejects(
+      () => readFile(markerFile, "utf8"),
+      (error) => error?.code === "ENOENT",
+    );
+  } finally {
+    await rm(markerFile, { force: true });
+    await rm(fixture.fixtureRoot, { recursive: true, force: true });
   }
 });
 

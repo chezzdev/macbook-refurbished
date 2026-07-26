@@ -13,6 +13,8 @@ publication_lock_owner="cloudflare-fallback-$$"
 publication_lock_owned=false
 deployment_dir=""
 runtime_dir=""
+expected_remote="git@github.com:chezzdev/macbook-refurbished.git"
+expected_branch="main"
 
 source "${script_dir}/publication-guards.zsh"
 
@@ -48,10 +50,6 @@ if ! git -C "$publish_dir" rev-parse \
   print -u2 "Unified publication checkout is missing: ${publish_dir}"
   exit 1
 fi
-if [[ ! -x "${workspace_dir}/node_modules/.bin/wrangler" ]]; then
-  print -u2 "Pinned Wrangler is missing; run npm ci in ${workspace_dir}"
-  exit 1
-fi
 if ! mkdir "$publication_lock_dir" 2>/dev/null; then
   print -u2 \
     "Another publication update is already running: $publication_lock_dir"
@@ -60,14 +58,12 @@ fi
 print -r -- "$publication_lock_owner" > "$publication_lock_owner_file"
 publication_lock_owned=true
 
-bootstrap_remote="$(git -C "$publish_dir" remote get-url origin)"
-bootstrap_branch="$(git -C "$publish_dir" branch --show-current)"
-if [[ -z "$bootstrap_branch" ]]; then
-  print -u2 "Unified publication checkout must not use detached HEAD."
+publication_require_clean_synced_checkout \
+  "$publish_dir" "$expected_remote" "$expected_branch" || exit 1
+if [[ ! -x "${workspace_dir}/node_modules/.bin/wrangler" ]]; then
+  print -u2 "Pinned Wrangler is missing; run npm ci in ${workspace_dir}"
   exit 1
 fi
-publication_require_clean_synced_checkout \
-  "$publish_dir" "$bootstrap_remote" "$bootstrap_branch"
 publish_commit="$(git -C "$publish_dir" rev-parse HEAD)"
 
 deployment_dir="$(
@@ -86,10 +82,15 @@ if [[ ! -f "$manifest_script" ]]; then
   print -u2 "Pinned publication manifest is missing."
   exit 1
 fi
-expected_remote="$(node "$manifest_script" --repository)"
-expected_branch="$(node "$manifest_script" --branch)"
+pinned_remote="$(node "$manifest_script" --repository)"
+pinned_branch="$(node "$manifest_script" --branch)"
+if [[ "$pinned_remote" != "$expected_remote" || \
+      "$pinned_branch" != "$expected_branch" ]]; then
+  print -u2 "Pinned publication manifest violates the repository contract."
+  exit 1
+fi
 publication_require_clean_synced_checkout \
-  "$publish_dir" "$expected_remote" "$expected_branch"
+  "$publish_dir" "$expected_remote" "$expected_branch" || exit 1
 if [[ "$(git -C "$publish_dir" rev-parse HEAD)" != "$publish_commit" ]]; then
   print -u2 "Publication HEAD changed after the fallback snapshot was pinned."
   exit 1

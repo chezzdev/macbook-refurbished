@@ -389,7 +389,10 @@ for relative_file in "${retired_publication_paths[@]}"; do
 done
 
 publication_require_cached_paths \
-  "$publish_dir" "${publish_owned_paths[@]}"
+  "$publish_dir" \
+  "${publish_owned_paths[@]}" \
+  --retired \
+  "${retired_publication_paths[@]}"
 publication_fetch_and_require_remote_head \
   "$publish_dir" "$publication_branch"
 if ! git -C "$publish_dir" diff --cached --quiet; then
