@@ -190,8 +190,6 @@ export function validateMarketProfile(profile) {
       profile.publication.artifactDirectory !== "markets/us" ||
       profile.publication.projectSlug !== "macbook-us-refurbished" ||
       profile.publication.provider !== "cloudflare-pages" ||
-      profile.publication.productionUrl !==
-        "https://macbook-us-refurbished.pages.dev/" ||
       profile.publication.canonicalUrl !==
         "https://macbook-us-refurbished.pages.dev/"
     ) {
@@ -215,8 +213,8 @@ export function validateMarketProfile(profile) {
       }
     } else if (
       profile.publication.status !== "active" ||
-      typeof profile.publication.productionUrl !== "string" ||
-      profile.publication.productionUrl.length === 0 ||
+      profile.publication.productionUrl !==
+        "https://macbook-us-refurbished.pages.dev/" ||
       profile.publication.canonicalUrl !== profile.publication.productionUrl
     ) {
       throw new Error(
