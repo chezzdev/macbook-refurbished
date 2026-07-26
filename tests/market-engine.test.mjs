@@ -286,6 +286,22 @@ test("third-market copy is driven by country and display currency", () => {
   assert.match(convertedCopy.currencyMethodBody, /кросс-курсу/);
 });
 
+test("conversion type is consistent with source and display currencies", () => {
+  const mismatchedIdentity = structuredClone(us);
+  mismatchedIdentity.currency.source = "CAD";
+  assert.throws(
+    () => validateMarketProfile(mismatchedIdentity),
+    /identity currency conversion requires matching source\/display currencies/,
+  );
+
+  const sameCurrencyCrossRate = structuredClone(sg);
+  sameCurrencyCrossRate.currency.display = "SGD";
+  assert.throws(
+    () => validateMarketProfile(sameCurrencyCrossRate),
+    /cbr-cross-rate conversion requires different source\/display currencies/,
+  );
+});
+
 test("identity tax-included market renders no conversion methodology", async () => {
   const fixtureRoot = await mkdtemp(join(tmpdir(), "macbook-jp-build-"));
   const copiedProject = join(fixtureRoot, "project");
@@ -491,6 +507,8 @@ test("identity tax-included market renders no conversion methodology", async () 
       /Конвертация сделана по официальному кросс-курсу/,
     );
     assert.doesNotMatch(html, /JPY — ориентир/);
+    assert.match(html, /Цены Apple и все сравнения показаны в JPY\./);
+    assert.doesNotMatch(html, /исходные JPY — рядом/);
     assert.match(html, /￥200,000/);
     assert.doesNotMatch(html, /￥200,000\.00/);
   } finally {

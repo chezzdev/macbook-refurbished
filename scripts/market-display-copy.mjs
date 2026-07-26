@@ -9,6 +9,7 @@ export function buildMarketDisplayCopy(
   },
 ) {
   const { source, display } = profile.currency;
+  const usesIdentityConversion = source === display;
   const heroCurrencyCopy = hasVerifiedTaxEstimate
     ? "Total = цена + налог + сбор"
     : source === display
@@ -22,8 +23,9 @@ export function buildMarketDisplayCopy(
       ? `Цены Apple указаны в ${source}. Каталог ` +
         `${profile.storefront.countryName} остаётся общенациональным; ` +
         "налоговый ориентир привязан к одной точке."
-      : `Цены в ${display} крупно, исходные ${source} — рядом.`;
-  const usesIdentityConversion = source === display;
+      : usesIdentityConversion
+        ? `Цены Apple и все сравнения показаны в ${display}.`
+        : `Цены в ${display} крупно, исходные ${source} — рядом.`;
   return {
     currencyMethodBody: usesIdentityConversion
       ? `Цены Apple уже указаны в ${display}; пересчёт по кросс-курсу не применяется.`

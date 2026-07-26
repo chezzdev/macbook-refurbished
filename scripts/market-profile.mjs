@@ -204,11 +204,21 @@ export function validateMarketProfile(profile) {
   }
   if (
     profile.currency.conversion.type === "identity" &&
-    profile.currency.conversion.siteField !== null
+    (
+      profile.currency.source !== profile.currency.display ||
+      profile.currency.conversion.siteField !== null
+    )
   ) {
-    throw new Error("identity currency conversion.siteField must be null");
+    throw new Error(
+      "identity currency conversion requires matching source/display currencies and a null siteField",
+    );
   }
   if (profile.currency.conversion.type === "cbr-cross-rate") {
+    if (profile.currency.source === profile.currency.display) {
+      throw new Error(
+        "cbr-cross-rate conversion requires different source/display currencies",
+      );
+    }
     requireString(
       profile.currency.conversion.siteField,
       "currency.conversion.siteField",

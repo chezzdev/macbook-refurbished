@@ -140,7 +140,9 @@ SHA-256. Cloudflare CLI зафиксирован в `package-lock.json` и за�
 Workflow выбирает артефакт и Cloudflare Pages project только из выбранного
 market profile, поэтому данные и deployment targets SG и US не смешиваются.
 Cross-rate adapter также берёт source/display валюты и имя поля результата из
-профиля; новый рынок не требует валютного кода в общем скрипте.
+профиля; `identity` разрешён только при одинаковых source/display валютах, а
+cross-rate — только при разных. Новый рынок не требует валютного кода в общем
+скрипте.
 Registry fail-closed отклоняет совпадающие data/output namespace paths и
 ranking-policy paths между рынками или внутри одного профиля. Проверяются
 нормализованные фактические цели, включая локальный `index.html`; outputs не
