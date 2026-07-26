@@ -149,6 +149,216 @@ function rankingCatalog(profile) {
   return { schemaVersion: 1, products };
 }
 
+function futureCaProfile() {
+  const profile = structuredClone(us);
+  profile.id = "ca";
+  profile.siteName = "MacBook CA Refurbished";
+  profile.pageTitle = "MacBook CA Refurbished — comparison";
+  profile.storefront = {
+    countryCode: "CA",
+    countryName: "Canada",
+    baseUrl: "https://www.apple.com/ca",
+    refurbishedCatalogUrl:
+      "https://www.apple.com/ca/shop/refurbished/mac",
+    newCatalogBaseUrl: "https://www.apple.com/ca/shop/buy-mac",
+  };
+  profile.currency = {
+    source: "CAD",
+    display: "EUR",
+    sourceFractionDigits: 2,
+    displayFractionDigits: 2,
+    displayLocale: "de-DE",
+    secondarySymbol: "C$",
+    secondaryLocale: "en-CA",
+    priceFields: {
+      refurbished: "priceCad",
+      new: "newPriceCad",
+      taxInclusive: "taxInclusivePriceCad",
+      newTaxInclusive: "newTaxInclusivePriceCad",
+    },
+    conversion: {
+      type: "cbr-cross-rate",
+      siteField: "cadToEur",
+    },
+  };
+  profile.tax.referenceLocation = {
+    id: "apple-toronto",
+    name: "Apple Toronto",
+    street: "100 Example Street",
+    city: "Toronto",
+    region: "ON",
+    postalCode: "M5V 1A1",
+    country: "CA",
+  };
+  profile.tax.estimate = {
+    ...profile.tax.estimate,
+    currency: "CAD",
+    salesTaxRate: 0.13,
+    recyclingFeeByScreenInches: {
+      "13": 5,
+      "14": 5,
+      "15": 6,
+      "16": 6,
+    },
+  };
+  profile.tax.acquisition.verification = {
+    productCode: "CA-VERIFY",
+    productUrl:
+      "https://www.apple.com/ca/shop/product/ca-verify/example",
+    currency: "CAD",
+    screenInches: 13,
+    preTaxAmount: 1000,
+    salesTaxAmount: 130,
+    recyclingFeeAmount: 5,
+    estimatedTotalAmount: 1135,
+  };
+  profile.ranking.policyPath = "config/ranking-policy.ca.json";
+  profile.namespace = {
+    catalog: "data/markets/ca/catalog.json",
+    featured: "data/markets/ca/featured.json",
+    site: "data/markets/ca/site.json",
+    updateStatus: "data/markets/ca/update-status.json",
+    updateDelta: "data/markets/ca/update-delta.json",
+    changelog: "data/markets/ca/changelog.json",
+    artifactDirectory: "outputs/markets/ca",
+  };
+  profile.publication = {
+    ...profile.publication,
+    projectSlug: "macbook-ca-refurbished",
+    artifactDirectory: "markets/ca",
+    productionUrl: "https://macbook-ca-refurbished.pages.dev/",
+    canonicalUrl: "https://macbook-ca-refurbished.pages.dev/",
+  };
+  return profile;
+}
+
+async function buildSyntheticMarketHtml({
+  profile,
+  products,
+  site,
+}) {
+  validateMarketProfile(profile);
+  const fixtureRoot = await mkdtemp(
+    join(tmpdir(), `macbook-${profile.id}-build-`),
+  );
+  const copiedProject = join(fixtureRoot, "project");
+  const namespaceRoot = join(fixtureRoot, "state");
+  try {
+    await mkdir(join(copiedProject, "work"), { recursive: true });
+    await Promise.all([
+      cp(join(projectRoot, "scripts"), join(copiedProject, "scripts"), {
+        recursive: true,
+      }),
+      cp(
+        join(projectRoot, "config/markets"),
+        join(copiedProject, "config/markets"),
+        { recursive: true },
+      ),
+      cp(
+        join(projectRoot, "work/build-expanded-standalone.mjs"),
+        join(copiedProject, "work/build-expanded-standalone.mjs"),
+      ),
+    ]);
+
+    const registryPath = join(
+      copiedProject,
+      "config/markets/registry.json",
+    );
+    const registry = JSON.parse(await readFile(registryPath, "utf8"));
+    registry.enabledMarkets.push(profile.id);
+    await Promise.all([
+      writeFile(
+        registryPath,
+        `${JSON.stringify(registry, null, 2)}\n`,
+        "utf8",
+      ),
+      writeFile(
+        join(copiedProject, `config/markets/${profile.id}.json`),
+        `${JSON.stringify(profile, null, 2)}\n`,
+        "utf8",
+      ),
+    ]);
+
+    const checkedAt = "2026-07-26T12:00:00.000Z";
+    const documents = new Map([
+      [profile.namespace.catalog, buildCatalog(products, profile)],
+      [profile.namespace.featured, {
+        schemaVersion: 1,
+        items: products.map((product, index) => ({
+          rank: index + 1,
+          configurationKey: product.configurationKey,
+          productCode: product.productCode,
+          score: 90000 - index,
+          label: `Choice ${index + 1}`,
+          headline: product.title,
+          reason: "Synthetic market fixture",
+        })),
+      }],
+      [profile.namespace.site, site],
+      [profile.namespace.updateStatus, {
+        schemaVersion: 1,
+        status: "success",
+        checkedAt,
+        counts: {
+          products: products.length,
+          air: products.filter((product) => product.family === "Air").length,
+          pro: products.filter((product) => product.family === "Pro").length,
+        },
+      }],
+      [profile.namespace.changelog, {
+        schemaVersion: 1,
+        latestRun: {
+          schemaVersion: 1,
+          checkedAt,
+          hasChanges: false,
+          counts: {
+            added: 0,
+            removed: 0,
+            refurbPriceChanges: 0,
+            newPriceChanges: 0,
+            configurationChanges: 0,
+            featuredChanges: 0,
+          },
+          added: [],
+          removed: [],
+          refurbPriceChanges: [],
+          newPriceChanges: [],
+          configurationChanges: [],
+          featured: null,
+        },
+        entries: [],
+      }],
+    ]);
+    for (const [relativePath, document] of documents) {
+      const filePath = join(namespaceRoot, relativePath);
+      await mkdir(dirname(filePath), { recursive: true });
+      await writeFile(
+        filePath,
+        `${JSON.stringify(document, null, 2)}\n`,
+        "utf8",
+      );
+    }
+
+    await execFileAsync(
+      process.execPath,
+      ["work/build-expanded-standalone.mjs", "--market", profile.id],
+      {
+        cwd: copiedProject,
+        env: {
+          ...process.env,
+          MACBOOK_NAMESPACE_ROOT: namespaceRoot,
+        },
+      },
+    );
+    return await readFile(
+      join(namespaceRoot, profile.namespace.artifactDirectory, "index.html"),
+      "utf8",
+    );
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
+}
+
 test("Singapore and US are equal first-class profiles with isolated state", () => {
   const commonShape = (profile) => ({
     topLevel: Object.keys(profile).sort(),
@@ -279,7 +489,7 @@ test("third-market copy is driven by country and display currency", () => {
     rateDateFormatted: "26.07.2026",
     rateDateLong: "26 июля 2026 года",
   });
-  assert.match(convertedCopy.heroCurrencyCopy, /до 1 EUR$/);
+  assert.match(convertedCopy.heroCurrencyCopy, /до 0,01 EUR$/);
   assert.match(convertedCopy.heroMarketCopy, /Цены в EUR/);
   assert.doesNotMatch(convertedCopy.heroCurrencyCopy, /\$1|USD/);
   assert.equal(convertedCopy.currencyMethodHeading, "EUR — ориентир");
@@ -965,85 +1175,7 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
 });
 
 test("fixed-location tax policy is currency-explicit for a future market", () => {
-  const futureProfile = structuredClone(us);
-  futureProfile.id = "ca";
-  futureProfile.siteName = "MacBook CA Refurbished";
-  futureProfile.pageTitle = "MacBook CA Refurbished — comparison";
-  futureProfile.storefront = {
-    countryCode: "CA",
-    countryName: "Canada",
-    baseUrl: "https://www.apple.com/ca",
-    refurbishedCatalogUrl:
-      "https://www.apple.com/ca/shop/refurbished/mac",
-    newCatalogBaseUrl: "https://www.apple.com/ca/shop/buy-mac",
-  };
-  futureProfile.currency = {
-    source: "CAD",
-    display: "EUR",
-    sourceFractionDigits: 2,
-    displayFractionDigits: 2,
-    displayLocale: "de-DE",
-    secondarySymbol: "C$",
-    secondaryLocale: "en-CA",
-    priceFields: {
-      refurbished: "priceCad",
-      new: "newPriceCad",
-      taxInclusive: "taxInclusivePriceCad",
-      newTaxInclusive: "newTaxInclusivePriceCad",
-    },
-    conversion: {
-      type: "cbr-cross-rate",
-      siteField: "cadToEur",
-    },
-  };
-  futureProfile.tax.referenceLocation = {
-    id: "apple-toronto",
-    name: "Apple Toronto",
-    street: "100 Example Street",
-    city: "Toronto",
-    region: "ON",
-    postalCode: "M5V 1A1",
-    country: "CA",
-  };
-  futureProfile.tax.estimate = {
-    ...futureProfile.tax.estimate,
-    currency: "CAD",
-    salesTaxRate: 0.13,
-    recyclingFeeByScreenInches: {
-      "13": 5,
-      "14": 5,
-      "15": 6,
-      "16": 6,
-    },
-  };
-  futureProfile.tax.acquisition.verification = {
-    productCode: "CA-VERIFY",
-    productUrl:
-      "https://www.apple.com/ca/shop/product/ca-verify/example",
-    currency: "CAD",
-    screenInches: 13,
-    preTaxAmount: 1000,
-    salesTaxAmount: 130,
-    recyclingFeeAmount: 5,
-    estimatedTotalAmount: 1135,
-  };
-  futureProfile.ranking.policyPath = "config/ranking-policy.ca.json";
-  futureProfile.namespace = {
-    catalog: "data/markets/ca/catalog.json",
-    featured: "data/markets/ca/featured.json",
-    site: "data/markets/ca/site.json",
-    updateStatus: "data/markets/ca/update-status.json",
-    updateDelta: "data/markets/ca/update-delta.json",
-    changelog: "data/markets/ca/changelog.json",
-    artifactDirectory: "outputs/markets/ca",
-  };
-  futureProfile.publication = {
-    ...futureProfile.publication,
-    projectSlug: "macbook-ca-refurbished",
-    artifactDirectory: "markets/ca",
-    productionUrl: "https://macbook-ca-refurbished.pages.dev/",
-    canonicalUrl: "https://macbook-ca-refurbished.pages.dev/",
-  };
+  const futureProfile = futureCaProfile();
 
   assert.doesNotThrow(() => validateMarketProfile(futureProfile));
   const estimate = calculateFixedLocationTaxEstimate(
@@ -1086,6 +1218,55 @@ test("fixed-location tax policy is currency-explicit for a future market", () =>
     () => validateMarketProfile(invalidDisplayPrecision),
     /displayFractionDigits/,
   );
+});
+
+test("fixed-tax cross-rate market renders both pricing methods", async () => {
+  const profile = futureCaProfile();
+  const parsedProducts = parseTiles(
+    [
+      tile({ productCode: "CA-TAX-1", marketId: "ca", price: 1000 }),
+      tile({
+        productCode: "CA-TAX-2",
+        marketId: "ca",
+        price: 1100,
+        storage: "512GB",
+      }),
+      tile({
+        productCode: "CA-TAX-3",
+        marketId: "ca",
+        price: 1200,
+        screenInches: 15,
+      }),
+    ],
+    profile,
+  );
+  const { products } = await hydrateTaxInclusivePrices(parsedProducts, {
+    marketProfile: profile,
+  });
+  const site = buildInitialSiteDocument(profile);
+  site.currency = {
+    cadToEur: 0.65,
+    sourceCurrency: "CAD",
+    displayCurrency: "EUR",
+    conversionType: "cbr-cross-rate",
+    sourceToDisplayRate: 0.65,
+    rateDate: "2026-07-25",
+    sourceUrl: "https://www.cbr.ru/currency_base/daily/",
+  };
+
+  const html = await buildSyntheticMarketHtml({
+    profile,
+    products,
+    site,
+  });
+  assert.match(
+    html,
+    /EUR — ориентир: Конвертация сделана по официальному кросс-курсу на 25 июля 2026 года\./,
+  );
+  assert.match(html, /737,75/);
+  assert.match(html, /class="source-tax-formula"/);
+  assert.match(html, /sourceAmount\(pricing\.preTaxAmount\)/);
+  assert.match(html, /C\$/);
 });
 
 test("US namespace migration seeds identity currency and active hosting", () => {

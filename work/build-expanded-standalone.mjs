@@ -409,24 +409,45 @@ const {
   rateDateFormatted,
   rateDateLong: formatRussianLongDate(rateDate),
 });
+const conversionMethodDisclosure =
+  sourceCurrency === displayCurrency
+    ? ""
+    : ` ${currencyMethodHeading}: ${currencyMethodBody}`;
 const taxMethodCopy = hasVerifiedTaxEstimate
-  ? `<article><span>03</span><h3>Расчётный total</h3><p>Цена + налог ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}% + сбор. Ориентир: ${escapeHtml(taxReferenceLabel)}.</p></article>`
+  ? `<article><span>03</span><h3>Расчётный total</h3><p>Цена + налог ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}% + сбор. Ориентир: ${escapeHtml(taxReferenceLabel)}.${escapeHtml(conversionMethodDisclosure)}</p></article>`
   : hasReferenceLocationTax
-    ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.</p></article>`
-  : `<article><span>03</span><h3>${escapeHtml(currencyMethodHeading)}</h3><p>${escapeHtml(currencyMethodBody)}</p></article>`;
+    ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.${escapeHtml(conversionMethodDisclosure)}</p></article>`
+    : `<article><span>03</span><h3>${escapeHtml(currencyMethodHeading)}</h3><p>${escapeHtml(currencyMethodBody)}</p></article>`;
 const clientPriceFormatterSource =
   sourceCurrency !== displayCurrency
     ? `const sourcePrice=new Intl.NumberFormat(${JSON.stringify(profile.currency.secondaryLocale)},{minimumFractionDigits:${profile.currency.sourceFractionDigits},maximumFractionDigits:${profile.currency.sourceFractionDigits}});
-    const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong> <span class="source-secondary">(${escapeHtml(profile.currency.secondarySymbol || sourceCurrency)}'+sourcePrice.format(amount)+')</span>';`
+    const sourceAmount=amount=>${JSON.stringify(profile.currency.secondarySymbol || sourceCurrency)}+sourcePrice.format(amount);
+    const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong> <span class="source-secondary">('+sourceAmount(amount)+')</span>';`
     : `const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong>';`;
+const sourceTaxFormulaSource =
+  sourceCurrency !== displayCurrency
+    ? `const sourcePriceFormula=pricing=>'<small class="source-tax-formula">('+
+      sourceAmount(pricing.preTaxAmount)+' + '+
+      sourceAmount(pricing.salesTaxAmount)+' + '+
+      sourceAmount(pricing.recyclingFeeAmount)+')</small>';
+    `
+    : "";
+const sourceTaxFormulaCall =
+  sourceCurrency !== displayCurrency
+    ? "+sourcePriceFormula(p.taxInclusivePricing)"
+    : "";
+const newSourceTaxFormulaCall =
+  sourceCurrency !== displayCurrency
+    ? "+sourcePriceFormula(p.newTaxInclusivePricing)"
+    : "";
 const clientTaxFormatterSource = hasVerifiedTaxEstimate
-  ? `const priceFormula=pricing=>'<small class="price-formula">'+
+  ? `${sourceTaxFormulaSource}const priceFormula=pricing=>'<small class="price-formula">'+
       taxCurrency.format(pricing.preTaxAmount*rate)+' + '+
       taxCurrency.format(pricing.salesTaxAmount*rate)+' + '+
       taxCurrency.format(pricing.recyclingFeeAmount*rate)+'</small>';
-    const refurbishedPrice=p=>'<strong class="primary-currency">'+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.taxInclusivePricing);
+    const refurbishedPrice=p=>'<strong class="primary-currency">'+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.taxInclusivePricing)${sourceTaxFormulaCall};
     const exactNewPrice=p=>p[newTaxInclusivePriceField]?
-      '<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple"><strong class="primary-currency">'+taxCurrency.format(p[newTaxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.newTaxInclusivePricing)+'</a>':
+      '<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple"><strong class="primary-currency">'+taxCurrency.format(p[newTaxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.newTaxInclusivePricing)${newSourceTaxFormulaCall}+'</a>':
       '<span class="na">—</span>';
     const comparableRefurbishedPrice=p=>p[taxInclusivePriceField];
     const comparableNewPrice=p=>p[newTaxInclusivePriceField];
@@ -537,7 +558,7 @@ const html = `<!doctype html>
     .chip-name{display:inline-block;background:#e8e5dc;padding:7px 9px;font-weight:850}.chip-m5{background:var(--blue);color:white}
     .dot{display:inline-block;width:12px;height:12px;border:1px solid #777;border-radius:50%;margin-right:7px;vertical-align:-1px}
     .silver{background:#e7e8e8}.midnight{background:#252a32}.space-grey{background:#838487}.space-black{background:#222}.starlight{background:#f1e5c9}.sky-blue{background:#b9d5e7}
-    .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-unresolved,.price-formula{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.pick-price small{flex-basis:100%;font-size:12px;color:var(--muted)}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+    .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-unresolved,.price-formula,.source-tax-formula{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.pick-price small{flex-basis:100%;font-size:12px;color:var(--muted)}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
     .price-link{color:inherit;text-decoration-color:#aaa;text-underline-offset:3px}
     .saving{font-weight:800;color:#187235}.overpay{font-weight:800;color:#c12b22}.na{color:var(--muted)}
     .open{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--ink);text-decoration:none}.open:hover{background:var(--blue);color:white}

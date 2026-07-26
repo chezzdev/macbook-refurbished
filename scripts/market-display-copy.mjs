@@ -10,12 +10,20 @@ export function buildMarketDisplayCopy(
 ) {
   const { source, display } = profile.currency;
   const usesIdentityConversion = source === display;
+  const roundingQuantum = new Intl.NumberFormat(
+    profile.currency.displayLocale,
+    {
+      useGrouping: false,
+      minimumFractionDigits: profile.currency.displayFractionDigits,
+      maximumFractionDigits: profile.currency.displayFractionDigits,
+    },
+  ).format(10 ** -profile.currency.displayFractionDigits);
   const heroCurrencyCopy = hasVerifiedTaxEstimate
     ? "Total = цена + налог + сбор"
     : source === display
       ? `Цены Apple уже указаны в ${display}; конвертация не применяется`
       : `Пересчёт по официальному кросс-курсу на ${rateDateFormatted}, ` +
-        `округление до 1 ${display}`;
+        `округление до ${roundingQuantum} ${display}`;
   const heroMarketCopy = hasVerifiedTaxEstimate
     ? `В ${profile.storefront.countryCode} крупно показан расчётный total ` +
       `для ${taxLocationName}; каталог остаётся общенациональным.`
