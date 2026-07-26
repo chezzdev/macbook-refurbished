@@ -112,7 +112,10 @@ private-repository sync, Cloudflare Pages deployment и live hash verification.
 publication lock, потому что все рынки синхронизируются через общий checkout.
 Перед live publication workflow требует, чтобы все общие scripts, tests,
 package/config files, market profiles и ranking policies совпадали с outer
-Git HEAD. Незакоммиченные pipeline-generated JSON/HTML не блокируют preflight.
+Git HEAD, затем выполняет fetch/tests/build и source sync из временного
+`git archive` этого зафиксированного HEAD. Изменения workspace во время
+длительного refresh не могут попасть в публикацию. Незакоммиченные
+pipeline-generated JSON/HTML не блокируют preflight.
 Для провайдера без автоматического deploy `--prepare-only` оставляет canonical
 state неизменным и возвращает путь к проверенному временному артефакту и его
 SHA-256. Cloudflare CLI зафиксирован в `package-lock.json` и запускается только
@@ -134,7 +137,10 @@ market profile, поэтому данные и deployment targets SG и US не 
 Cross-rate adapter также берёт source/display валюты и имя поля результата из
 профиля; новый рынок не требует валютного кода в общем скрипте.
 Registry fail-closed отклоняет совпадающие data/output namespace paths и
-ranking-policy paths между рынками или внутри одного профиля.
+ranking-policy paths между рынками или внутри одного профиля. Проверяются
+нормализованные фактические цели, включая локальный `index.html`; outputs не
+могут пересекать immutable source directories. Staging сохраняет полные
+profile paths и не сплющивает одинаковые basename.
 
 ## Ежедневное обновление всех рынков
 

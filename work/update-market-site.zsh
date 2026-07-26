@@ -26,6 +26,15 @@ while (( $# > 0 )); do
   esac
 done
 
+source_head=""
+if [[ "$prepare_only" != "true" ]]; then
+  if ! git -C "$workspace_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    print -u2 "Live publication requires a reviewed outer Git worktree."
+    exit 1
+  fi
+  source_head="$(git -C "$workspace_dir" rev-parse HEAD)"
+fi
+
 workflow_config="$(
   node "${workspace_dir}/scripts/print-market-workflow-config.mjs" "$market_id"
 )"
@@ -60,6 +69,8 @@ deployment_dir=""
 metadata_dir=""
 snapshot_dir=""
 staging_dir=""
+source_snapshot_dir=""
+execution_root="$workspace_dir"
 canonical_promotion_started=false
 workflow_succeeded=false
 allowed_ssh_remote="$repository_url"
@@ -89,6 +100,7 @@ canonical_output_relatives=(
 )
 typeset -A staged_output_by_relative
 typeset -A snapshot_by_relative
+typeset -A immutable_source_set
 
 cleanup() {
   exit_code=$?
@@ -122,6 +134,10 @@ cleanup() {
   if [[ -n "$staging_dir" && -d "$staging_dir" && \
         "$staging_dir" == "${temporary_root%/}/macbook-market-stage."* ]]; then
     rm -rf -- "$staging_dir"
+  fi
+  if [[ -n "$source_snapshot_dir" && -d "$source_snapshot_dir" && \
+        "$source_snapshot_dir" == "${temporary_root%/}/macbook-source-snapshot."* ]]; then
+    rm -rf -- "$source_snapshot_dir"
   fi
   if [[ "$publication_lock_owned" == "true" ]]; then
     current_lock_owner=""
@@ -158,12 +174,8 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 if [[ "$prepare_only" != "true" ]]; then
-  if ! git -C "$workspace_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    print -u2 "Live publication requires a reviewed outer Git worktree."
-    exit 1
-  fi
   outer_source_changes="$(
-    git -C "$workspace_dir" status --porcelain --untracked-files=all -- \
+    git -C "$workspace_dir" diff --name-status "$source_head" -- \
       "${immutable_source_paths[@]}"
   )"
   if [[ -n "$outer_source_changes" ]]; then
@@ -171,6 +183,16 @@ if [[ "$prepare_only" != "true" ]]; then
     print -u2 "$outer_source_changes"
     exit 1
   fi
+  source_snapshot_dir="$(
+    mktemp -d "${temporary_root%/}/macbook-source-snapshot.XXXXXX"
+  )"
+  git -C "$workspace_dir" archive "$source_head" -- \
+    "${immutable_source_paths[@]}" |
+    tar -x -C "$source_snapshot_dir"
+  execution_root="$source_snapshot_dir"
+  for relative_file in "${immutable_source_paths[@]}"; do
+    immutable_source_set[$relative_file]=true
+  done
 fi
 
 if [[ "$prepare_only" != "true" ]]; then
@@ -189,7 +211,7 @@ if [[ "$prepare_only" != "true" ]]; then
   fi
 fi
 
-cd "$workspace_dir"
+cd "$execution_root"
 snapshot_dir="$(mktemp -d "${temporary_root%/}/macbook-canonical-before.XXXXXX")"
 staging_dir="$(mktemp -d "${temporary_root%/}/macbook-market-stage.XXXXXX")"
 snapshot_number=0
@@ -213,13 +235,14 @@ for relative_file in \
   "$update_delta_relative" \
   "$changelog_relative"; do
   canonical_file="${workspace_dir}/${relative_file}"
-  staged_file="${staging_dir}/${relative_file:t}"
+  staged_file="${staging_dir}/${relative_file}"
   staged_output_by_relative[$relative_file]="$staged_file"
+  mkdir -p "${staged_file:h}"
   if [[ -f "$canonical_file" ]]; then
     cp "$canonical_file" "$staged_file"
   fi
 done
-staged_output_by_relative[${artifact_directory_relative}/index.html]="${staging_dir}/index.html"
+staged_output_by_relative[${artifact_directory_relative}/index.html]="${staging_dir}/${artifact_directory_relative}/index.html"
 
 promote_staged_outputs() {
   for relative_file in "${canonical_output_relatives[@]}"; do
@@ -275,7 +298,7 @@ node --test \
 print "4/8 Building the standalone page twice"
 MACBOOK_NAMESPACE_ROOT="$staging_dir" \
   node work/build-expanded-standalone.mjs --market "$market_id"
-artifact_file="${staging_dir}/index.html"
+artifact_file="${staging_dir}/${artifact_directory_relative}/index.html"
 first_hash="$(shasum -a 256 "$artifact_file" | awk '{print $1}')"
 MACBOOK_NAMESPACE_ROOT="$staging_dir" \
   node work/build-expanded-standalone.mjs --market "$market_id"
@@ -330,7 +353,11 @@ fi
 
 if [[ "$publish_dir" != "$workspace_dir" ]]; then
   for relative_file in "${source_owned_paths[@]}"; do
-    source_file="${staged_output_by_relative[$relative_file]:-${workspace_dir}/${relative_file}}"
+    if [[ "${immutable_source_set[$relative_file]:-}" == "true" ]]; then
+      source_file="${execution_root}/${relative_file}"
+    else
+      source_file="${staged_output_by_relative[$relative_file]:-${workspace_dir}/${relative_file}}"
+    fi
     if [[ ! -f "$source_file" ]]; then
       print -u2 "Publication source is missing: $source_file"
       exit 1
@@ -339,7 +366,7 @@ if [[ "$publish_dir" != "$workspace_dir" ]]; then
     cp "$source_file" "${publish_dir}/${relative_file}"
   done
 fi
-cp "${workspace_dir}/config/publish.gitignore" "${publish_dir}/.gitignore"
+cp "${execution_root}/config/publish.gitignore" "${publish_dir}/.gitignore"
 rm -f "${publish_dir}/index.html"
 mkdir -p "${publish_dir}/${publication_artifact_directory}"
 cp "$artifact_file" "${publish_dir}/${publication_artifact_directory}/index.html"
@@ -393,4 +420,5 @@ workflow_succeeded=true
 print "Catalog refresh, tests, private sync, deployment, and live hash verification succeeded."
 print "Artifact SHA-256: $second_hash"
 print "Production: $production_url"
-node scripts/summarize-update.mjs --market "$market_id"
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/summarize-update.mjs --market "$market_id"

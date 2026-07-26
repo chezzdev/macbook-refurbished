@@ -2,43 +2,9 @@
 
 import {
   assertUniqueProfileOwnedPaths,
+  COMMON_PUBLICATION_SOURCE_PATHS,
   loadEnabledMarketProfiles,
 } from "./market-profile.mjs";
-
-const commonSourcePaths = [
-  "README.md",
-  "package.json",
-  "package-lock.json",
-  "eslint.config.mjs",
-  "config/publish.gitignore",
-  "config/markets/registry.json",
-  "scripts/apple-catalog-lib.mjs",
-  "scripts/apple-catalog-lib.test.mjs",
-  "scripts/build-enabled-markets.mjs",
-  "scripts/html-escape.mjs",
-  "scripts/initialize-market.mjs",
-  "scripts/market-profile.mjs",
-  "scripts/print-market-workflow-config.mjs",
-  "scripts/publication-manifest.mjs",
-  "scripts/rank-models.mjs",
-  "scripts/summarize-enabled-markets.mjs",
-  "scripts/summarize-update.mjs",
-  "scripts/update-apple-catalog.mjs",
-  "scripts/update-changelog.mjs",
-  "scripts/update-exchange-rate.mjs",
-  "scripts/validate-apple-catalog.mjs",
-  "tests/changelog.test.mjs",
-  "tests/exchange-rate.test.mjs",
-  "tests/html-escape.test.mjs",
-  "tests/market-engine.test.mjs",
-  "tests/rank-models.test.mjs",
-  "tests/standalone-catalog.test.mjs",
-  "work/build-expanded-standalone.mjs",
-  "work/daily-update.zsh",
-  "work/update-all-markets.zsh",
-  "work/update-market-site.zsh",
-  "work/update-published-site.zsh",
-];
 
 const retiredPublicationPaths = [
   "app",
@@ -87,11 +53,11 @@ export function buildPublicationManifest(profiles) {
     (profile) => `${profile.publication.artifactDirectory}/index.html`,
   );
   const sourcePaths = uniqueSorted([
-    ...commonSourcePaths,
+    ...COMMON_PUBLICATION_SOURCE_PATHS,
     ...marketSourcePaths,
   ]);
   const immutableSourcePaths = uniqueSorted([
-    ...commonSourcePaths,
+    ...COMMON_PUBLICATION_SOURCE_PATHS,
     ...profiles.flatMap((profile) => [
       `config/markets/${profile.id}.json`,
       profile.ranking.policyPath,

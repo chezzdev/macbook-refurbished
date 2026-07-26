@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import {
   mkdtemp,
+  mkdir,
   readFile,
   rm,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
 
@@ -310,6 +311,17 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
     perMarketWorkflow,
     /Live publication refuses uncommitted source\/config changes/,
   );
+  assert.match(perMarketWorkflow, /git -C "\$workspace_dir" archive "\$source_head"/);
+  assert.match(perMarketWorkflow, /execution_root="\$source_snapshot_dir"/);
+  assert.match(
+    perMarketWorkflow,
+    /source_file="\$\{execution_root\}\/\$\{relative_file\}"/,
+  );
+  assert.match(
+    perMarketWorkflow,
+    /staged_file="\$\{staging_dir\}\/\$\{relative_file\}"/,
+  );
+  assert.doesNotMatch(perMarketWorkflow, /relative_file:t/);
 });
 
 test("publication manifest derives every market path from enabled profiles", () => {
@@ -378,6 +390,63 @@ test("enabled market profiles cannot share state or policy paths", () => {
   assert.throws(
     () => assertUniqueProfileOwnedPaths([internallyCollidingMarket]),
     /namespace\.catalog and ca\.namespace\.featured/,
+  );
+
+  const baseFutureMarket = structuredClone(us);
+  baseFutureMarket.id = "ca";
+  baseFutureMarket.ranking.policyPath = "config/ranking-policy.ca.json";
+  baseFutureMarket.namespace = {
+    catalog: "data/markets/ca/catalog.json",
+    featured: "data/markets/ca/featured.json",
+    site: "data/markets/ca/site.json",
+    updateStatus: "data/markets/ca/update-status.json",
+    updateDelta: "data/markets/ca/update-delta.json",
+    changelog: "data/markets/ca/changelog.json",
+    artifactDirectory: "outputs/markets/ca",
+  };
+
+  const aliasedMarket = structuredClone(baseFutureMarket);
+  aliasedMarket.namespace.catalog = "data/markets/ca/./catalog.json";
+  assert.throws(
+    () => assertUniqueProfileOwnedPaths([aliasedMarket]),
+    /must use its normalized project-relative path/,
+  );
+
+  const artifactCollisionMarket = structuredClone(baseFutureMarket);
+  artifactCollisionMarket.namespace.catalog =
+    "outputs/markets/ca/index.html";
+  assert.throws(
+    () => assertUniqueProfileOwnedPaths([artifactCollisionMarket]),
+    /namespace\.catalog and ca\.namespace\.artifact/,
+  );
+
+  const sourceCollisionMarket = structuredClone(baseFutureMarket);
+  sourceCollisionMarket.namespace.catalog = "scripts/market-profile.mjs";
+  assert.throws(
+    () => assertUniqueProfileOwnedPaths([sourceCollisionMarket]),
+    /profile output path overlaps immutable source/,
+  );
+
+  const sameBasenameMarket = structuredClone(baseFutureMarket);
+  sameBasenameMarket.namespace.featured =
+    "data/markets/ca/alternate/catalog.json";
+  assert.doesNotThrow(() =>
+    assertUniqueProfileOwnedPaths([sameBasenameMarket]),
+  );
+});
+
+test("staging preserves complete profile-relative namespace paths", async () => {
+  const stagingRoot = join(tmpdir(), "profile-stage-layout");
+  const stagedContext = await loadMarketContext("us", {
+    namespaceRoot: stagingRoot,
+  });
+  assert.equal(
+    stagedContext.paths.catalog,
+    join(stagingRoot, "data/markets/us/catalog.json"),
+  );
+  assert.equal(
+    stagedContext.paths.artifact,
+    join(stagingRoot, "outputs/markets/us/index.html"),
   );
 });
 
@@ -579,6 +648,9 @@ test("enabled profiles reproduce their selected featured artifacts", async () =>
 
 test("the shared UI builder renders the US profile without Singapore assumptions", async () => {
   const fixtureRoot = await mkdtemp(join(tmpdir(), "macbook-us-market-"));
+  const fixtureContext = await loadMarketContext("us", {
+    namespaceRoot: fixtureRoot,
+  });
   const checkedAt = "2026-07-26T12:00:00.000Z";
   try {
     const parsedProducts = parseTiles(
@@ -634,14 +706,14 @@ test("the shared UI builder renders the US profile without Singapore assumptions
       newPriceChanges: [],
       featured: null,
     };
-    const files = {
-      "catalog.json": catalog,
-      "featured.json": featured,
-      "site.json": {
+    const files = new Map([
+      [fixtureContext.paths.catalog, catalog],
+      [fixtureContext.paths.featured, featured],
+      [fixtureContext.paths.site, {
         ...buildInitialSiteDocument(us),
         checkedDateFallback: "2026-07-26",
-      },
-      "update-status.json": {
+      }],
+      [fixtureContext.paths.updateStatus, {
         schemaVersion: 1,
         status: "success",
         checkedAt,
@@ -650,8 +722,8 @@ test("the shared UI builder renders the US profile without Singapore assumptions
           air: products.length,
           pro: 0,
         },
-      },
-      "changelog.json": {
+      }],
+      [fixtureContext.paths.changelog, {
         schemaVersion: 1,
         latestRun: emptyDelta,
         entries: [
@@ -666,16 +738,17 @@ test("the shared UI builder renders the US profile without Singapore assumptions
             },
           },
         ],
-      },
-    };
+      }],
+    ]);
     await Promise.all(
-      Object.entries(files).map(([fileName, value]) =>
-        writeFile(
-          join(fixtureRoot, fileName),
+      [...files].map(async ([filePath, value]) => {
+        await mkdir(dirname(filePath), { recursive: true });
+        await writeFile(
+          filePath,
           `${JSON.stringify(value, null, 2)}\n`,
           "utf8",
-        ),
-      ),
+        );
+      }),
     );
 
     await execFileAsync(
@@ -689,10 +762,7 @@ test("the shared UI builder renders the US profile without Singapore assumptions
         },
       },
     );
-    const html = await readFile(
-      join(fixtureRoot, "index.html"),
-      "utf8",
-    );
+    const html = await readFile(fixtureContext.paths.artifact, "utf8");
     assert.match(html, /MacBook US Refurbished/);
     assert.match(html, /Apple Beverly Center/);
     assert.match(html, /Расчётный total/);

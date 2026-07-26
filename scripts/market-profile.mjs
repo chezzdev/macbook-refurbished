@@ -1,9 +1,43 @@
 import { readFile } from "node:fs/promises";
-import { basename, isAbsolute, relative, resolve } from "node:path";
+import { isAbsolute, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
 export const DEFAULT_MARKET_ID = "sg";
 export const projectRoot = resolve(import.meta.dirname, "..");
+export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
+  "README.md",
+  "package.json",
+  "package-lock.json",
+  "eslint.config.mjs",
+  "config/publish.gitignore",
+  "config/markets/registry.json",
+  "scripts/apple-catalog-lib.mjs",
+  "scripts/apple-catalog-lib.test.mjs",
+  "scripts/build-enabled-markets.mjs",
+  "scripts/html-escape.mjs",
+  "scripts/initialize-market.mjs",
+  "scripts/market-profile.mjs",
+  "scripts/print-market-workflow-config.mjs",
+  "scripts/publication-manifest.mjs",
+  "scripts/rank-models.mjs",
+  "scripts/summarize-enabled-markets.mjs",
+  "scripts/summarize-update.mjs",
+  "scripts/update-apple-catalog.mjs",
+  "scripts/update-changelog.mjs",
+  "scripts/update-exchange-rate.mjs",
+  "scripts/validate-apple-catalog.mjs",
+  "tests/changelog.test.mjs",
+  "tests/exchange-rate.test.mjs",
+  "tests/html-escape.test.mjs",
+  "tests/market-engine.test.mjs",
+  "tests/rank-models.test.mjs",
+  "tests/standalone-catalog.test.mjs",
+  "work/build-expanded-standalone.mjs",
+  "work/daily-update.zsh",
+  "work/update-all-markets.zsh",
+  "work/update-market-site.zsh",
+  "work/update-published-site.zsh",
+]);
 
 const cache = new Map();
 let registryCache;
@@ -40,6 +74,10 @@ function validateNamespacePath(value, label) {
   if (relativePath.startsWith("..") || isAbsolute(relativePath)) {
     throw new Error(`${label} must stay inside the project root`);
   }
+  if (value.includes("\\") || value !== relativePath) {
+    throw new Error(`${label} must use its normalized project-relative path`);
+  }
+  return relativePath;
 }
 
 function roundCurrency(value) {
@@ -409,27 +447,79 @@ export async function loadMarketRegistry() {
   return registryCache;
 }
 
+function pathsOverlap(left, right) {
+  return (
+    left === right ||
+    left.startsWith(`${right}/`) ||
+    right.startsWith(`${left}/`)
+  );
+}
+
 export function assertUniqueProfileOwnedPaths(profiles) {
-  const pathOwners = new Map();
+  const policyOwners = new Map();
+  const outputOwners = new Map();
+  const immutableSourcePaths = [
+    ...COMMON_PUBLICATION_SOURCE_PATHS,
+    ...profiles.flatMap((profile) => [
+      `config/markets/${profile.id}.json`,
+      profile.ranking.policyPath,
+    ]),
+  ].map((value) => validateNamespacePath(value, "immutable source path"));
+  const immutableSourceRoots = new Set(
+    immutableSourcePaths.map((value) =>
+      value.includes("/") ? value.split("/", 1)[0] : value,
+    ),
+  );
+
   for (const profile of profiles) {
-    const ownedPaths = [
-      ["ranking.policyPath", profile.ranking.policyPath],
-      ...Object.entries(profile.namespace).map(([key, value]) => [
-        `namespace.${key}`,
-        value,
-      ]),
+    const policyPath = validateNamespacePath(
+      profile.ranking.policyPath,
+      `${profile.id}.ranking.policyPath`,
+    );
+    const previousPolicyOwner = policyOwners.get(policyPath);
+    if (previousPolicyOwner) {
+      throw new Error(
+        `profile-owned path collision: ${policyPath} is used by ` +
+          `${previousPolicyOwner} and ${profile.id}.ranking.policyPath`,
+      );
+    }
+    policyOwners.set(policyPath, `${profile.id}.ranking.policyPath`);
+
+    const outputPaths = [
+      ...Object.entries(profile.namespace)
+        .filter(([key]) => key !== "artifactDirectory")
+        .map(([key, value]) => [`namespace.${key}`, value]),
+      [
+        "namespace.artifact",
+        `${profile.namespace.artifactDirectory}/index.html`,
+      ],
     ];
-    for (const [label, value] of ownedPaths) {
-      validateNamespacePath(value, `${profile.id}.${label}`);
+    for (const [label, value] of outputPaths) {
+      const normalizedPath = validateNamespacePath(
+        value,
+        `${profile.id}.${label}`,
+      );
       const owner = `${profile.id}.${label}`;
-      const previousOwner = pathOwners.get(value);
-      if (previousOwner) {
+      const topLevel = normalizedPath.split("/", 1)[0];
+      if (
+        immutableSourcePaths.some((sourcePath) =>
+          pathsOverlap(normalizedPath, sourcePath),
+        ) ||
+        immutableSourceRoots.has(topLevel)
+      ) {
         throw new Error(
-          `profile-owned path collision: ${value} is used by ` +
-            `${previousOwner} and ${owner}`,
+          `profile output path overlaps immutable source: ${normalizedPath}`,
         );
       }
-      pathOwners.set(value, owner);
+      for (const [existingPath, existingOwner] of outputOwners) {
+        if (pathsOverlap(normalizedPath, existingPath)) {
+          throw new Error(
+            `profile-owned path collision: ${normalizedPath} is used by ` +
+              `${existingOwner} and ${owner}`,
+          );
+        }
+      }
+      outputOwners.set(normalizedPath, owner);
     }
   }
 }
@@ -493,12 +583,12 @@ export async function loadMarketContext(
       .map(([key, value]) => [
         key,
         namespaceRoot
-          ? resolve(namespaceRoot, basename(value))
+          ? resolve(namespaceRoot, value)
           : resolveProfilePath(profile, value),
       ]),
   );
   paths.artifactDirectory = namespaceRoot
-    ? resolve(namespaceRoot)
+    ? resolve(namespaceRoot, profile.namespace.artifactDirectory)
     : resolveProfilePath(profile, profile.namespace.artifactDirectory);
   paths.artifact = resolve(paths.artifactDirectory, "index.html");
   return {
