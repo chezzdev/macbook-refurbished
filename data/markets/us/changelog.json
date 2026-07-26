@@ -2,53 +2,22 @@
   "schemaVersion": 1,
   "latestRun": {
     "schemaVersion": 1,
-    "checkedAt": "2026-07-26T15:45:31.042Z",
-    "hasChanges": true,
+    "checkedAt": "2026-07-26T16:21:23.893Z",
+    "hasChanges": false,
     "counts": {
       "added": 0,
-      "removed": 1,
+      "removed": 0,
       "refurbPriceChanges": 0,
       "newPriceChanges": 0,
+      "configurationChanges": 0,
       "taxInclusivePriceChanges": 0,
       "featuredChanges": 0
     },
     "added": [],
-    "removed": [
-      {
-        "productCode": "G1M20LL/A",
-        "family": "Air",
-        "screen": "15″",
-        "display": "Standard",
-        "chip": "M5",
-        "cpuCores": 10,
-        "gpuCores": 10,
-        "memory": "24GB",
-        "storage": "2TB",
-        "priceUsd": 2119,
-        "newPriceUsd": 2499,
-        "taxInclusivePriceUsd": 2346.5,
-        "taxInclusivePricing": {
-          "status": "estimated",
-          "amount": 2346.5,
-          "currency": "USD",
-          "preTaxAmount": 2119,
-          "salesTaxRate": 0.105,
-          "salesTaxAmount": 222.5,
-          "recyclingFeeAmount": 5,
-          "locationId": "apple-beverly-center",
-          "provenance": {
-            "provider": "Calculated estimate",
-            "method": "verified-fixed-location",
-            "sourceUrl": "https://www.apple.com/shop/help/payments",
-            "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-            "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-          },
-          "reason": null
-        }
-      }
-    ],
+    "removed": [],
     "refurbPriceChanges": [],
     "newPriceChanges": [],
+    "configurationChanges": [],
     "taxInclusivePriceChanges": [],
     "featured": null
   },

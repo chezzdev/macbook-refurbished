@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "policyVersion": "2026-07-26.us.2",
+  "policyVersion": "2026-07-26.us.3",
   "ideal": {
     "family": "Air",
     "screen": "13″",
@@ -10,7 +10,7 @@
   "items": [
     {
       "rank": 1,
-      "recommendationKey": "Air|13″|M5|24GB|1TB",
+      "recommendationKey": "air|13|standard|m5|10|10|24gb|1tb",
       "configurationKey": "air|13|standard|m5|10|10|24gb|1tb",
       "productCode": "FDH94LL/A",
       "score": 110048,
@@ -36,7 +36,7 @@
     },
     {
       "rank": 2,
-      "recommendationKey": "Air|13″|M4|24GB|1TB",
+      "recommendationKey": "air|13|standard|m4|10|10|24gb|1tb",
       "configurationKey": "air|13|standard|m4|10|10|24gb|1tb",
       "productCode": "G1H90LL/A",
       "score": 104062,
@@ -61,7 +61,7 @@
     },
     {
       "rank": 3,
-      "recommendationKey": "Air|13″|M5|24GB|2TB",
+      "recommendationKey": "air|13|standard|m5|10|10|24gb|2tb",
       "configurationKey": "air|13|standard|m5|10|10|24gb|2tb",
       "productCode": "G1L20LL/A",
       "score": 102714,
