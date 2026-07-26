@@ -162,7 +162,13 @@ workflow использует тот же общий путь без отдел�
 ```
 
 Если GitHub Pages недоступен, одна и та же проверенная публикационная сборка
-разворачивается на обоих существующих Cloudflare Pages проектах:
+разворачивается на обоих существующих Cloudflare Pages проектах. Каждый
+fallback-домен содержит оба рынка:
+
+- <https://macbook-sg-refurbished.pages.dev/markets/sg/>
+- <https://macbook-sg-refurbished.pages.dev/markets/us/>
+- <https://macbook-us-refurbished.pages.dev/markets/sg/>
+- <https://macbook-us-refurbished.pages.dev/markets/us/>
 
 ```zsh
 MACBOOK_PUBLISH_DIR=/absolute/path/to/work/gh-pages-site \

@@ -78,11 +78,14 @@ fallback_projects=(
 for fallback_target in "${fallback_projects[@]}"; do
   IFS="|" read -r cloudflare_project production_url <<< "$fallback_target"
   print "Deploying unified fallback to ${cloudflare_project}"
-  "${workspace_dir}/node_modules/.bin/wrangler" pages deploy "$deployment_dir" \
-    --project-name "$cloudflare_project" \
-    --branch main \
-    --commit-hash "$publish_commit" \
-    --commit-dirty=true
+  (
+    cd "$publish_dir"
+    "${workspace_dir}/node_modules/.bin/wrangler" pages deploy "$deployment_dir" \
+      --project-name "$cloudflare_project" \
+      --branch main \
+      --commit-hash "$publish_commit" \
+      --commit-dirty=true
+  )
 
   for market_id in sg us; do
     if [[ "$market_id" == "sg" ]]; then
