@@ -15,6 +15,7 @@ export const UNIFIED_PAGES_PROJECT_SLUG = "macbook-refurbished";
 export const UNIFIED_PAGES_BASE_URL =
   "https://chezzdev.github.io/macbook-refurbished/";
 export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
+  ".github/dependabot.yml",
   ".nojekyll",
   "index.html",
   "README.md",

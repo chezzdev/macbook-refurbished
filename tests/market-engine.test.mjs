@@ -52,6 +52,13 @@ const [sg, us, sgContext, usContext, enabledMarketState] = await Promise.all([
 ]);
 const execFileAsync = promisify(execFile);
 const projectRoot = resolve(import.meta.dirname, "..");
+const dependabotConfigText = await readFile(
+  join(projectRoot, ".github/dependabot.yml"),
+  "utf8",
+).catch((error) => {
+  if (error?.code === "ENOENT") return "";
+  throw error;
+});
 const [sgPolicy, usPolicy] = await Promise.all([
   readFile(sgContext.policyPath, "utf8").then(JSON.parse),
   readFile(usContext.policyPath, "utf8").then(JSON.parse),
@@ -940,6 +947,22 @@ test("publication manifest derives every market path from enabled profiles", () 
   assert.ok(
     !manifest.immutableSourcePaths.includes("data/markets/ca/catalog.json"),
   );
+});
+
+test("publication manifest ships the canonical Dependabot config", () => {
+  const manifest = buildPublicationManifest([sg, us]);
+  assert.ok(
+    dependabotConfigText.length > 0,
+    ".github/dependabot.yml must exist in the source worktree",
+  );
+  assert.match(dependabotConfigText, /package-ecosystem:\s*"npm"/);
+  assert.match(dependabotConfigText, /directory:\s*"\/"/);
+  assert.match(dependabotConfigText, /interval:\s*"weekly"/);
+  assert.match(dependabotConfigText, /open-pull-requests-limit:\s*3/);
+  assert.ok(manifest.sourcePaths.includes(".github/dependabot.yml"));
+  assert.ok(manifest.immutableSourcePaths.includes(".github/dependabot.yml"));
+  assert.ok(manifest.publicationPaths.includes(".github/dependabot.yml"));
+  assert.ok(!manifest.retiredPublicationPaths.includes(".github/dependabot.yml"));
 });
 
 test("enabled market profiles cannot share state or policy paths", () => {

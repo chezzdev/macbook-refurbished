@@ -195,6 +195,22 @@ Namespace layout намеренно строгий и lowercase ASCII: кажд�
 `markets/<id>/index.html`. Это исключает APFS case/Unicode aliases и
 пересечение с `.gitignore`/source/publication targets.
 
+## Защита публичного репозитория
+
+Публичный репозиторий `chezzdev/macbook-refurbished` использует GitHub
+secret scanning с push protection, Dependabot alerts и automated security
+fixes. `main` защищена без PR, status-check и signed-commit requirements:
+daily automation по-прежнему может делать обычные fast-forward direct pushes,
+но force-push и deletion запрещены, а правила применяются к admins.
+
+Канонический Dependabot config находится в source worktree:
+`.github/dependabot.yml`. Он проверяет npm-зависимости в корне раз в неделю и
+держит небольшой лимит открытых PR. Publication manifest считает этот файл
+immutable source-owned path, поэтому общий canonical workflow копирует его в
+`work/gh-pages-site` и публичный `main`; вложенную копию не нужно редактировать
+отдельно. Local Git email publication checkout настроен на GitHub noreply,
+история публичного репозитория не переписывается.
+
 ## Ежедневное обновление всех рынков
 
 `work/daily-update.zsh` вызывает `work/update-all-markets.zsh`, сохраняет общий
