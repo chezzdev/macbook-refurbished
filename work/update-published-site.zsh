@@ -176,6 +176,10 @@ fi
 publish_commit="$(git -C "$publish_dir" rev-parse HEAD)"
 
 print "7/8 Deploying the tested artifact to the existing Cloudflare Pages project"
+git -C "$deployment_dir" init --quiet
+git -C "$deployment_dir" fetch --quiet --no-tags "$publish_dir" "$publish_commit"
+git -C "$deployment_dir" update-ref refs/heads/main "$publish_commit"
+git -C "$deployment_dir" symbolic-ref HEAD refs/heads/main
 npx --yes wrangler@4.92.0 pages deploy "$deployment_dir" \
   --project-name "$cloudflare_project" \
   --branch main \
