@@ -13,6 +13,7 @@ import { promisify } from "node:util";
 
 import {
   buildCatalog,
+  calculateFixedLocationTaxEstimate,
   hydrateTaxInclusivePrices,
   parseExactNewPriceHtml,
   parseRefurbishedCatalog,
@@ -52,6 +53,7 @@ function tile({
   colour = "Midnight",
   price = 1999,
   storage = "1TB",
+  screenInches = 13,
 }) {
   return {
     partNumber: productCode,
@@ -60,12 +62,12 @@ function tile({
         ? `/sg/shop/product/${productCode.toLowerCase()}`
         : `/shop/product/${productCode.toLowerCase()}`,
     title:
-      "Refurbished 13‑inch MacBook Air Apple M5 chip with " +
+      `Refurbished ${screenInches}‑inch MacBook Air Apple M5 chip with ` +
       `10‑Core CPU and 10‑Core GPU - ${colour}`,
     filters: {
       dimensions: {
         refurbClearModel: "macbookair",
-        dimensionScreensize: "13inch",
+        dimensionScreensize: `${screenInches}inch`,
         dimensionColor: colour,
         dimensionRelYear: "2026",
         tsMemorySize: "24GB",
@@ -295,7 +297,7 @@ test("both profiles use the same parser, exact-match, catalog, and ranking path"
   }
 });
 
-test("US tax pricing is Apple-provenanced or explicitly unresolved", async () => {
+test("US fixed-location estimate reproduces Apple checkout and screen fees", async () => {
   const products = parseTiles(
     [
       tile({ productCode: "US-TAX-1", marketId: "us", price: 1500 }),
@@ -304,31 +306,50 @@ test("US tax pricing is Apple-provenanced or explicitly unresolved", async () =>
         marketId: "us",
         colour: "Sky Blue",
         price: 1600,
+        screenInches: 15,
       }),
     ],
     us,
   );
-  const resolved = await hydrateTaxInclusivePrices(products, {
+  const estimated = await hydrateTaxInclusivePrices(products, {
     marketProfile: us,
-    quoteTaxInclusivePrice: async ({ product }) => ({
-      amount: product.priceUsd + 150,
-      currency: "USD",
-      provider: "Apple",
-      method: "apple-checkout",
-      sourceUrl: "https://www.apple.com/shop/bag",
-    }),
   });
-  assert.equal(resolved.products.length, products.length);
-  assert.equal(resolved.resolvedCount, products.length);
-  for (const product of resolved.products) {
-    assert.equal(product.taxInclusivePricing.status, "resolved");
+  assert.equal(estimated.products.length, products.length);
+  assert.equal(estimated.estimatedCount, products.length);
+  assert.equal(estimated.resolvedCount, 0);
+  assert.equal(estimated.unresolvedCount, 0);
+  assert.equal(estimated.products[0].taxInclusivePricing.salesTaxAmount, 157.5);
+  assert.equal(estimated.products[0].taxInclusivePricing.recyclingFeeAmount, 4);
+  assert.equal(estimated.products[0].taxInclusivePriceUsd, 1661.5);
+  assert.equal(estimated.products[1].taxInclusivePricing.salesTaxAmount, 168);
+  assert.equal(estimated.products[1].taxInclusivePricing.recyclingFeeAmount, 5);
+  assert.equal(estimated.products[1].taxInclusivePriceUsd, 1773);
+  for (const product of estimated.products) {
+    assert.equal(product.taxInclusivePricing.status, "estimated");
     assert.equal(product.taxInclusivePricing.locationId, "apple-beverly-center");
-    assert.equal(product.taxInclusivePricing.provenance.provider, "Apple");
+    assert.equal(
+      product.taxInclusivePricing.provenance.provider,
+      "Calculated estimate",
+    );
   }
-  assert.equal(validateCatalog(buildCatalog(resolved.products, us), us), true);
+  assert.equal(validateCatalog(buildCatalog(estimated.products, us), us), true);
+
+  const checkoutExample = {
+    ...products[0],
+    priceUsd: 1529,
+    screen: "13″",
+  };
+  const verifiedPricing = calculateFixedLocationTaxEstimate(
+    checkoutExample,
+    us,
+  );
+  assert.equal(verifiedPricing.salesTaxAmount, 160.55);
+  assert.equal(verifiedPricing.recyclingFeeAmount, 4);
+  assert.equal(verifiedPricing.amount, 1693.55);
+
   const taxDelta = buildCatalogDelta({
     previousCatalog: { products },
-    currentCatalog: { products: resolved.products },
+    currentCatalog: { products: estimated.products },
     previousFeatured: { items: [] },
     currentFeatured: { items: [] },
     checkedAt: "2026-07-26T12:00:00.000Z",
@@ -337,26 +358,12 @@ test("US tax pricing is Apple-provenanced or explicitly unresolved", async () =>
   assert.equal(taxDelta.counts.taxInclusivePriceChanges, products.length);
   assert.equal(taxDelta.taxInclusivePriceChanges.length, products.length);
 
-  const unresolved = await hydrateTaxInclusivePrices(products, {
-    marketProfile: us,
-    quoteTaxInclusivePrice: async ({ product }) => ({
-      amount: product.priceUsd * 1.095,
-      currency: "USD",
-      provider: "calculated",
-      method: "local-rate",
-      sourceUrl: "https://example.com/tax",
-    }),
-  });
-  assert.equal(unresolved.products.length, products.length);
-  assert.equal(unresolved.unresolvedCount, products.length);
-  for (const product of unresolved.products) {
-    assert.equal(product.taxInclusivePriceUsd, null);
-    assert.equal(product.taxInclusivePricing.status, "unresolved");
-    assert.equal(
-      product.taxInclusivePricing.reason,
-      "apple-tax-quote-unavailable",
-    );
-  }
+  const tampered = structuredClone(estimated.products);
+  tampered[0].taxInclusivePriceUsd += 1;
+  assert.throws(
+    () => buildCatalog(tampered, us),
+    /tax estimate does not match its profile policy/,
+  );
 });
 
 test("US namespace migration seeds identity currency and active hosting", () => {
@@ -410,7 +417,7 @@ test("the shared UI builder renders the US profile without Singapore assumptions
   const fixtureRoot = await mkdtemp(join(tmpdir(), "macbook-us-market-"));
   const checkedAt = "2026-07-26T12:00:00.000Z";
   try {
-    const products = parseTiles(
+    const parsedProducts = parseTiles(
       [
         tile({
           productCode: "US-IDEAL-A",
@@ -438,6 +445,9 @@ test("the shared UI builder renders the US profile without Singapore assumptions
       ],
       us,
     );
+    const { products } = await hydrateTaxInclusivePrices(parsedProducts, {
+      marketProfile: us,
+    });
     const catalog = buildCatalog(products, us);
     const featured = rankCatalog(catalog, usPolicy, us);
     const emptyDelta = {
@@ -518,7 +528,9 @@ test("the shared UI builder renders the US profile without Singapore assumptions
     );
     assert.match(html, /MacBook US Refurbished/);
     assert.match(html, /Apple Beverly Center/);
-    assert.match(html, /Итого с налогом: не получено/);
+    assert.match(html, /Расчётный итог/);
+    assert.match(html, /10\.5%/);
+    assert.match(html, /\$1,661\.50/);
     assert.ok(
       html.includes(
         `<link rel="canonical" href="${us.publication.canonicalUrl}">`,

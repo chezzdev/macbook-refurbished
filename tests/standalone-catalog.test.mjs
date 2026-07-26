@@ -146,6 +146,22 @@ test("renders a USD-only changelog and latest-run result at the page bottom", ()
   assert.match(changelogSection, new RegExp(escapeRegex(latestDate)));
 });
 
+test("renders explicit fixed-location tax estimates for the US market", () => {
+  if (profile.id !== "us") return;
+  assert.equal(profile.tax.model, "verified-fixed-location-estimate");
+  assert.ok(
+    catalog.products.every(
+      (product) =>
+        product.taxInclusivePricing?.status === "estimated" &&
+        Number.isFinite(product.taxInclusivePriceUsd) &&
+        product.taxInclusivePriceUsd > product.priceUsd,
+    ),
+  );
+  assert.match(html, /Расчётный итог/);
+  assert.match(html, /налог .+ · сбор/);
+  assert.doesNotMatch(html, /Итого Apple/);
+});
+
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

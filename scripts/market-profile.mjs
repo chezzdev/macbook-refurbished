@@ -42,6 +42,10 @@ function validateNamespacePath(value, label) {
   }
 }
 
+function roundCurrency(value) {
+  return Math.floor(value * 100 + 0.5 + 1e-9) / 100;
+}
+
 export function validateMarketProfile(profile) {
   if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
     throw new Error("market profile must be an object");
@@ -91,7 +95,10 @@ export function validateMarketProfile(profile) {
       "market profiles must keep catalog scope independent of delivery and pickup",
     );
   }
-  if (profile.tax?.model === "apple-checkout-reference-location") {
+  if (
+    ["apple-checkout-reference-location", "verified-fixed-location-estimate"]
+      .includes(profile.tax?.model)
+  ) {
     const location = profile.tax.referenceLocation;
     for (const field of [
       "id",
@@ -104,23 +111,97 @@ export function validateMarketProfile(profile) {
     ]) {
       requireString(location?.[field], `tax.referenceLocation.${field}`);
     }
-    if (profile.tax.taxInclusiveSourcePolicy !== "apple-flow-only") {
-      throw new Error(
-        "reference-location tax-inclusive prices must use Apple flow provenance",
-      );
-    }
-    if (
-      profile.tax.acquisition?.adapter !== "apple-checkout" ||
-      !["available", "unavailable"].includes(profile.tax.acquisition?.status)
-    ) {
-      throw new Error(
-        "reference-location tax acquisition must declare Apple checkout status",
-      );
-    }
     requireString(
       profile.currency.priceFields.taxInclusive,
       "currency.priceFields.taxInclusive",
     );
+    if (profile.tax.model === "apple-checkout-reference-location") {
+      if (profile.tax.taxInclusiveSourcePolicy !== "apple-flow-only") {
+        throw new Error(
+          "Apple checkout tax-inclusive prices must use Apple flow provenance",
+        );
+      }
+      if (
+        profile.tax.acquisition?.adapter !== "apple-checkout" ||
+        !["available", "unavailable"].includes(profile.tax.acquisition?.status)
+      ) {
+        throw new Error(
+          "Apple checkout tax acquisition must declare adapter status",
+        );
+      }
+    } else {
+      const estimate = profile.tax.estimate;
+      const verification = profile.tax.acquisition?.verification;
+      if (
+        profile.tax.taxInclusiveSourcePolicy !== "verified-manual-estimate" ||
+        profile.tax.acquisition?.adapter !== "manual-calculation" ||
+        profile.tax.acquisition?.status !== "verified" ||
+        !Number.isFinite(estimate?.salesTaxRate) ||
+        estimate.salesTaxRate <= 0 ||
+        estimate.salesTaxRate >= 1 ||
+        estimate.rounding !== "nearest-cent"
+      ) {
+        throw new Error(
+          "fixed-location tax estimate must declare its verified calculation policy",
+        );
+      }
+      for (const [screen, fee] of Object.entries(
+        estimate.recyclingFeeUsdByScreenInches ?? {},
+      )) {
+        if (!/^\d+$/.test(screen) || !Number.isFinite(fee) || fee < 0) {
+          throw new Error(
+            "tax.estimate.recyclingFeeUsdByScreenInches must contain non-negative screen fees",
+          );
+        }
+      }
+      for (const field of [
+        "appleTaxPolicyUrl",
+        "salesTaxSourceUrl",
+        "recyclingFeeSourceUrl",
+      ]) {
+        requireHttpsUrl(estimate?.[field], `tax.estimate.${field}`);
+      }
+      requireString(
+        profile.tax.acquisition?.verifiedAt,
+        "tax.acquisition.verifiedAt",
+      );
+      requireString(
+        verification?.productCode,
+        "tax.acquisition.verification.productCode",
+      );
+      requireAppleUrl(
+        verification?.productUrl,
+        "tax.acquisition.verification.productUrl",
+      );
+      for (const field of [
+        "preTaxAmountUsd",
+        "salesTaxAmountUsd",
+        "recyclingFeeAmountUsd",
+        "estimatedTotalAmountUsd",
+      ]) {
+        if (!Number.isFinite(verification?.[field]) || verification[field] < 0) {
+          throw new Error(
+            `tax.acquisition.verification.${field} must be non-negative`,
+          );
+        }
+      }
+      const expectedTax = roundCurrency(
+        verification.preTaxAmountUsd * estimate.salesTaxRate,
+      );
+      const expectedTotal = roundCurrency(
+        verification.preTaxAmountUsd +
+          expectedTax +
+          verification.recyclingFeeAmountUsd,
+      );
+      if (
+        verification.salesTaxAmountUsd !== expectedTax ||
+        verification.estimatedTotalAmountUsd !== expectedTotal
+      ) {
+        throw new Error(
+          "fixed-location tax policy does not reproduce its Apple checkout verification",
+        );
+      }
+    }
   } else if (profile.tax?.model !== "included-in-list-price") {
     throw new Error(`unsupported tax model: ${profile.tax?.model}`);
   }

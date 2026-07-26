@@ -38,6 +38,7 @@ export async function updateCatalog({
       marketProfile: profile,
     });
     const {
+      estimatedCount: taxEstimatedCount,
       resolvedCount: taxResolvedCount,
       unresolvedCount: taxUnresolvedCount,
       products: taxHydratedProducts,
@@ -52,6 +53,7 @@ export async function updateCatalog({
       pricedConfigurationCount,
       marketProfile: profile,
       taxResolvedCount,
+      taxEstimatedCount,
       taxUnresolvedCount,
     });
 

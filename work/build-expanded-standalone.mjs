@@ -96,7 +96,15 @@ const displayFormatter = new Intl.NumberFormat("en-US", {
   currency: displayCurrency,
   maximumFractionDigits: 0,
 });
+const taxDisplayFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: displayCurrency,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 const usdPrice = (amount) => displayFormatter.format(amount * rate);
+const taxDisplayPrice = (amount) =>
+  taxDisplayFormatter.format(amount * rate);
 const capacityNumber = (value) => Number(value.replace(/\D/g, "")) * (value.endsWith("TB") ? 1024 : 1);
 const chipNumber = (value) => Number(value.match(/\d+/)?.[0] || 0);
 const chipTier = (value) => (value.includes("Max") ? 2 : value.includes("Pro") ? 1 : 0);
@@ -250,11 +258,11 @@ const changeItems = (entry) => {
     );
   }
   for (const item of entry.taxInclusivePriceChanges || []) {
-    const before = item.before?.status === "resolved"
-      ? usdPrice(item.before.amount)
+    const before = ["resolved", "estimated"].includes(item.before?.status)
+      ? taxDisplayPrice(item.before.amount)
       : "не получено";
-    const after = item.after?.status === "resolved"
-      ? usdPrice(item.after.amount)
+    const after = ["resolved", "estimated"].includes(item.after?.status)
+      ? taxDisplayPrice(item.after.amount)
       : "не получено";
     items.push(
       `Итого с налогом ${item.product.productCode}: ${before} → ${after}`,
@@ -300,7 +308,11 @@ const card = ({ product, label, heading, body, score, highlighted = false }) =>
     <div class="pick-chip">${escapeHtml(product.chip)}</div>
     <h3>${escapeHtml(heading)}</h3>
     <p>${escapeHtml(body)}</p>
-    <div class="pick-price"><strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb</span></div>
+    <div class="pick-price"><strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>${
+      product.taxInclusivePricing?.status === "estimated"
+        ? `<small>расчётный итог ${taxDisplayPrice(product[taxInclusivePriceField])}</small>`
+        : ""
+    }</div>
     <a class="pick-link" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">Открыть у Apple ↗</a>
   </article>`;
 
@@ -353,7 +365,12 @@ const rateLink = rateSourceUrl
   ? `<a href="${escapeHtml(rateSourceUrl)}" target="_blank" rel="noreferrer">Курс валют ↗</a>`
   : "";
 const hasReferenceLocationTax =
-  profile.tax.model === "apple-checkout-reference-location";
+  [
+    "apple-checkout-reference-location",
+    "verified-fixed-location-estimate",
+  ].includes(profile.tax.model);
+const hasVerifiedTaxEstimate =
+  profile.tax.model === "verified-fixed-location-estimate";
 const taxLocation = profile.tax.referenceLocation;
 const taxReferenceLabel = taxLocation
   ? `${taxLocation.name}, ${taxLocation.street}, ${taxLocation.city}, ${taxLocation.region} ${taxLocation.postalCode}`
@@ -366,17 +383,24 @@ const heroMarketCopy =
   hasReferenceLocationTax
     ? `Цены Apple указаны в ${sourceCurrency}. Каталог ${profile.storefront.countryName} остаётся общенациональным; налоговый ориентир привязан к одной точке.`
     : `Цены в ${displayCurrency} крупно, исходные ${sourceCurrency} — рядом.`;
-const taxMethodCopy = hasReferenceLocationTax
-  ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.</p></article>`
+const taxMethodCopy = hasVerifiedTaxEstimate
+  ? `<article><span>03</span><h3>Расчётный итог</h3><p>Для ${escapeHtml(taxReferenceLabel)} применяется ставка ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}%, округлённая до цента, плюс официальный CA recycling fee по диагонали. Формула проверена в корзине Apple на ${escapeHtml(profile.tax.acquisition.verification.productCode)}; окончательный счёт Apple может отличаться.</p></article>`
+  : hasReferenceLocationTax
+    ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.</p></article>`
   : `<article><span>03</span><h3>USD — ориентир</h3><p>Конвертация сделана по официальному кросс-курсу на ${formatRussianLongDate(rateDate)}. Банк или карта могут посчитать иначе.</p></article>`;
 const clientPriceFormatterSource =
   sourceCurrency !== displayCurrency
     ? `const sourcePrice=new Intl.NumberFormat(${JSON.stringify(profile.currency.secondaryLocale)},{maximumFractionDigits:0});
     const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong> <span class="source-secondary">(${escapeHtml(profile.currency.secondarySymbol || sourceCurrency)}'+sourcePrice.format(amount)+')</span>';`
     : `const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong>';`;
-const clientTaxFormatterSource = hasReferenceLocationTax
+const clientTaxFormatterSource = hasVerifiedTaxEstimate
   ? `const taxPrice=p=>p[taxInclusivePriceField]?
-      '<small class="tax-inclusive">Итого Apple: '+tablePrice(p[taxInclusivePriceField])+'</small>':
+      '<small class="tax-inclusive">Расчётный итог: '+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</small>'+
+      '<small class="tax-details">налог '+taxCurrency.format(p.taxInclusivePricing.salesTaxAmount*rate)+' · сбор '+taxCurrency.format(p.taxInclusivePricing.recyclingFeeAmount*rate)+'</small>':
+      '<small class="tax-unresolved">Итого с налогом: не рассчитано</small>';`
+  : hasReferenceLocationTax
+    ? `const taxPrice=p=>p[taxInclusivePriceField]?
+      '<small class="tax-inclusive">Итого Apple: '+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</small>':
       '<small class="tax-unresolved">Итого с налогом: не получено</small>';`
   : `const taxPrice=()=>"";`;
 const refurbishedHeader = hasReferenceLocationTax
@@ -467,7 +491,7 @@ const html = `<!doctype html>
     .chip-name{display:inline-block;background:#e8e5dc;padding:7px 9px;font-weight:850}.chip-m5{background:var(--blue);color:white}
     .dot{display:inline-block;width:12px;height:12px;border:1px solid #777;border-radius:50%;margin-right:7px;vertical-align:-1px}
     .silver{background:#e7e8e8}.midnight{background:#252a32}.space-grey{background:#838487}.space-black{background:#222}.starlight{background:#f1e5c9}.sky-blue{background:#b9d5e7}
-    .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-unresolved{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+    .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-details,.tax-unresolved{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.pick-price small{flex-basis:100%;font-size:12px;color:var(--muted)}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
     .price-link{color:inherit;text-decoration-color:#aaa;text-underline-offset:3px}
     .saving{font-weight:800;color:#187235}.overpay{font-weight:800;color:#c12b22}.na{color:var(--muted)}
     .open{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--ink);text-decoration:none}.open:hover{background:var(--blue);color:white}
@@ -505,7 +529,7 @@ const html = `<!doctype html>
       <div class="hero-stats">
         <div><strong>${products.length}</strong><span>актуальные позиции</span></div>
         <div><strong>${airCount} Air · ${proCount} Pro</strong><span>весь каталог ноутбуков</span></div>
-        <div class="price-range"><strong>${usdPrice(minimumPrice)} – ${usdPrice(maximumPrice)}</strong><span>диапазон цен</span></div>
+        <div class="price-range"><strong>${usdPrice(minimumPrice)} – ${usdPrice(maximumPrice)}</strong><span>${hasReferenceLocationTax ? "диапазон до налога" : "диапазон цен"}</span></div>
       </div>
     </section>
 
@@ -569,6 +593,7 @@ const html = `<!doctype html>
     const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
     const classes={Silver:"silver",Midnight:"midnight","Space Grey":"space-grey","Space Black":"space-black",Starlight:"starlight","Sky Blue":"sky-blue"};
     const primaryCurrency=new Intl.NumberFormat(${JSON.stringify(profile.locale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},maximumFractionDigits:0});
+    const taxCurrency=new Intl.NumberFormat(${JSON.stringify(profile.locale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:2,maximumFractionDigits:2});
     ${clientPriceFormatterSource}
     ${clientTaxFormatterSource}
     const filterNames=["family","screen","chip","memory","storage"];

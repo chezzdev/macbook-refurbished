@@ -33,6 +33,63 @@ function priceFields(marketProfile = DEFAULT_MARKET_PROFILE) {
   return marketProfile.currency.priceFields;
 }
 
+function hasReferenceLocationTax(marketProfile) {
+  return [
+    "apple-checkout-reference-location",
+    "verified-fixed-location-estimate",
+  ].includes(marketProfile.tax.model);
+}
+
+export function roundCurrency(value) {
+  return Math.floor(value * 100 + 0.5 + 1e-9) / 100;
+}
+
+export function calculateFixedLocationTaxEstimate(
+  product,
+  marketProfile,
+) {
+  if (marketProfile.tax.model !== "verified-fixed-location-estimate") {
+    throw new Error("market profile does not use a fixed-location estimate");
+  }
+  const fields = priceFields(marketProfile);
+  const preTaxAmount = product[fields.refurbished];
+  const screenInches = String(
+    Number(String(product.screen).replace(/\D/g, "")),
+  );
+  const recyclingFee =
+    marketProfile.tax.estimate.recyclingFeeUsdByScreenInches[screenInches];
+  if (!Number.isFinite(recyclingFee)) {
+    throw new Error(
+      `No recycling fee is configured for ${product.screen}`,
+    );
+  }
+  const salesTaxAmount = roundCurrency(
+    preTaxAmount * marketProfile.tax.estimate.salesTaxRate,
+  );
+  const amount = roundCurrency(
+    preTaxAmount + salesTaxAmount + recyclingFee,
+  );
+  return {
+    status: "estimated",
+    amount,
+    currency: marketProfile.currency.source,
+    preTaxAmount,
+    salesTaxRate: marketProfile.tax.estimate.salesTaxRate,
+    salesTaxAmount,
+    recyclingFeeAmount: recyclingFee,
+    locationId: marketProfile.tax.referenceLocation.id,
+    provenance: {
+      provider: "Calculated estimate",
+      method: "verified-fixed-location",
+      sourceUrl: marketProfile.tax.estimate.appleTaxPolicyUrl,
+      salesTaxSourceUrl: marketProfile.tax.estimate.salesTaxSourceUrl,
+      recyclingFeeSourceUrl:
+        marketProfile.tax.estimate.recyclingFeeSourceUrl,
+    },
+    reason: null,
+  };
+}
+
 export const sleep = (milliseconds) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -160,8 +217,11 @@ export function unresolvedTaxInclusivePricing(
     preTaxAmount: product[refurbishedPriceField],
     locationId: marketProfile.tax.referenceLocation.id,
     provenance: {
-      provider: "Apple",
-      method: "apple-checkout",
+      provider:
+        marketProfile.tax.model === "apple-checkout-reference-location"
+          ? "Apple"
+          : "Calculated estimate",
+      method: marketProfile.tax.acquisition.adapter,
       sourceUrl: null,
     },
     reason,
@@ -206,7 +266,7 @@ export function parseRefurbishedTile(
   const fields = priceFields(marketProfile);
   product[fields.refurbished] = parsePrice(tile?.price?.currentPrice?.amount);
   product[fields.new] = null;
-  if (marketProfile.tax.model === "apple-checkout-reference-location") {
+  if (hasReferenceLocationTax(marketProfile)) {
     product[fields.taxInclusive] = null;
     product.taxInclusivePricing = unresolvedTaxInclusivePricing(
       product,
@@ -449,8 +509,29 @@ export async function hydrateTaxInclusivePrices(
     batchSize = 2,
   } = {},
 ) {
+  if (marketProfile.tax.model === "verified-fixed-location-estimate") {
+    const fields = priceFields(marketProfile);
+    const hydratedProducts = products.map((product) => {
+      const pricing = calculateFixedLocationTaxEstimate(
+        product,
+        marketProfile,
+      );
+      return {
+        ...product,
+        [fields.taxInclusive]: pricing.amount,
+        taxInclusivePricing: pricing,
+      };
+    });
+    return {
+      estimatedCount: hydratedProducts.length,
+      resolvedCount: 0,
+      unresolvedCount: 0,
+      products: hydratedProducts,
+    };
+  }
   if (marketProfile.tax.model !== "apple-checkout-reference-location") {
     return {
+      estimatedCount: 0,
       resolvedCount: 0,
       unresolvedCount: 0,
       products,
@@ -512,6 +593,7 @@ export async function hydrateTaxInclusivePrices(
     (product) => product.taxInclusivePricing.status === "resolved",
   ).length;
   return {
+    estimatedCount: 0,
     resolvedCount,
     unresolvedCount: hydratedProducts.length - resolvedCount,
     products: hydratedProducts,
@@ -621,9 +703,12 @@ export function validateProducts(
       pricesByConfiguration.set(product.configurationKey, product[fields.new]);
     }
 
-    if (marketProfile.tax.model === "apple-checkout-reference-location") {
+    if (hasReferenceLocationTax(marketProfile)) {
       const pricing = product.taxInclusivePricing;
-      if (!pricing || !["resolved", "unresolved"].includes(pricing.status)) {
+      if (
+        !pricing ||
+        !["resolved", "unresolved", "estimated"].includes(pricing.status)
+      ) {
         throw new Error(
           `products[${index}].taxInclusivePricing must be explicit`,
         );
@@ -648,7 +733,7 @@ export function validateProducts(
             `products[${index}] unresolved tax-inclusive price must remain null`,
           );
         }
-      } else {
+      } else if (pricing.status === "resolved") {
         validateAppleTaxQuote(
           {
             amount: pricing.amount,
@@ -661,6 +746,26 @@ export function validateProducts(
         if (product[fields.taxInclusive] !== pricing.amount) {
           throw new Error(
             `products[${index}].${fields.taxInclusive} must match Apple quote`,
+          );
+        }
+      } else {
+        if (
+          marketProfile.tax.model !== "verified-fixed-location-estimate"
+        ) {
+          throw new Error(
+            `products[${index}] estimated tax requires an estimate profile`,
+          );
+        }
+        const expected = calculateFixedLocationTaxEstimate(
+          product,
+          marketProfile,
+        );
+        if (
+          product[fields.taxInclusive] !== expected.amount ||
+          JSON.stringify(pricing) !== JSON.stringify(expected)
+        ) {
+          throw new Error(
+            `products[${index}] tax estimate does not match its profile policy`,
           );
         }
       }
@@ -726,7 +831,13 @@ export function buildCatalog(
     catalog.marketId = marketProfile.id;
     catalog.source.tax = {
       model: marketProfile.tax.model,
+      acquisition: marketProfile.tax.acquisition,
       referenceLocation: marketProfile.tax.referenceLocation,
+      taxInclusiveSourcePolicy:
+        marketProfile.tax.taxInclusiveSourcePolicy,
+      ...(marketProfile.tax.estimate
+        ? { estimate: marketProfile.tax.estimate }
+        : {}),
       availabilityPolicy: marketProfile.tax.availabilityPolicy,
       filterByDeliveryOrPickup: marketProfile.tax.filterByDeliveryOrPickup,
     };
@@ -743,6 +854,7 @@ export function buildSuccessStatus(
     pricedConfigurationCount,
     marketProfile = DEFAULT_MARKET_PROFILE,
     taxResolvedCount = 0,
+    taxEstimatedCount = 0,
     taxUnresolvedCount = 0,
   },
 ) {
@@ -767,9 +879,10 @@ export function buildSuccessStatus(
       ...(marketProfile.id === "sg"
         ? { unpricedLegacyProducts: products.length - pricedProducts.length }
         : { unpricedCurrentProducts: products.length - pricedProducts.length }),
-      ...(marketProfile.tax.model === "apple-checkout-reference-location"
+      ...(hasReferenceLocationTax(marketProfile)
         ? {
-            taxInclusiveResolvedProducts: taxResolvedCount,
+            taxInclusiveAppleResolvedProducts: taxResolvedCount,
+            taxInclusiveEstimatedProducts: taxEstimatedCount,
             taxInclusiveUnresolvedProducts: taxUnresolvedCount,
           }
         : {}),

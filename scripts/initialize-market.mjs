@@ -23,12 +23,18 @@ export function buildInitialSiteDocument(profile) {
           }
         : null,
     tax:
-      profile.tax.model === "apple-checkout-reference-location"
+      [
+        "apple-checkout-reference-location",
+        "verified-fixed-location-estimate",
+      ].includes(profile.tax.model)
         ? {
             model: profile.tax.model,
             acquisition: profile.tax.acquisition,
             referenceLocation: profile.tax.referenceLocation,
             taxInclusiveSourcePolicy: profile.tax.taxInclusiveSourcePolicy,
+            ...(profile.tax.estimate
+              ? { estimate: profile.tax.estimate }
+              : {}),
             availabilityPolicy: profile.tax.availabilityPolicy,
             filterByDeliveryOrPickup: profile.tax.filterByDeliveryOrPickup,
           }
@@ -64,7 +70,9 @@ export async function initializeMarketNamespace({
       existingSite.productionUrl !== profile.publication.productionUrl ||
       existingSite.canonicalUrl !== profile.publication.canonicalUrl ||
       existingSite.plannedProductionUrl !==
-        (profile.publication.plannedUrl ?? null)
+        (profile.publication.plannedUrl ?? null) ||
+      JSON.stringify(existingSite.tax) !==
+        JSON.stringify(buildInitialSiteDocument(profile).tax)
     )
   ) {
     if (check) {
@@ -75,6 +83,7 @@ export async function initializeMarketNamespace({
       productionUrl: profile.publication.productionUrl,
       canonicalUrl: profile.publication.canonicalUrl,
       plannedProductionUrl: profile.publication.plannedUrl ?? null,
+      tax: buildInitialSiteDocument(profile).tax,
     };
     await writeJsonAtomic(paths.site, existingSite);
   }

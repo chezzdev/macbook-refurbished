@@ -12,11 +12,19 @@
     "sourceToDisplayRate": 1
   },
   "tax": {
-    "model": "apple-checkout-reference-location",
+    "model": "verified-fixed-location-estimate",
     "acquisition": {
-      "adapter": "apple-checkout",
-      "status": "unavailable",
-      "reason": "No stable non-interactive Apple checkout tax quote interface is configured"
+      "adapter": "manual-calculation",
+      "status": "verified",
+      "verifiedAt": "2026-07-26",
+      "verification": {
+        "productCode": "FDH94LL/A",
+        "productUrl": "https://www.apple.com/shop/product/fdh94ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Silver",
+        "preTaxAmountUsd": 1529,
+        "salesTaxAmountUsd": 160.55,
+        "recyclingFeeAmountUsd": 4,
+        "estimatedTotalAmountUsd": 1693.55
+      }
     },
     "referenceLocation": {
       "id": "apple-beverly-center",
@@ -27,7 +35,20 @@
       "postalCode": "90048",
       "country": "US"
     },
-    "taxInclusiveSourcePolicy": "apple-flow-only",
+    "taxInclusiveSourcePolicy": "verified-manual-estimate",
+    "estimate": {
+      "salesTaxRate": 0.105,
+      "rounding": "nearest-cent",
+      "recyclingFeeUsdByScreenInches": {
+        "13": 4,
+        "14": 4,
+        "15": 5,
+        "16": 5
+      },
+      "appleTaxPolicyUrl": "https://www.apple.com/shop/help/payments",
+      "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+      "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+    },
     "availabilityPolicy": "catalog-wide",
     "filterByDeliveryOrPickup": false
   }

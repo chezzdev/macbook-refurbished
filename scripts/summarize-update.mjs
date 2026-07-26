@@ -104,11 +104,11 @@ function detailLines(latestDelta) {
   }
   for (const item of latestDelta.taxInclusivePriceChanges ?? []) {
     const before =
-      item.before?.status === "resolved"
+      ["resolved", "estimated"].includes(item.before?.status)
         ? price(item.before.amount)
         : "не получено";
     const after =
-      item.after?.status === "resolved"
+      ["resolved", "estimated"].includes(item.after?.status)
         ? price(item.after.amount)
         : "не получено";
     lines.push(
