@@ -5,6 +5,7 @@ export function buildMarketDisplayCopy(
     hasReferenceLocationTax,
     taxLocationName = "",
     rateDateFormatted = "",
+    rateDateLong = "",
   },
 ) {
   const { source, display } = profile.currency;
@@ -22,8 +23,15 @@ export function buildMarketDisplayCopy(
         `${profile.storefront.countryName} остаётся общенациональным; ` +
         "налоговый ориентир привязан к одной точке."
       : `Цены в ${display} крупно, исходные ${source} — рядом.`;
+  const usesIdentityConversion = source === display;
   return {
-    convertedPriceHeading: `${display} — ориентир`,
+    currencyMethodBody: usesIdentityConversion
+      ? `Цены Apple уже указаны в ${display}; пересчёт по кросс-курсу не применяется.`
+      : `Конвертация сделана по официальному кросс-курсу на ${rateDateLong}. ` +
+        "Банк или карта могут посчитать иначе.",
+    currencyMethodHeading: usesIdentityConversion
+      ? `${display} — основная валюта`
+      : `${display} — ориентир`,
     heroCurrencyCopy,
     heroMarketCopy,
   };

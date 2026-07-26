@@ -44,8 +44,9 @@ function hasReferenceLocationTax(marketProfile) {
   ].includes(marketProfile.tax.model);
 }
 
-export function roundCurrency(value) {
-  return Math.floor(value * 100 + 0.5 + 1e-9) / 100;
+export function roundCurrency(value, minorUnitDigits = 2) {
+  const factor = 10 ** minorUnitDigits;
+  return Math.floor(value * factor + 0.5 + 1e-9) / factor;
 }
 
 export function calculateFixedLocationTaxEstimate(
@@ -58,6 +59,12 @@ export function calculateFixedLocationTaxEstimate(
   if (marketProfile.tax.model !== "verified-fixed-location-estimate") {
     throw new Error("market profile does not use a fixed-location estimate");
   }
+  const estimate = marketProfile.tax.estimate;
+  if (estimate.currency !== marketProfile.currency.source) {
+    throw new Error(
+      "fixed-location tax estimate currency must match the source currency",
+    );
+  }
   const preTaxAmount = product[priceField];
   if (!Number.isFinite(preTaxAmount) || preTaxAmount <= 0) {
     throw new Error(`${priceField} must be a positive number`);
@@ -66,34 +73,36 @@ export function calculateFixedLocationTaxEstimate(
     Number(String(product.screen).replace(/\D/g, "")),
   );
   const recyclingFee =
-    marketProfile.tax.estimate.recyclingFeeUsdByScreenInches[screenInches];
+    estimate.recyclingFeeByScreenInches[screenInches];
   if (!Number.isFinite(recyclingFee)) {
     throw new Error(
       `No recycling fee is configured for ${product.screen}`,
     );
   }
   const salesTaxAmount = roundCurrency(
-    preTaxAmount * marketProfile.tax.estimate.salesTaxRate,
+    preTaxAmount * estimate.salesTaxRate,
+    estimate.minorUnitDigits,
   );
   const amount = roundCurrency(
     preTaxAmount + salesTaxAmount + recyclingFee,
+    estimate.minorUnitDigits,
   );
   return {
     status: "estimated",
     amount,
-    currency: marketProfile.currency.source,
+    currency: estimate.currency,
     preTaxAmount,
-    salesTaxRate: marketProfile.tax.estimate.salesTaxRate,
+    salesTaxRate: estimate.salesTaxRate,
     salesTaxAmount,
     recyclingFeeAmount: recyclingFee,
     locationId: marketProfile.tax.referenceLocation.id,
     provenance: {
       provider: "Calculated estimate",
       method: "verified-fixed-location",
-      sourceUrl: marketProfile.tax.estimate.appleTaxPolicyUrl,
-      salesTaxSourceUrl: marketProfile.tax.estimate.salesTaxSourceUrl,
+      sourceUrl: estimate.appleTaxPolicyUrl,
+      salesTaxSourceUrl: estimate.salesTaxSourceUrl,
       recyclingFeeSourceUrl:
-        marketProfile.tax.estimate.recyclingFeeSourceUrl,
+        estimate.recyclingFeeSourceUrl,
     },
     reason: null,
   };

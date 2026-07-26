@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import {
+  cp,
   mkdtemp,
   mkdir,
   readFile,
@@ -266,19 +267,231 @@ test("third-market copy is driven by country and display currency", () => {
     hasReferenceLocationTax: true,
     taxLocationName: "Apple Toronto",
     rateDateFormatted: "26.07.2026",
+    rateDateLong: "26 июля 2026 года",
   });
   assert.match(fixedEstimateCopy.heroMarketCopy, /^В CA /);
   assert.doesNotMatch(fixedEstimateCopy.heroMarketCopy, /\bUS\b/);
-  assert.equal(fixedEstimateCopy.convertedPriceHeading, "EUR — ориентир");
+  assert.equal(fixedEstimateCopy.currencyMethodHeading, "EUR — ориентир");
 
   const convertedCopy = buildMarketDisplayCopy(futureProfile, {
     hasVerifiedTaxEstimate: false,
     hasReferenceLocationTax: false,
     rateDateFormatted: "26.07.2026",
+    rateDateLong: "26 июля 2026 года",
   });
   assert.match(convertedCopy.heroCurrencyCopy, /до 1 EUR$/);
   assert.match(convertedCopy.heroMarketCopy, /Цены в EUR/);
   assert.doesNotMatch(convertedCopy.heroCurrencyCopy, /\$1|USD/);
+  assert.equal(convertedCopy.currencyMethodHeading, "EUR — ориентир");
+  assert.match(convertedCopy.currencyMethodBody, /кросс-курсу/);
+});
+
+test("identity tax-included market renders no conversion methodology", async () => {
+  const fixtureRoot = await mkdtemp(join(tmpdir(), "macbook-jp-build-"));
+  const copiedProject = join(fixtureRoot, "project");
+  const namespaceRoot = join(fixtureRoot, "state");
+  try {
+    await mkdir(join(copiedProject, "work"), { recursive: true });
+    await Promise.all([
+      cp(join(projectRoot, "scripts"), join(copiedProject, "scripts"), {
+        recursive: true,
+      }),
+      cp(
+        join(projectRoot, "config/markets"),
+        join(copiedProject, "config/markets"),
+        { recursive: true },
+      ),
+      cp(
+        join(projectRoot, "work/build-expanded-standalone.mjs"),
+        join(copiedProject, "work/build-expanded-standalone.mjs"),
+        { recursive: true },
+      ),
+    ]);
+
+    const profile = structuredClone(sg);
+    profile.id = "jp";
+    profile.siteName = "MacBook JP Refurbished";
+    profile.pageTitle = "MacBook JP Refurbished — comparison";
+    profile.storefront = {
+      countryCode: "JP",
+      countryName: "Japan",
+      baseUrl: "https://www.apple.com/jp",
+      refurbishedCatalogUrl:
+        "https://www.apple.com/jp/shop/refurbished/mac",
+      newCatalogBaseUrl: "https://www.apple.com/jp/shop/buy-mac",
+    };
+    profile.currency = {
+      source: "JPY",
+      display: "JPY",
+      displayLocale: "ja-JP",
+      secondarySymbol: null,
+      secondaryLocale: "ja-JP",
+      priceFields: {
+        refurbished: "priceJpy",
+        new: "newPriceJpy",
+        taxInclusive: null,
+        newTaxInclusive: null,
+      },
+      conversion: {
+        type: "identity",
+        siteField: null,
+      },
+    };
+    profile.ranking.policyPath = "config/ranking-policy.jp.json";
+    profile.namespace = {
+      catalog: "data/markets/jp/catalog.json",
+      featured: "data/markets/jp/featured.json",
+      site: "data/markets/jp/site.json",
+      updateStatus: "data/markets/jp/update-status.json",
+      updateDelta: "data/markets/jp/update-delta.json",
+      changelog: "data/markets/jp/changelog.json",
+      artifactDirectory: "outputs/markets/jp",
+    };
+    profile.publication = {
+      ...profile.publication,
+      projectSlug: "macbook-jp-refurbished",
+      artifactDirectory: "markets/jp",
+      productionUrl: "https://macbook-jp-refurbished.pages.dev/",
+      canonicalUrl: "https://macbook-jp-refurbished.pages.dev/",
+    };
+    validateMarketProfile(profile);
+
+    const registryPath = join(
+      copiedProject,
+      "config/markets/registry.json",
+    );
+    const registry = JSON.parse(await readFile(registryPath, "utf8"));
+    registry.enabledMarkets.push("jp");
+    await writeFile(
+      registryPath,
+      `${JSON.stringify(registry, null, 2)}\n`,
+      "utf8",
+    );
+    await writeFile(
+      join(copiedProject, "config/markets/jp.json"),
+      `${JSON.stringify(profile, null, 2)}\n`,
+      "utf8",
+    );
+
+    const sourceProducts = JSON.parse(
+      await readFile(sgContext.paths.catalog, "utf8"),
+    ).products.slice(0, 3);
+    const products = sourceProducts.map((product, index) => {
+      const copy = {
+        ...product,
+        productCode: `JP-${index + 1}`,
+        priceJpy: 200000 + index * 10000,
+        newPriceJpy: null,
+        newSourceUrl: null,
+      };
+      delete copy.priceSgd;
+      delete copy.newPriceSgd;
+      return copy;
+    });
+    const checkedAt = "2026-07-26T12:00:00.000Z";
+    const documents = new Map([
+      [profile.namespace.catalog, {
+        schemaVersion: 1,
+        marketId: "jp",
+        source: {
+          refurbishedCatalogUrl:
+            profile.storefront.refurbishedCatalogUrl,
+          newCatalogBaseUrl: profile.storefront.newCatalogBaseUrl,
+          tax: {
+            model: "included-in-list-price",
+            acquisition: null,
+            referenceLocation: null,
+            availabilityPolicy: "catalog-wide",
+            filterByDeliveryOrPickup: false,
+          },
+        },
+        products,
+      }],
+      [profile.namespace.featured, {
+        schemaVersion: 1,
+        items: products.map((product, index) => ({
+          rank: index + 1,
+          configurationKey: product.configurationKey,
+          productCode: product.productCode,
+          score: 90000 - index,
+          label: `Choice ${index + 1}`,
+          headline: product.title,
+          reason: "Synthetic identity-market fixture",
+        })),
+      }],
+      [profile.namespace.site, buildInitialSiteDocument(profile)],
+      [profile.namespace.updateStatus, {
+        schemaVersion: 1,
+        status: "success",
+        checkedAt,
+        counts: {
+          products: products.length,
+          air: products.filter((product) => product.family === "Air").length,
+          pro: products.filter((product) => product.family === "Pro").length,
+        },
+      }],
+      [profile.namespace.changelog, {
+        schemaVersion: 1,
+        latestRun: {
+          schemaVersion: 1,
+          checkedAt,
+          hasChanges: false,
+          counts: {
+            added: 0,
+            removed: 0,
+            refurbPriceChanges: 0,
+            newPriceChanges: 0,
+            configurationChanges: 0,
+            featuredChanges: 0,
+          },
+          added: [],
+          removed: [],
+          refurbPriceChanges: [],
+          newPriceChanges: [],
+          configurationChanges: [],
+          featured: null,
+        },
+        entries: [],
+      }],
+    ]);
+    for (const [relativePath, document] of documents) {
+      const filePath = join(namespaceRoot, relativePath);
+      await mkdir(dirname(filePath), { recursive: true });
+      await writeFile(
+        filePath,
+        `${JSON.stringify(document, null, 2)}\n`,
+        "utf8",
+      );
+    }
+
+    await execFileAsync(
+      process.execPath,
+      ["work/build-expanded-standalone.mjs", "--market", "jp"],
+      {
+        cwd: copiedProject,
+        env: {
+          ...process.env,
+          MACBOOK_NAMESPACE_ROOT: namespaceRoot,
+        },
+      },
+    );
+    const html = await readFile(
+      join(namespaceRoot, profile.namespace.artifactDirectory, "index.html"),
+      "utf8",
+    );
+    assert.match(html, /JPY — основная валюта/);
+    assert.match(
+      html,
+      /Цены Apple уже указаны в JPY; пересчёт по кросс-курсу не применяется\./,
+    );
+    assert.doesNotMatch(
+      html,
+      /Конвертация сделана по официальному кросс-курсу/,
+    );
+    assert.doesNotMatch(html, /JPY — ориентир/);
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
 });
 
 test("enabled-market registry rejects ambiguous profile lists", () => {
@@ -726,6 +939,110 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
   assert.throws(
     () => buildCatalog(tamperedNew, us),
     /new tax estimate does not match its profile policy/,
+  );
+});
+
+test("fixed-location tax policy is currency-explicit for a future market", () => {
+  const futureProfile = structuredClone(us);
+  futureProfile.id = "ca";
+  futureProfile.siteName = "MacBook CA Refurbished";
+  futureProfile.pageTitle = "MacBook CA Refurbished — comparison";
+  futureProfile.storefront = {
+    countryCode: "CA",
+    countryName: "Canada",
+    baseUrl: "https://www.apple.com/ca",
+    refurbishedCatalogUrl:
+      "https://www.apple.com/ca/shop/refurbished/mac",
+    newCatalogBaseUrl: "https://www.apple.com/ca/shop/buy-mac",
+  };
+  futureProfile.currency = {
+    source: "CAD",
+    display: "EUR",
+    displayLocale: "de-DE",
+    secondarySymbol: "C$",
+    secondaryLocale: "en-CA",
+    priceFields: {
+      refurbished: "priceCad",
+      new: "newPriceCad",
+      taxInclusive: "taxInclusivePriceCad",
+      newTaxInclusive: "newTaxInclusivePriceCad",
+    },
+    conversion: {
+      type: "cbr-cross-rate",
+      siteField: "cadToEur",
+    },
+  };
+  futureProfile.tax.referenceLocation = {
+    id: "apple-toronto",
+    name: "Apple Toronto",
+    street: "100 Example Street",
+    city: "Toronto",
+    region: "ON",
+    postalCode: "M5V 1A1",
+    country: "CA",
+  };
+  futureProfile.tax.estimate = {
+    ...futureProfile.tax.estimate,
+    currency: "CAD",
+    salesTaxRate: 0.13,
+    recyclingFeeByScreenInches: {
+      "13": 5,
+      "14": 5,
+      "15": 6,
+      "16": 6,
+    },
+  };
+  futureProfile.tax.acquisition.verification = {
+    productCode: "CA-VERIFY",
+    productUrl:
+      "https://www.apple.com/ca/shop/product/ca-verify/example",
+    currency: "CAD",
+    preTaxAmount: 1000,
+    salesTaxAmount: 130,
+    recyclingFeeAmount: 5,
+    estimatedTotalAmount: 1135,
+  };
+  futureProfile.ranking.policyPath = "config/ranking-policy.ca.json";
+  futureProfile.namespace = {
+    catalog: "data/markets/ca/catalog.json",
+    featured: "data/markets/ca/featured.json",
+    site: "data/markets/ca/site.json",
+    updateStatus: "data/markets/ca/update-status.json",
+    updateDelta: "data/markets/ca/update-delta.json",
+    changelog: "data/markets/ca/changelog.json",
+    artifactDirectory: "outputs/markets/ca",
+  };
+  futureProfile.publication = {
+    ...futureProfile.publication,
+    projectSlug: "macbook-ca-refurbished",
+    artifactDirectory: "markets/ca",
+    productionUrl: "https://macbook-ca-refurbished.pages.dev/",
+    canonicalUrl: "https://macbook-ca-refurbished.pages.dev/",
+  };
+
+  assert.doesNotThrow(() => validateMarketProfile(futureProfile));
+  const estimate = calculateFixedLocationTaxEstimate(
+    { screen: "13″", priceCad: 1000 },
+    futureProfile,
+  );
+  assert.equal(estimate.currency, "CAD");
+  assert.equal(estimate.salesTaxAmount, 130);
+  assert.equal(estimate.recyclingFeeAmount, 5);
+  assert.equal(estimate.amount, 1135);
+
+  const mismatchedCurrency = structuredClone(futureProfile);
+  mismatchedCurrency.tax.estimate.currency = "USD";
+  assert.throws(
+    () => validateMarketProfile(mismatchedCurrency),
+    /fixed-location tax estimate/,
+  );
+  assert.throws(
+    () =>
+      calculateFixedLocationTaxEstimate(
+        { screen: "13″", priceCad: 1000 },
+        mismatchedCurrency,
+      ),
+    /currency must match the source currency/,
   );
 });
 

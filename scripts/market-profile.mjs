@@ -138,8 +138,9 @@ function assertCanonicalProfileLayout(profile) {
   }
 }
 
-function roundCurrency(value) {
-  return Math.floor(value * 100 + 0.5 + 1e-9) / 100;
+function roundCurrency(value, minorUnitDigits = 2) {
+  const factor = 10 ** minorUnitDigits;
+  return Math.floor(value * factor + 0.5 + 1e-9) / factor;
 }
 
 export function validateMarketProfile(profile) {
@@ -235,6 +236,11 @@ export function validateMarketProfile(profile) {
     ]) {
       requireString(location?.[field], `tax.referenceLocation.${field}`);
     }
+    if (location.country !== profile.storefront.countryCode) {
+      throw new Error(
+        "tax reference country must match the market storefront country",
+      );
+    }
     requireString(
       profile.currency.priceFields.taxInclusive,
       "currency.priceFields.taxInclusive",
@@ -262,6 +268,11 @@ export function validateMarketProfile(profile) {
     } else {
       const estimate = profile.tax.estimate;
       const verification = profile.tax.acquisition?.verification;
+      if (estimate?.currency !== profile.currency.source) {
+        throw new Error(
+          "fixed-location tax estimate currency must match the source currency",
+        );
+      }
       if (
         profile.tax.taxInclusiveSourcePolicy !== "verified-manual-estimate" ||
         profile.tax.acquisition?.adapter !== "manual-calculation" ||
@@ -269,18 +280,27 @@ export function validateMarketProfile(profile) {
         !Number.isFinite(estimate?.salesTaxRate) ||
         estimate.salesTaxRate <= 0 ||
         estimate.salesTaxRate >= 1 ||
-        estimate.rounding !== "nearest-cent"
+        estimate.rounding !== "nearest-minor-unit" ||
+        !Number.isSafeInteger(estimate.minorUnitDigits) ||
+        estimate.minorUnitDigits < 0 ||
+        estimate.minorUnitDigits > 4
       ) {
         throw new Error(
           "fixed-location tax estimate must declare its verified calculation policy",
         );
       }
-      for (const [screen, fee] of Object.entries(
-        estimate.recyclingFeeUsdByScreenInches ?? {},
-      )) {
+      const recyclingFees = Object.entries(
+        estimate.recyclingFeeByScreenInches ?? {},
+      );
+      if (recyclingFees.length === 0) {
+        throw new Error(
+          "tax.estimate.recyclingFeeByScreenInches must not be empty",
+        );
+      }
+      for (const [screen, fee] of recyclingFees) {
         if (!/^\d+$/.test(screen) || !Number.isFinite(fee) || fee < 0) {
           throw new Error(
-            "tax.estimate.recyclingFeeUsdByScreenInches must contain non-negative screen fees",
+            "tax.estimate.recyclingFeeByScreenInches must contain non-negative fees",
           );
         }
       }
@@ -295,6 +315,11 @@ export function validateMarketProfile(profile) {
         profile.tax.acquisition?.verifiedAt,
         "tax.acquisition.verifiedAt",
       );
+      if (verification?.currency !== estimate.currency) {
+        throw new Error(
+          "tax verification currency must match the estimate currency",
+        );
+      }
       requireString(
         verification?.productCode,
         "tax.acquisition.verification.productCode",
@@ -304,10 +329,10 @@ export function validateMarketProfile(profile) {
         "tax.acquisition.verification.productUrl",
       );
       for (const field of [
-        "preTaxAmountUsd",
-        "salesTaxAmountUsd",
-        "recyclingFeeAmountUsd",
-        "estimatedTotalAmountUsd",
+        "preTaxAmount",
+        "salesTaxAmount",
+        "recyclingFeeAmount",
+        "estimatedTotalAmount",
       ]) {
         if (!Number.isFinite(verification?.[field]) || verification[field] < 0) {
           throw new Error(
@@ -316,16 +341,18 @@ export function validateMarketProfile(profile) {
         }
       }
       const expectedTax = roundCurrency(
-        verification.preTaxAmountUsd * estimate.salesTaxRate,
+        verification.preTaxAmount * estimate.salesTaxRate,
+        estimate.minorUnitDigits,
       );
       const expectedTotal = roundCurrency(
-        verification.preTaxAmountUsd +
+        verification.preTaxAmount +
           expectedTax +
-          verification.recyclingFeeAmountUsd,
+          verification.recyclingFeeAmount,
+        estimate.minorUnitDigits,
       );
       if (
-        verification.salesTaxAmountUsd !== expectedTax ||
-        verification.estimatedTotalAmountUsd !== expectedTotal
+        verification.salesTaxAmount !== expectedTax ||
+        verification.estimatedTotalAmount !== expectedTotal
       ) {
         throw new Error(
           "fixed-location tax policy does not reproduce its Apple checkout verification",

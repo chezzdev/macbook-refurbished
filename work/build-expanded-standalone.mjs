@@ -397,7 +397,8 @@ const taxReferenceLabel = taxLocation
   ? `${taxLocation.name}, ${taxLocation.street}, ${taxLocation.city}, ${taxLocation.region} ${taxLocation.postalCode}`
   : "";
 const {
-  convertedPriceHeading,
+  currencyMethodBody,
+  currencyMethodHeading,
   heroCurrencyCopy,
   heroMarketCopy,
 } = buildMarketDisplayCopy(profile, {
@@ -405,12 +406,13 @@ const {
   hasReferenceLocationTax,
   taxLocationName: taxLocation?.name,
   rateDateFormatted,
+  rateDateLong: formatRussianLongDate(rateDate),
 });
 const taxMethodCopy = hasVerifiedTaxEstimate
   ? `<article><span>03</span><h3>Расчётный total</h3><p>Цена + налог ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}% + сбор. Ориентир: ${escapeHtml(taxReferenceLabel)}.</p></article>`
   : hasReferenceLocationTax
     ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.</p></article>`
-  : `<article><span>03</span><h3>${escapeHtml(convertedPriceHeading)}</h3><p>Конвертация сделана по официальному кросс-курсу на ${formatRussianLongDate(rateDate)}. Банк или карта могут посчитать иначе.</p></article>`;
+  : `<article><span>03</span><h3>${escapeHtml(currencyMethodHeading)}</h3><p>${escapeHtml(currencyMethodBody)}</p></article>`;
 const clientPriceFormatterSource =
   sourceCurrency !== displayCurrency
     ? `const sourcePrice=new Intl.NumberFormat(${JSON.stringify(profile.currency.secondaryLocale)},{maximumFractionDigits:0});
