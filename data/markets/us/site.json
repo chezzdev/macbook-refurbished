@@ -20,10 +20,11 @@
       "verification": {
         "productCode": "FDH94LL/A",
         "productUrl": "https://www.apple.com/shop/product/fdh94ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Silver",
-        "preTaxAmountUsd": 1529,
-        "salesTaxAmountUsd": 160.55,
-        "recyclingFeeAmountUsd": 4,
-        "estimatedTotalAmountUsd": 1693.55
+        "currency": "USD",
+        "preTaxAmount": 1529,
+        "salesTaxAmount": 160.55,
+        "recyclingFeeAmount": 4,
+        "estimatedTotalAmount": 1693.55
       }
     },
     "referenceLocation": {
@@ -37,9 +38,11 @@
     },
     "taxInclusiveSourcePolicy": "verified-manual-estimate",
     "estimate": {
+      "currency": "USD",
       "salesTaxRate": 0.105,
-      "rounding": "nearest-cent",
-      "recyclingFeeUsdByScreenInches": {
+      "rounding": "nearest-minor-unit",
+      "minorUnitDigits": 2,
+      "recyclingFeeByScreenInches": {
         "13": 4,
         "14": 4,
         "15": 5,
