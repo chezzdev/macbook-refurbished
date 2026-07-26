@@ -141,6 +141,12 @@ ranking-policy paths между рынками или внутри одного 
 нормализованные фактические цели, включая локальный `index.html`; outputs не
 могут пересекать immutable source directories. Staging сохраняет полные
 profile paths и не сплющивает одинаковые basename.
+Namespace layout намеренно строгий и lowercase ASCII: SG сохраняет legacy
+`data/*.json`, остальные рынки используют
+`data/markets/<id>/*.json`; локальный HTML всегда
+`outputs/markets/<id>/index.html`, publication HTML —
+`markets/<id>/index.html`. Это исключает APFS case/Unicode aliases и
+пересечение с `.gitignore`/source/publication targets.
 
 ## Ежедневное обновление всех рынков
 
@@ -149,6 +155,9 @@ profile paths и не сплющивает одинаковые basename.
 `outputs/latest-update-summary.txt` и показывает macOS notification.
 Codex automation в 08:00 Europe/Minsk использует тот же registry-driven
 entrypoint. Добавление enabled market не требует отдельной scheduled-команды.
+All-market entrypoint фиксирует один Git HEAD, читает registry из его archive
+snapshot и передаёт тот же SHA каждому рынку; SG и US в одном batch не могут
+быть собраны из разных commits.
 
 Production UI существует в одном варианте:
 `work/build-expanded-standalone.mjs`. `npm run build` валидирует и собирает

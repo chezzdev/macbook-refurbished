@@ -2,7 +2,7 @@
 set -euo pipefail
 
 script_dir="${0:A:h}"
-workspace_dir="${script_dir:h}"
+workspace_dir="${MACBOOK_WORKSPACE_DIR:-${script_dir:h}}"
 market_id="sg"
 prepare_only=false
 while (( $# > 0 )); do
@@ -26,17 +26,40 @@ while (( $# > 0 )); do
   esac
 done
 
+temporary_root="${TMPDIR:-/tmp}"
+temporary_root="${temporary_root:A}"
 source_head=""
+source_snapshot_dir=""
+execution_root="$workspace_dir"
 if [[ "$prepare_only" != "true" ]]; then
   if ! git -C "$workspace_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     print -u2 "Live publication requires a reviewed outer Git worktree."
     exit 1
   fi
-  source_head="$(git -C "$workspace_dir" rev-parse HEAD)"
+  requested_source_head="${MACBOOK_SOURCE_HEAD:-HEAD}"
+  source_head="$(
+    git -C "$workspace_dir" rev-parse --verify \
+      "${requested_source_head}^{commit}"
+  )"
+  source_snapshot_dir="$(
+    mktemp -d "${temporary_root%/}/macbook-source-snapshot.XXXXXX"
+  )"
+  source_snapshot_dir="${source_snapshot_dir:A}"
+  git -C "$workspace_dir" archive "$source_head" |
+    tar -x -C "$source_snapshot_dir"
+  execution_root="$source_snapshot_dir"
+
+  cleanup_bootstrap_snapshot() {
+    if [[ -n "$source_snapshot_dir" && -d "$source_snapshot_dir" && \
+          "$source_snapshot_dir" == "${temporary_root%/}/macbook-source-snapshot."* ]]; then
+      rm -rf -- "$source_snapshot_dir"
+    fi
+  }
+  trap cleanup_bootstrap_snapshot EXIT
 fi
 
 workflow_config="$(
-  node "${workspace_dir}/scripts/print-market-workflow-config.mjs" "$market_id"
+  node "${execution_root}/scripts/print-market-workflow-config.mjs" "$market_id"
 )"
 IFS=$'\x1f' read -r \
   market_id site_name profile_relative catalog_relative featured_relative site_relative \
@@ -60,17 +83,14 @@ if [[ "$prepare_only" != "true" && ( -z "$production_url" || -z "$repository_url
 fi
 
 default_publish_dir="${workspace_dir}/${publish_checkout_relative}"
-publication_lock_dir="${script_dir}/.publication-update.lock"
+publication_lock_dir="${workspace_dir}/work/.publication-update.lock"
 publication_lock_owner_file="${publication_lock_dir}/owner"
 publication_lock_owner="${MACBOOK_PUBLICATION_LOCK_OWNER:-market-${market_id}-$$}"
 publication_lock_owned=false
-temporary_root="${TMPDIR:-/tmp}"
 deployment_dir=""
 metadata_dir=""
 snapshot_dir=""
 staging_dir=""
-source_snapshot_dir=""
-execution_root="$workspace_dir"
 canonical_promotion_started=false
 workflow_succeeded=false
 allowed_ssh_remote="$repository_url"
@@ -78,9 +98,9 @@ allowed_https_remote="${repository_url/git@github.com:/https://github.com/}"
 allowed_https_remote_short="${allowed_https_remote%.git}"
 allowed_ssh_url_remote="${repository_url/git@github.com:/ssh://git@github.com/}"
 
-source_owned_paths=("${(@f)$(node "${workspace_dir}/scripts/publication-manifest.mjs" --source)}")
-immutable_source_paths=("${(@f)$(node "${workspace_dir}/scripts/publication-manifest.mjs" --immutable-source)}")
-publish_owned_paths=("${(@f)$(node "${workspace_dir}/scripts/publication-manifest.mjs" --publish)}")
+source_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --source)}")
+immutable_source_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --immutable-source)}")
+publish_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --publish)}")
 
 if [[ -d "${workspace_dir}/.git" && \
       -f "${workspace_dir}/scripts/update-apple-catalog.mjs" && \
@@ -173,7 +193,8 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-if [[ "$prepare_only" != "true" ]]; then
+if [[ "$prepare_only" != "true" && \
+      "${MACBOOK_BATCH_SOURCE_VERIFIED:-false}" != "true" ]]; then
   outer_source_changes="$(
     git -C "$workspace_dir" diff --name-status "$source_head" -- \
       "${immutable_source_paths[@]}"
@@ -183,13 +204,8 @@ if [[ "$prepare_only" != "true" ]]; then
     print -u2 "$outer_source_changes"
     exit 1
   fi
-  source_snapshot_dir="$(
-    mktemp -d "${temporary_root%/}/macbook-source-snapshot.XXXXXX"
-  )"
-  git -C "$workspace_dir" archive "$source_head" -- \
-    "${immutable_source_paths[@]}" |
-    tar -x -C "$source_snapshot_dir"
-  execution_root="$source_snapshot_dir"
+fi
+if [[ "$prepare_only" != "true" ]]; then
   for relative_file in "${immutable_source_paths[@]}"; do
     immutable_source_set[$relative_file]=true
   done

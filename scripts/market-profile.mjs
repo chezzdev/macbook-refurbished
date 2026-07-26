@@ -74,10 +74,62 @@ function validateNamespacePath(value, label) {
   if (relativePath.startsWith("..") || isAbsolute(relativePath)) {
     throw new Error(`${label} must stay inside the project root`);
   }
-  if (value.includes("\\") || value !== relativePath) {
-    throw new Error(`${label} must use its normalized project-relative path`);
+  if (
+    value.includes("\\") ||
+    value !== relativePath
+  ) {
+    throw new Error(
+      `${label} must use a normalized project-relative path`,
+    );
   }
   return relativePath;
+}
+
+function assertCanonicalProfileLayout(profile) {
+  const dataPrefix = profile.id === "sg" ? "data" : `data/markets/${profile.id}`;
+  const expectedNamespace = {
+    catalog: `${dataPrefix}/catalog.json`,
+    featured: `${dataPrefix}/featured.json`,
+    site: `${dataPrefix}/site.json`,
+    updateStatus: `${dataPrefix}/update-status.json`,
+    updateDelta: `${dataPrefix}/update-delta.json`,
+    changelog: `${dataPrefix}/changelog.json`,
+    artifactDirectory: `outputs/markets/${profile.id}`,
+  };
+  for (const [key, expectedPath] of Object.entries(expectedNamespace)) {
+    if (profile.namespace?.[key] !== expectedPath) {
+      throw new Error(
+        `${profile.id}.namespace.${key} must be ${expectedPath}`,
+      );
+    }
+  }
+  const expectedPolicyPath =
+    profile.id === "sg"
+      ? "config/ranking-policy.json"
+      : `config/ranking-policy.${profile.id}.json`;
+  if (profile.ranking?.policyPath !== expectedPolicyPath) {
+    throw new Error(
+      `${profile.id}.ranking.policyPath must be ${expectedPolicyPath}`,
+    );
+  }
+  if (
+    profile.publication?.artifactDirectory !== `markets/${profile.id}`
+  ) {
+    throw new Error(
+      `${profile.id}.publication.artifactDirectory must be markets/${profile.id}`,
+    );
+  }
+  if (
+    profile.publication?.repository !==
+      "git@github.com:chezzdev/macbook-refurbished-sg.git" ||
+    profile.publication?.checkoutPath !== "work/gh-pages-site" ||
+    profile.publication?.branch !== "main" ||
+    profile.publication?.provider !== "cloudflare-pages"
+  ) {
+    throw new Error(
+      `${profile.id}.publication must use the unified Cloudflare publication repository`,
+    );
+  }
 }
 
 function roundCurrency(value) {
@@ -309,6 +361,7 @@ export function validateMarketProfile(profile) {
     profile.publication?.artifactDirectory,
     "publication.artifactDirectory",
   );
+  assertCanonicalProfileLayout(profile);
   if (
     profile.namespace.artifactDirectory !==
       `outputs/markets/${profile.id}` ||
@@ -470,8 +523,17 @@ export function assertUniqueProfileOwnedPaths(profiles) {
       value.includes("/") ? value.split("/", 1)[0] : value,
     ),
   );
+  const reservedPublicationTargets = new Set([
+    ".gitignore",
+    ...profiles.map(
+      (profile) => `${profile.publication.artifactDirectory}/index.html`,
+    ),
+  ].map((value) =>
+    validateNamespacePath(value, "reserved publication target"),
+  ));
 
   for (const profile of profiles) {
+    assertCanonicalProfileLayout(profile);
     const policyPath = validateNamespacePath(
       profile.ranking.policyPath,
       `${profile.id}.ranking.policyPath`,
@@ -510,6 +572,14 @@ export function assertUniqueProfileOwnedPaths(profiles) {
         throw new Error(
           `profile output path overlaps immutable source: ${normalizedPath}`,
         );
+      }
+      for (const publicationTarget of reservedPublicationTargets) {
+        if (pathsOverlap(normalizedPath, publicationTarget)) {
+          throw new Error(
+            `profile output path overlaps reserved publication target: ` +
+              normalizedPath,
+          );
+        }
       }
       for (const [existingPath, existingOwner] of outputOwners) {
         if (pathsOverlap(normalizedPath, existingPath)) {

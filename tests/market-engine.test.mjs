@@ -26,6 +26,7 @@ import {
   loadEnabledMarketProfiles,
   loadMarketContext,
   loadMarketProfile,
+  validateMarketProfile,
   validateMarketRegistry,
 } from "../scripts/market-profile.mjs";
 import { buildPublicationManifest } from "../scripts/publication-manifest.mjs";
@@ -293,6 +294,18 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
     allMarketsWorkflow,
     /export MACBOOK_PUBLICATION_LOCK_OWNER=/,
   );
+  assert.match(
+    allMarketsWorkflow,
+    /batch_source_head="\$\(git -C "\$workspace_dir" rev-parse HEAD\)"/,
+  );
+  assert.match(
+    allMarketsWorkflow,
+    /export MACBOOK_SOURCE_HEAD="\$batch_source_head"/,
+  );
+  assert.match(
+    allMarketsWorkflow,
+    /"\$\{batch_snapshot_dir\}\/work\/update-market-site\.zsh"/,
+  );
 
   const prepareOnlyBranch = perMarketWorkflow.slice(
     perMarketWorkflow.indexOf('if [[ "$prepare_only" == "true" ]]'),
@@ -370,7 +383,7 @@ test("enabled market profiles cannot share state or policy paths", () => {
   collidingMarket.ranking.policyPath = "config/ranking-policy.ca.json";
   assert.throws(
     () => assertUniqueProfileOwnedPaths([sg, us, collidingMarket]),
-    /profile-owned path collision: data\/markets\/us\/catalog\.json/,
+    /ca\.namespace\.catalog must be data\/markets\/ca\/catalog\.json/,
   );
 
   const internallyCollidingMarket = structuredClone(us);
@@ -389,7 +402,7 @@ test("enabled market profiles cannot share state or policy paths", () => {
   };
   assert.throws(
     () => assertUniqueProfileOwnedPaths([internallyCollidingMarket]),
-    /namespace\.catalog and ca\.namespace\.featured/,
+    /ca\.namespace\.featured must be data\/markets\/ca\/featured\.json/,
   );
 
   const baseFutureMarket = structuredClone(us);
@@ -404,12 +417,14 @@ test("enabled market profiles cannot share state or policy paths", () => {
     changelog: "data/markets/ca/changelog.json",
     artifactDirectory: "outputs/markets/ca",
   };
+  baseFutureMarket.publication.artifactDirectory = "markets/ca";
+  assert.doesNotThrow(() => validateMarketProfile(baseFutureMarket));
 
   const aliasedMarket = structuredClone(baseFutureMarket);
   aliasedMarket.namespace.catalog = "data/markets/ca/./catalog.json";
   assert.throws(
     () => assertUniqueProfileOwnedPaths([aliasedMarket]),
-    /must use its normalized project-relative path/,
+    /ca\.namespace\.catalog must be data\/markets\/ca\/catalog\.json/,
   );
 
   const artifactCollisionMarket = structuredClone(baseFutureMarket);
@@ -417,21 +432,43 @@ test("enabled market profiles cannot share state or policy paths", () => {
     "outputs/markets/ca/index.html";
   assert.throws(
     () => assertUniqueProfileOwnedPaths([artifactCollisionMarket]),
-    /namespace\.catalog and ca\.namespace\.artifact/,
+    /ca\.namespace\.catalog must be data\/markets\/ca\/catalog\.json/,
   );
 
   const sourceCollisionMarket = structuredClone(baseFutureMarket);
   sourceCollisionMarket.namespace.catalog = "scripts/market-profile.mjs";
   assert.throws(
     () => assertUniqueProfileOwnedPaths([sourceCollisionMarket]),
-    /profile output path overlaps immutable source/,
+    /ca\.namespace\.catalog must be data\/markets\/ca\/catalog\.json/,
   );
 
-  const sameBasenameMarket = structuredClone(baseFutureMarket);
-  sameBasenameMarket.namespace.featured =
-    "data/markets/ca/alternate/catalog.json";
-  assert.doesNotThrow(() =>
-    assertUniqueProfileOwnedPaths([sameBasenameMarket]),
+  const publicationCollisionMarket = structuredClone(baseFutureMarket);
+  publicationCollisionMarket.namespace.catalog = "markets/ca/index.html";
+  assert.throws(
+    () => assertUniqueProfileOwnedPaths([publicationCollisionMarket]),
+    /ca\.namespace\.catalog must be data\/markets\/ca\/catalog\.json/,
+  );
+
+  const rootCollisionMarket = structuredClone(baseFutureMarket);
+  rootCollisionMarket.namespace.catalog = ".gitignore";
+  assert.throws(
+    () => assertUniqueProfileOwnedPaths([rootCollisionMarket]),
+    /ca\.namespace\.catalog must be data\/markets\/ca\/catalog\.json/,
+  );
+
+  const caseAliasMarket = structuredClone(sg);
+  caseAliasMarket.namespace.catalog = "DATA/CATALOG.JSON";
+  assert.throws(
+    () => validateMarketProfile(caseAliasMarket),
+    /sg\.namespace\.catalog must be data\/catalog\.json/,
+  );
+
+  const splitRepositoryMarket = structuredClone(baseFutureMarket);
+  splitRepositoryMarket.publication.repository =
+    "git@github.com:chezzdev/macbook-refurbished-ca.git";
+  assert.throws(
+    () => validateMarketProfile(splitRepositoryMarket),
+    /must use the unified Cloudflare publication repository/,
   );
 });
 
