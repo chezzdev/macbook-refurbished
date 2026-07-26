@@ -153,9 +153,12 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     sg.publication.productionUrl,
     "https://macbook-sg-refurbished.pages.dev/",
   );
-  assert.equal(us.publication.productionUrl, null);
+  assert.equal(
+    us.publication.productionUrl,
+    "https://macbook-us-refurbished.whole-acorn-4078.chatgpt.site/",
+  );
   assert.equal(us.publication.approvalRequired, false);
-  assert.equal(us.publication.status, "approved-pending-provision");
+  assert.equal(us.publication.status, "active");
   assert.deepEqual(enabledMarketState.registry.enabledMarkets, ["sg", "us"]);
   assert.deepEqual(
     enabledMarketState.profiles.map((profile) => profile.id),
@@ -354,10 +357,10 @@ test("US tax pricing is Apple-provenanced or explicitly unresolved", async () =>
   }
 });
 
-test("US namespace migration seeds identity currency and provision-pending hosting", () => {
+test("US namespace migration seeds identity currency and active hosting", () => {
   const site = buildInitialSiteDocument(us);
   assert.equal(site.siteName, "MacBook US Refurbished");
-  assert.equal(site.productionUrl, null);
+  assert.equal(site.productionUrl, us.publication.productionUrl);
   assert.equal(site.canonicalUrl, us.publication.canonicalUrl);
   assert.equal(site.plannedProductionUrl, us.publication.plannedUrl);
   assert.equal(site.currency.sourceToDisplayRate, 1);
@@ -514,17 +517,19 @@ test("the shared UI builder renders the US profile without Singapore assumptions
     assert.match(html, /MacBook US Refurbished/);
     assert.match(html, /Apple Beverly Center/);
     assert.match(html, /Итого с налогом: не получено/);
-    assert.match(
-      html,
-      /<link rel="canonical" href="https:\/\/macbook-us-refurbished\.pages\.dev\/">/,
+    assert.ok(
+      html.includes(
+        `<link rel="canonical" href="${us.publication.canonicalUrl}">`,
+      ),
     );
     assert.match(
       html,
       /href="https:\/\/macbook-sg-refurbished\.pages\.dev\/"[^>]*aria-label="MacBook SG Refurbished"/,
     );
-    assert.match(
-      html,
-      /href="https:\/\/macbook-us-refurbished\.pages\.dev\/"[^>]*aria-current="page"[^>]*aria-label="MacBook US Refurbished"/,
+    assert.ok(
+      html.includes(
+        `href="${us.publication.canonicalUrl}" aria-current="page" aria-label="MacBook US Refurbished"`,
+      ),
     );
     assert.doesNotMatch(html, /class="source-secondary"/);
     assert.doesNotMatch(html, /Apple Singapore|priceSgd|newPriceSgd/);

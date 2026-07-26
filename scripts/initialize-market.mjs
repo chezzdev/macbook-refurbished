@@ -58,6 +58,25 @@ export async function initializeMarketNamespace({
     existingSite.productionUrl !== profile.publication.productionUrl
   ) {
     throw new Error("Singapore site migration cannot change its production URL");
+  } else if (
+    profile.publication.status === "active" &&
+    (
+      existingSite.productionUrl !== profile.publication.productionUrl ||
+      existingSite.canonicalUrl !== profile.publication.canonicalUrl ||
+      existingSite.plannedProductionUrl !==
+        (profile.publication.plannedUrl ?? null)
+    )
+  ) {
+    if (check) {
+      throw new Error(`${paths.site} does not match its active publication`);
+    }
+    existingSite = {
+      ...existingSite,
+      productionUrl: profile.publication.productionUrl,
+      canonicalUrl: profile.publication.canonicalUrl,
+      plannedProductionUrl: profile.publication.plannedUrl ?? null,
+    };
+    await writeJsonAtomic(paths.site, existingSite);
   }
 
   for (const requiredPath of [paths.catalog, paths.featured]) {

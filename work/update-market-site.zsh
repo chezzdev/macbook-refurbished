@@ -64,7 +64,6 @@ allowed_ssh_url_remote="${repository_url/git@github.com:/ssh://git@github.com/}"
 publish_owned_paths=(
   .gitignore
   README.md
-  index.html
   "${publication_artifact_directory}/index.html"
   package.json
   package-lock.json
@@ -111,6 +110,10 @@ if [[ -d "${workspace_dir}/.git" && \
   publish_dir="$workspace_dir"
 else
   publish_dir="$default_publish_dir"
+fi
+if [[ -e "${publish_dir}/index.html" ]] || \
+    git -C "$publish_dir" ls-files --error-unmatch index.html >/dev/null 2>&1; then
+  publish_owned_paths+=(index.html)
 fi
 
 cleanup() {

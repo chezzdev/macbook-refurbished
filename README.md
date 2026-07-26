@@ -5,10 +5,9 @@
 
 - **MacBook SG Refurbished** — действующий сайт:
   <https://macbook-sg-refurbished.pages.dev/>
-- **MacBook US Refurbished** — отдельный профиль и отдельный будущий сайт.
-  Планируемый slug `macbook-us-refurbished` остаётся заблокированным до
-  одобрения hosting project и финального production URL. Этот проект ничего
-  внешнего для US не создаёт и не публикует.
+- **MacBook US Refurbished** — отдельный Sites-проект:
+  <https://macbook-us-refurbished.whole-acorn-4078.chatgpt.site/>. Сейчас
+  доступ owner-only; публичный доступ требует отдельного явного одобрения.
 
 В интерфейсе есть переключатель рынков, построенный из
 `config/markets/registry.json`. Он ведёт на канонический URL отдельного сайта и
@@ -90,10 +89,11 @@ private-repository sync, Cloudflare Pages deployment и live hash verification.
 публикуемые файлы изолированы как `markets/sg/index.html` и
 `markets/us/index.html`. Старый корневой `index.html` SG удаляется при следующей
 канонической синхронизации. Каждый профиль выбирает собственный артефакт и
-отдельный Cloudflare Pages project, поэтому постоянный SG URL не зависит от
-расположения файла в repository. US профиль fail-closed до одобрения hosting
-project и финального URL, поэтому
-`--market us` не начинает live refresh и не создаёт hosting project.
+отдельный hosting project, поэтому постоянный SG URL не зависит от расположения
+файла в repository. US использует Sites, поэтому общий workflow запускается для
+него с `--prepare-only`: он обновляет и полностью проверяет профильный
+артефакт, но не отправляет его в SG Cloudflare Pages project. Сохранение версии
+и deployment выполняются через Sites из того же исходного дерева.
 
 ## Ежедневное обновление Singapore
 

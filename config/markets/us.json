@@ -66,16 +66,16 @@
     "artifactDirectory": "outputs/markets/us"
   },
   "publication": {
-    "status": "approved-pending-provision",
+    "status": "active",
     "provider": "sites",
     "projectSlug": "macbook-us-refurbished",
     "repository": "git@github.com:chezzdev/macbook-refurbished-sg.git",
     "checkoutPath": "work/gh-pages-site",
     "artifactDirectory": "markets/us",
     "branch": "main",
-    "productionUrl": null,
-    "canonicalUrl": "https://macbook-us-refurbished.pages.dev/",
-    "plannedUrl": "https://macbook-us-refurbished.pages.dev/",
+    "productionUrl": "https://macbook-us-refurbished.whole-acorn-4078.chatgpt.site/",
+    "canonicalUrl": "https://macbook-us-refurbished.whole-acorn-4078.chatgpt.site/",
+    "plannedUrl": null,
     "approvalRequired": false
   }
 }

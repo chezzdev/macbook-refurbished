@@ -189,10 +189,7 @@ export function validateMarketProfile(profile) {
       profile.publication.checkoutPath !== "work/gh-pages-site" ||
       profile.publication.artifactDirectory !== "markets/us" ||
       profile.publication.projectSlug !== "macbook-us-refurbished" ||
-      profile.publication.canonicalUrl !==
-        "https://macbook-us-refurbished.pages.dev/" ||
-      profile.publication.plannedUrl !==
-        "https://macbook-us-refurbished.pages.dev/"
+      profile.publication.provider !== "sites"
     ) {
       throw new Error("US publication identity does not match its approved plan");
     }
@@ -215,7 +212,8 @@ export function validateMarketProfile(profile) {
     } else if (
       profile.publication.status !== "active" ||
       typeof profile.publication.productionUrl !== "string" ||
-      profile.publication.productionUrl.length === 0
+      profile.publication.productionUrl.length === 0 ||
+      profile.publication.canonicalUrl !== profile.publication.productionUrl
     ) {
       throw new Error(
         "Approved US publication must declare an active repository and production URL",
