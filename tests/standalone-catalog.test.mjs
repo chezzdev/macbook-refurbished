@@ -3,18 +3,22 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const projectRoot = new URL("../", import.meta.url);
-const [html, catalog, featured, site] = await Promise.all([
+const [html, catalog, featured, changelog, site] = await Promise.all([
   readFile(
     new URL("outputs/macbook-air-refurbished-comparison.html", projectRoot),
     "utf8",
   ),
   readFile(new URL("data/catalog.json", projectRoot), "utf8").then(JSON.parse),
   readFile(new URL("data/featured.json", projectRoot), "utf8").then(JSON.parse),
+  readFile(new URL("data/changelog.json", projectRoot), "utf8").then(JSON.parse),
   readFile(new URL("data/site.json", projectRoot), "utf8").then(JSON.parse),
 ]);
 
 const shortlist = html.match(
   /<section class="section-shell" id="shortlist">([\s\S]*?)<section class="section-shell" id="comparison">/,
+)?.[1];
+const changelogSection = html.match(
+  /<section class="section-shell" id="changelog">([\s\S]*?)<\/main>/,
 )?.[1];
 
 test("embeds the complete catalog and exactly three ranked cards", () => {
@@ -84,6 +88,19 @@ test("contains syntactically valid inline JavaScript", () => {
   for (const [, source] of scripts) {
     assert.doesNotThrow(() => new Function(source));
   }
+});
+
+test("renders a USD-only changelog and latest-run result at the page bottom", () => {
+  assert.ok(changelogSection);
+  assert.match(changelogSection, /Что изменилось/);
+  assert.match(changelogSection, /Старт отслеживания|изменений/);
+  assert.doesNotMatch(changelogSection, /S\$|\bSGD\b/);
+  const latestDate = changelog.latestRun.checkedAt
+    .slice(0, 10)
+    .split("-")
+    .reverse()
+    .join(".");
+  assert.match(changelogSection, new RegExp(escapeRegex(latestDate)));
 });
 
 function escapeRegex(value) {

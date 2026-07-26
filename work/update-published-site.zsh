@@ -8,6 +8,7 @@ lock_dir="${script_dir}/.catalog-update.lock"
 temporary_root="${TMPDIR:-/tmp}"
 deployment_dir=""
 metadata_dir=""
+snapshot_dir=""
 production_url="https://macbook-sg-refurbished.pages.dev"
 cloudflare_project="macbook-sg-refurbished"
 allowed_ssh_remote="git@github.com:chezzdev/macbook-refurbished-sg.git"
@@ -24,21 +25,27 @@ publish_owned_paths=(
   config/publish.gitignore
   config/ranking-policy.json
   data/catalog.json
+  data/changelog.json
   data/featured.json
   data/site.json
+  data/update-delta.json
   data/update-status.json
   scripts/apple-catalog-lib.mjs
   scripts/apple-catalog-lib.test.mjs
   scripts/html-escape.mjs
+  scripts/summarize-update.mjs
   scripts/update-apple-catalog.mjs
+  scripts/update-changelog.mjs
   scripts/update-exchange-rate.mjs
   scripts/validate-apple-catalog.mjs
   scripts/rank-models.mjs
+  tests/changelog.test.mjs
   tests/exchange-rate.test.mjs
   tests/html-escape.test.mjs
   tests/rank-models.test.mjs
   tests/standalone-catalog.test.mjs
   work/build-expanded-standalone.mjs
+  work/daily-update.zsh
   work/update-published-site.zsh
 )
 
@@ -58,6 +65,10 @@ cleanup() {
   if [[ -n "$metadata_dir" && -d "$metadata_dir" && \
         "$metadata_dir" == "${temporary_root%/}/macbook-deploy-git."* ]]; then
     rm -rf -- "$metadata_dir"
+  fi
+  if [[ -n "$snapshot_dir" && -d "$snapshot_dir" && \
+        "$snapshot_dir" == "${temporary_root%/}/macbook-catalog-before."* ]]; then
+    rm -rf -- "$snapshot_dir"
   fi
   rmdir "$lock_dir" 2>/dev/null || true
 }
@@ -83,6 +94,13 @@ if [[ -n "$preexisting_changes" ]]; then
 fi
 
 cd "$workspace_dir"
+snapshot_dir="$(mktemp -d "${temporary_root%/}/macbook-catalog-before.XXXXXX")"
+if [[ -f data/catalog.json ]]; then
+  cp data/catalog.json "${snapshot_dir}/catalog.json"
+fi
+if [[ -f data/featured.json ]]; then
+  cp data/featured.json "${snapshot_dir}/featured.json"
+fi
 
 print "1/8 Fetching Apple Singapore prices and the current SGD to USD rate"
 node scripts/update-apple-catalog.mjs
@@ -92,10 +110,14 @@ node scripts/update-exchange-rate.mjs
 print "2/8 Applying deterministic ranking policy"
 node scripts/rank-models.mjs
 node scripts/rank-models.mjs --check
+node scripts/update-changelog.mjs \
+  --previous-catalog "${snapshot_dir}/catalog.json" \
+  --previous-featured "${snapshot_dir}/featured.json"
 
 print "3/8 Running parser, currency, and ranking tests"
 node --test \
   scripts/apple-catalog-lib.test.mjs \
+  tests/changelog.test.mjs \
   tests/exchange-rate.test.mjs \
   tests/html-escape.test.mjs \
   tests/rank-models.test.mjs
@@ -149,21 +171,27 @@ if [[ "$publish_dir" != "$workspace_dir" ]]; then
     config/publish.gitignore
     config/ranking-policy.json
     data/catalog.json
+    data/changelog.json
     data/featured.json
     data/site.json
+    data/update-delta.json
     data/update-status.json
     scripts/apple-catalog-lib.mjs
     scripts/apple-catalog-lib.test.mjs
     scripts/html-escape.mjs
+    scripts/summarize-update.mjs
     scripts/update-exchange-rate.mjs
     scripts/update-apple-catalog.mjs
+    scripts/update-changelog.mjs
     scripts/validate-apple-catalog.mjs
     scripts/rank-models.mjs
+    tests/changelog.test.mjs
     tests/rank-models.test.mjs
     tests/exchange-rate.test.mjs
     tests/html-escape.test.mjs
     tests/standalone-catalog.test.mjs
     work/build-expanded-standalone.mjs
+    work/daily-update.zsh
     work/update-published-site.zsh
   )
   for relative_file in "${owned_files[@]}"; do
@@ -221,3 +249,4 @@ fi
 print "Catalog refresh, tests, private sync, deployment, and live hash verification succeeded."
 print "Artifact SHA-256: $second_hash"
 print "Production: $production_url"
+node scripts/summarize-update.mjs

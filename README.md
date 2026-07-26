@@ -30,9 +30,11 @@ https://macbook-sg-refurbished.pages.dev
 ## Источники и правила
 
 - `data/catalog.json` — нормализованный каталог и точные новые цены.
+- `data/changelog.json` — история реальных изменений каталога.
 - `data/featured.json` — три результата рейтинга для верхней секции.
 - `data/site.json` — постоянный URL и курс SGD → USD.
 - `data/update-status.json` — время и итоговые счётчики обновления.
+- `data/update-delta.json` — изменения относительно предыдущего запуска.
 - `config/ranking-policy.json` — фиксированные веса, идеальная конфигурация и
   tie-breakers.
 
@@ -47,6 +49,14 @@ npm run catalog:update
 npm run currency:update
 npm run catalog:validate
 npm run catalog:rank
+npm run catalog:summary
 npm run build
 npm test
 ```
+
+## Ежедневное обновление
+
+`work/daily-update.zsh` запускает полный процесс, сохраняет текстовый отчёт в
+`outputs/latest-update-summary.txt` и показывает системное уведомление macOS.
+LaunchAgent `dev.chezz.macbook-refurbished-sg.daily-update` запускает его каждый
+день в 08:00 по локальному времени Mac.

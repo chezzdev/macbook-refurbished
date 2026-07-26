@@ -12,6 +12,7 @@ const readJson = async (fileName, { optional = false } = {}) => {
 
 const catalogDocument = await readJson("data/catalog.json");
 const featuredDocument = await readJson("data/featured.json");
+const changelogDocument = await readJson("data/changelog.json");
 const site = await readJson("data/site.json");
 const updateStatus = await readJson("data/update-status.json", { optional: true });
 
@@ -23,6 +24,13 @@ if (!Array.isArray(products) || products.length === 0) {
 const featuredEntries = Array.isArray(featuredDocument) ? featuredDocument : featuredDocument?.items;
 if (!Array.isArray(featuredEntries)) {
   throw new Error("data/featured.json must be an array or contain an items array");
+}
+if (
+  changelogDocument?.schemaVersion !== 1 ||
+  !Array.isArray(changelogDocument.entries) ||
+  !changelogDocument.latestRun
+) {
+  throw new Error("data/changelog.json must contain latestRun and entries");
 }
 
 const rate = Number(site?.currency?.sgdToUsd);
@@ -164,6 +172,71 @@ const embeddedFeatured = JSON.stringify(featured.map((item) => ({
 const recommendedCodes = featured.map((item) => item.product.productCode);
 const formatScore = (score) => (score / 1000).toFixed(1);
 const embeddedEscapeHtml = escapeHtml.toString();
+const productChangeLabel = (product) => {
+  const display =
+    product.display === "Nano-texture" ? " · Nano-texture" : "";
+  return `MacBook ${product.family} ${product.screen}${display} · ${
+    product.chip
+  } · ${product.memory}/${product.storage} · ${product.productCode}`;
+};
+const changeCount = (counts = {}) =>
+  Object.values(counts).reduce((sum, count) => sum + Number(count || 0), 0);
+const priceTransition = (fromSgd, toSgd) =>
+  `${fromSgd === null ? "нет точной цены" : usdPrice(fromSgd)} → ${
+    toSgd === null ? "нет точной цены" : usdPrice(toSgd)
+  }`;
+const changeItems = (entry) => {
+  const items = [];
+  if (entry.featured) {
+    items.push(
+      `Топ-3: ${entry.featured.before.join(", ")} → ${
+        entry.featured.after.join(", ")
+      }`,
+    );
+  }
+  for (const item of entry.refurbPriceChanges || []) {
+    items.push(
+      `Refurb-цена ${item.product.productCode}: ${
+        priceTransition(item.fromSgd, item.toSgd)
+      }`,
+    );
+  }
+  for (const item of entry.newPriceChanges || []) {
+    items.push(
+      `Цена нового ${item.product.productCode}: ${
+        priceTransition(item.fromSgd, item.toSgd)
+      }`,
+    );
+  }
+  for (const item of entry.added || []) {
+    items.push(`Добавлено: ${productChangeLabel(item)} · ${usdPrice(item.priceSgd)}`);
+  }
+  for (const item of entry.removed || []) {
+    items.push(`Исчезло: ${productChangeLabel(item)}`);
+  }
+  return items;
+};
+const changelogEntry = (entry) => {
+  if (entry.type === "baseline") {
+    return `<article class="change-entry">
+      <div class="change-entry-head"><time>${escapeHtml(formatRussianLongDate(entry.checkedAt))}</time><span>Старт отслеживания</span></div>
+      <p>Зафиксирована исходная точка: ${escapeHtml(entry.counts.products)} позиций — ${escapeHtml(entry.counts.air)} Air и ${escapeHtml(entry.counts.pro)} Pro.</p>
+    </article>`;
+  }
+  const items = changeItems(entry);
+  const visibleItems = items.slice(0, 10);
+  const hiddenCount = items.length - visibleItems.length;
+  return `<article class="change-entry">
+    <div class="change-entry-head"><time>${escapeHtml(formatRussianLongDate(entry.checkedAt))}</time><span>${escapeHtml(changeCount(entry.counts))} изменений</span></div>
+    <ul>${visibleItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}${
+      hiddenCount > 0 ? `<li>И ещё ${escapeHtml(hiddenCount)} изменений.</li>` : ""
+    }</ul>
+  </article>`;
+};
+const latestChangeCount = changeCount(changelogDocument.latestRun.counts);
+const changelogHtml = changelogDocument.entries
+  .map(changelogEntry)
+  .join("");
 
 const card = ({ product, label, heading, body, score, highlighted = false }) =>
   `<article class="pick-card${highlighted ? " featured" : ""}" data-score="${escapeHtml(score)}">
@@ -298,10 +371,12 @@ const html = `<!doctype html>
     .method-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink)}
     .method-grid article{background:var(--paper);padding:28px;min-height:220px}.method-grid span{font:700 12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--blue)}
     .method-grid h3{font-size:25px;margin:35px 0 12px}.method-grid p{line-height:1.5;color:var(--muted);margin:0}
+    .change-latest{display:flex;justify-content:space-between;gap:20px;align-items:center;background:var(--lime);border:1px solid var(--ink);padding:18px 22px;margin-bottom:18px}.change-latest strong{font-size:18px}.change-latest span{font:700 11px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.06em}
+    .changelog-list{display:grid;gap:12px}.change-entry{border:1px solid var(--ink);background:var(--white);padding:22px}.change-entry-head{display:flex;justify-content:space-between;gap:20px;margin-bottom:15px}.change-entry-head time{font-size:19px;font-weight:850}.change-entry-head span{font:700 10px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;color:var(--blue)}.change-entry p{margin:0;color:var(--muted);line-height:1.5}.change-entry ul{margin:0;padding-left:20px;display:grid;gap:9px;line-height:1.45}
     footer{padding:30px 4vw;display:flex;justify-content:space-between;gap:20px;font-size:12px;color:var(--muted)}
     footer div{display:flex;gap:20px;flex-wrap:wrap}
     @media(max-width:1100px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.sort-control{grid-column:span 2}.reset{width:100%}}
-    @media(max-width:850px){.topbar nav{display:none}.hero{padding-top:48px}h1{margin-bottom:40px}.hero-grid,.picks-grid,.method-grid{grid-template-columns:1fr}.hero-note{max-width:480px}.hero-stats{grid-template-columns:1fr}.hero-stats div{border-right:0;border-bottom:1px solid var(--ink);padding:18px 0!important}.section-shell{padding:70px 4vw}.section-heading{display:block}.section-heading p{margin-top:20px}.reset{width:100%}.pick-card{min-height:340px}footer{display:block}footer div{margin-top:15px}}
+    @media(max-width:850px){.topbar nav{display:none}.hero{padding-top:48px}h1{margin-bottom:40px}.hero-grid,.picks-grid,.method-grid{grid-template-columns:1fr}.hero-note{max-width:480px}.hero-stats{grid-template-columns:1fr}.hero-stats div{border-right:0;border-bottom:1px solid var(--ink);padding:18px 0!important}.section-shell{padding:70px 4vw}.section-heading{display:block}.section-heading p{margin-top:20px}.reset{width:100%}.pick-card{min-height:340px}.change-latest,.change-entry-head{align-items:flex-start;flex-direction:column}footer{display:block}footer div{margin-top:15px}}
     @media(max-width:620px){h1{font-size:54px}.lede{font-size:22px}.filters{grid-template-columns:1fr}.sort-control{grid-column:auto}.dropdown-menu{position:static;min-width:0;margin-top:6px;box-shadow:none}.section-heading h2{font-size:44px}.pick-chip{font-size:58px}}
     @media print{.topbar,.filters,.open{display:none}.hero{padding-top:30px}.section-shell{padding:40px 3vw}.table-wrap{overflow:visible}table{min-width:0}th,td{padding:8px;font-size:8px}}
   </style>
@@ -309,7 +384,7 @@ const html = `<!doctype html>
 <body>
   <header class="topbar">
     <a class="wordmark" href="#top">MAC / FINDER</a>
-    <nav><a href="#shortlist">Короткий список</a><a href="#comparison">Все модели</a><a href="#method">О данных</a></nav>
+    <nav><a href="#shortlist">Короткий список</a><a href="#comparison">Все модели</a><a href="#method">О данных</a><a href="#changelog">Изменения</a></nav>
   </header>
 
   <main>
@@ -361,6 +436,15 @@ const html = `<!doctype html>
         <article><span>02</span><h3>Новая цена — только точная</h3><p>Для ${exactNewPriceCount} актуальных позиций проверены те же экран, чип, ядра, RAM и SSD. Если точного совпадения нет, новая цена не приписывается.</p></article>
         <article><span>03</span><h3>USD — ориентир</h3><p>Конвертация сделана по официальному кросс-курсу на ${formatRussianLongDate(rateDate)}. Банк или карта могут посчитать иначе.</p></article>
       </div>
+    </section>
+
+    <section class="section-shell" id="changelog">
+      <div class="section-heading"><div><span class="section-index">04</span><h2>Что изменилось</h2></div><p>История доступности, цен и рекомендаций. Записываются только реальные изменения каталога.</p></div>
+      <div class="change-latest">
+        <strong>${changelogDocument.latestRun.hasChanges ? `За последнюю проверку найдено ${latestChangeCount} изменений.` : "С предыдущей проверки изменений нет."}</strong>
+        <span>Проверено ${escapeHtml(formatRussianDate(changelogDocument.latestRun.checkedAt))}</span>
+      </div>
+      <div class="changelog-list">${changelogHtml}</div>
     </section>
   </main>
 
