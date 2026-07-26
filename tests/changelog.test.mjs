@@ -63,6 +63,7 @@ test("finds availability, price, new-price, and featured changes deterministical
     removed: 1,
     refurbPriceChanges: 1,
     newPriceChanges: 1,
+    configurationChanges: 0,
     featuredChanges: 1,
   });
   assert.equal(delta.added[0].productCode, "ADDED");
@@ -80,6 +81,51 @@ test("finds availability, price, new-price, and featured changes deterministical
   assert.deepEqual(delta.featured, {
     before: ["PRICE", "REMOVED", "NEWPRICE"],
     after: ["PRICE", "ADDED", "NEWPRICE"],
+  });
+});
+
+test("records hardware configuration changes for a stable product code", () => {
+  const before = product("SAME");
+  const after = product("SAME", {
+    display: "Nano-texture",
+    chip: "M5 Pro",
+    cpuCores: 12,
+    gpuCores: 16,
+    memory: "16GB",
+    storage: "1TB",
+  });
+  const delta = buildCatalogDelta({
+    previousCatalog: catalog([before]),
+    currentCatalog: catalog([after]),
+    previousFeatured: featured(["SAME"]),
+    currentFeatured: featured(["SAME"]),
+    checkedAt,
+  });
+
+  assert.equal(delta.hasChanges, true);
+  assert.equal(delta.counts.configurationChanges, 1);
+  assert.deepEqual(delta.configurationChanges[0], {
+    productCode: "SAME",
+    before: {
+      family: "Air",
+      screen: "13″",
+      display: "Standard",
+      chip: "M5",
+      cpuCores: 10,
+      gpuCores: 10,
+      memory: "24GB",
+      storage: "512GB",
+    },
+    after: {
+      family: "Air",
+      screen: "13″",
+      display: "Nano-texture",
+      chip: "M5 Pro",
+      cpuCores: 12,
+      gpuCores: 16,
+      memory: "16GB",
+      storage: "1TB",
+    },
   });
 });
 

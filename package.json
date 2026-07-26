@@ -6,10 +6,8 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
-    "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "build": "node scripts/build-enabled-markets.mjs",
     "build:catalog": "node work/build-expanded-standalone.mjs",
-    "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "test": "node --test scripts/apple-catalog-lib.test.mjs tests/changelog.test.mjs tests/exchange-rate.test.mjs tests/html-escape.test.mjs tests/market-engine.test.mjs tests/rank-models.test.mjs tests/standalone-catalog.test.mjs",
     "catalog:update": "node scripts/update-apple-catalog.mjs",
     "currency:update": "node scripts/update-exchange-rate.mjs",
@@ -19,34 +17,14 @@
     "catalog:summary": "node scripts/summarize-update.mjs",
     "market:initialize": "node scripts/initialize-market.mjs",
     "test:catalog": "node --test scripts/apple-catalog-lib.test.mjs tests/exchange-rate.test.mjs tests/market-engine.test.mjs",
-    "refresh:publish": "./work/update-published-site.zsh",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "refresh:publish": "./work/update-all-markets.zsh",
+    "lint": "eslint ."
   },
-  "dependencies": {
-    "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "react-loading-skeleton": "3.5.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.37.1",
-    "@tailwindcss/postcss": "4.2.1",
-    "@types/node": "22.19.19",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.2",
-    "@vitejs/plugin-rsc": "0.5.26",
-    "drizzle-kit": "0.31.10",
-    "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
-    "react-server-dom-webpack": "19.2.6",
-    "tailwindcss": "4.2.1",
-    "typescript": "5.9.3",
-    "vinext": "0.0.50",
-    "vite": "8.0.13",
-    "wrangler": "4.92.0"
+    "@eslint/js": "10.0.1",
+    "eslint": "10.8.0",
+    "globals": "17.7.0"
   },
   "type": "module"
 }

@@ -9,5 +9,8 @@
     "sourceUrl": "https://www.cbr.ru/currency_base/daily/?UniDbQuery.Posted=True&UniDbQuery.To=25.07.2026"
   },
   "canonicalUrl": "https://macbook-sg-refurbished.pages.dev/",
-  "plannedProductionUrl": null
+  "plannedProductionUrl": null,
+  "tax": {
+    "model": "included-in-list-price"
+  }
 }

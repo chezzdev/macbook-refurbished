@@ -151,29 +151,15 @@ export function validatePolicy(
   }
 
   requireObject(policy.featuredSelection, "featuredSelection");
-  const expectedRecommendationKeyFields = [
-    "family",
-    "screen",
-    "chip",
-    "memory",
-    "storage",
-  ];
-  if (
-    JSON.stringify(policy.featuredSelection.recommendationKeyFields) !==
-    JSON.stringify(expectedRecommendationKeyFields)
-  ) {
-    fail(
-      `featuredSelection.recommendationKeyFields must be ${expectedRecommendationKeyFields.join(
-        ", ",
-      )}`,
-    );
+  if (policy.featuredSelection.key !== "configurationKey") {
+    fail('featuredSelection.key must be "configurationKey"');
   }
   if (
     policy.featuredSelection.method !==
-    "first-ranked-per-recommendation-key"
+    "top-ranked-unique-configurations"
   ) {
     fail(
-      'featuredSelection.method must be "first-ranked-per-recommendation-key"',
+      'featuredSelection.method must be "top-ranked-unique-configurations"',
     );
   }
 
@@ -533,9 +519,10 @@ function reasonFor(scored, policy) {
 }
 
 function recommendationKeyFor(product, policy) {
-  return policy.featuredSelection.recommendationKeyFields
-    .map((field) => product[field])
-    .join("|");
+  if (policy.featuredSelection.key !== "configurationKey") {
+    fail("featured selection must use configurationKey");
+  }
+  return product.configurationKey;
 }
 
 export function rankCatalog(

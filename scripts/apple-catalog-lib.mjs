@@ -464,21 +464,67 @@ export async function hydrateCurrentNewPrices(
     ).values(),
   ];
 
-  const priceEntries = await mapInBatches(
+  const attemptedEntries = await mapInBatches(
     uniqueConfigurations,
     batchSize,
     async (product) => {
       const newSourceUrl = buildNewProductUrl(product, marketProfile);
-      const { html } = await fetchTextImpl(newSourceUrl);
-      const newPrice = parseExactNewPriceHtml(html, product, marketProfile);
-      return [product.configurationKey, { newPrice, newSourceUrl }];
+      try {
+        const { html } = await fetchTextImpl(newSourceUrl);
+        const newPrice = parseExactNewPriceHtml(
+          html,
+          product,
+          marketProfile,
+        );
+        return [
+          product.configurationKey,
+          { newPrice, newSourceUrl, unavailableReason: null },
+        ];
+      } catch (error) {
+        return [
+          product.configurationKey,
+          {
+            newPrice: null,
+            newSourceUrl: null,
+            unavailableReason:
+              error instanceof Error ? error.message : String(error),
+          },
+        ];
+      }
     },
   );
-  const pricesByConfiguration = new Map(priceEntries);
+  const pricesByConfiguration = new Map(
+    attemptedEntries.filter(([, entry]) => entry.newPrice !== null),
+  );
+  const unavailableConfigurations = attemptedEntries
+    .filter(([, entry]) => entry.newPrice === null)
+    .map(([configurationKey, entry]) => ({
+      configurationKey,
+      reason: entry.unavailableReason,
+    }));
+  const minimumMatchCount =
+    marketProfile.currentNewPricing.minimumExactMatchCount;
+  const minimumMatchRatio =
+    marketProfile.currentNewPricing.minimumExactMatchRatio;
+  const exactMatchRatio =
+    uniqueConfigurations.length === 0
+      ? 0
+      : pricesByConfiguration.size / uniqueConfigurations.length;
+  if (
+    pricesByConfiguration.size < minimumMatchCount ||
+    exactMatchRatio < minimumMatchRatio
+  ) {
+    throw new Error(
+      `Exact current-new matching failed closed: ${pricesByConfiguration.size}/${uniqueConfigurations.length} configurations matched; ` +
+        `market policy requires at least ${minimumMatchCount} and ${minimumMatchRatio * 100}%`,
+    );
+  }
 
   return {
     currentChipGeneration,
     pricedConfigurationCount: pricesByConfiguration.size,
+    unavailableConfigurationCount: unavailableConfigurations.length,
+    unavailableConfigurations,
     products: products.map((product) => {
       const exactPrice = pricesByConfiguration.get(product.configurationKey);
       const pricedProduct = {
@@ -897,6 +943,7 @@ export function buildSuccessStatus(
     checkedAt,
     currentChipGeneration,
     pricedConfigurationCount,
+    unavailableConfigurationCount = 0,
     marketProfile = DEFAULT_MARKET_PROFILE,
     taxResolvedCount = 0,
     taxEstimatedCount = 0,
@@ -921,6 +968,7 @@ export function buildSuccessStatus(
       ).size,
       pricedProducts: pricedProducts.length,
       pricedConfigurations: pricedConfigurationCount,
+      unavailableCurrentConfigurations: unavailableConfigurationCount,
       ...(marketProfile.id === "sg"
         ? { unpricedLegacyProducts: products.length - pricedProducts.length }
         : { unpricedCurrentProducts: products.length - pricedProducts.length }),

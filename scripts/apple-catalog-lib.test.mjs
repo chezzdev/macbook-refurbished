@@ -110,6 +110,53 @@ test("only newest-generation exact configurations receive new prices", async () 
   assert.equal(result.products[1].newPriceSgd, 2199);
 });
 
+test("keeps isolated unavailable exact-new configurations null", async () => {
+  const [first] = parseRefurbishedCatalog(
+    `<script>{"tiles":${JSON.stringify([tile])}}</script>`,
+  );
+  const second = {
+    ...first,
+    productCode: "TEST2ZP/A",
+    storage: "1TB",
+  };
+  second.configurationKey = buildConfigurationKey(second);
+
+  const result = await hydrateCurrentNewPrices([first, second], {
+    fetchTextImpl: async (url) => {
+      if (url.includes("1tb")) {
+        throw new Error("Apple offer is unavailable");
+      }
+      return {
+        html:
+          "<title>Buy 13-inch MacBook Air - Apple M5 chip, 10-core CPU, " +
+          "10-core GPU, 24GB memory, 512GB storage</title>" +
+          '<script>{"priceCurrency":"SGD","price":2199}</script>',
+        finalUrl: url,
+      };
+    },
+  });
+
+  assert.equal(result.pricedConfigurationCount, 1);
+  assert.equal(result.unavailableConfigurationCount, 1);
+  assert.equal(result.products[0].newPriceSgd, 2199);
+  assert.equal(result.products[1].newPriceSgd, null);
+  assert.equal(result.products[1].newSourceUrl, null);
+});
+
+test("fails closed when exact-new matching fails systemically", async () => {
+  const [product] = parseRefurbishedCatalog(
+    `<script>{"tiles":${JSON.stringify([tile])}}</script>`,
+  );
+  await assert.rejects(
+    hydrateCurrentNewPrices([product], {
+      fetchTextImpl: async () => {
+        throw new Error("systemic Apple failure");
+      },
+    }),
+    /Exact current-new matching failed closed: 0\/1/,
+  );
+});
+
 test("matches nano-texture MacBook Pro prices as a distinct exact configuration", () => {
   const nanoProduct = {
     family: "Pro",

@@ -11,6 +11,16 @@ import {
 
 const workspaceRoot = resolve(import.meta.dirname, "..");
 const defaultMarketProfile = await loadMarketProfile("sg");
+const configurationFields = [
+  "family",
+  "screen",
+  "display",
+  "chip",
+  "cpuCores",
+  "gpuCores",
+  "memory",
+  "storage",
+];
 
 function priceContext(marketProfile) {
   const source = marketProfile.currency.source;
@@ -58,6 +68,7 @@ export function buildCatalogDelta({
   const refurbPriceChanges = [];
   const newPriceChanges = [];
   const taxInclusivePriceChanges = [];
+  const configurationChanges = [];
 
   for (const productCode of sortedUnion(previousProducts, currentProducts)) {
     const before = previousProducts.get(productCode);
@@ -69,6 +80,18 @@ export function buildCatalogDelta({
     if (!after) {
       removed.push(productSnapshot(before, marketProfile));
       continue;
+    }
+    const beforeConfiguration = configurationSnapshot(before);
+    const afterConfiguration = configurationSnapshot(after);
+    if (
+      JSON.stringify(beforeConfiguration) !==
+      JSON.stringify(afterConfiguration)
+    ) {
+      configurationChanges.push({
+        productCode,
+        before: beforeConfiguration,
+        after: afterConfiguration,
+      });
     }
     if (before[refurbishedField] !== after[refurbishedField]) {
       refurbPriceChanges.push({
@@ -106,6 +129,7 @@ export function buildCatalogDelta({
     removed: removed.length,
     refurbPriceChanges: refurbPriceChanges.length,
     newPriceChanges: newPriceChanges.length,
+    configurationChanges: configurationChanges.length,
     ...(taxInclusiveField
       ? { taxInclusivePriceChanges: taxInclusivePriceChanges.length }
       : {}),
@@ -121,6 +145,7 @@ export function buildCatalogDelta({
     removed,
     refurbPriceChanges,
     newPriceChanges,
+    configurationChanges,
     ...(taxInclusiveField ? { taxInclusivePriceChanges } : {}),
     featured: featuredChanged
       ? { before: featuredBefore, after: featuredAfter }
@@ -155,6 +180,7 @@ export function buildChangelog({
       removed: delta.removed,
       refurbPriceChanges: delta.refurbPriceChanges,
       newPriceChanges: delta.newPriceChanges,
+      configurationChanges: delta.configurationChanges,
       ...("taxInclusivePriceChanges" in delta
         ? { taxInclusivePriceChanges: delta.taxInclusivePriceChanges }
         : {}),
@@ -263,6 +289,12 @@ function productSnapshot(product, marketProfile) {
         }
       : {}),
   };
+}
+
+function configurationSnapshot(product) {
+  return Object.fromEntries(
+    configurationFields.map((field) => [field, product[field]]),
+  );
 }
 
 function catalogCounts(catalog) {

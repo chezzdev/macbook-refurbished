@@ -26,6 +26,7 @@ import {
   loadMarketProfile,
   validateMarketRegistry,
 } from "../scripts/market-profile.mjs";
+import { buildPublicationManifest } from "../scripts/publication-manifest.mjs";
 import {
   rankCatalog,
   renderFeaturedJson,
@@ -171,11 +172,12 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
   assert.equal(us.publication.provider, "cloudflare-pages");
   assert.equal(us.publication.approvalRequired, false);
   assert.equal(us.publication.status, "active");
-  assert.deepEqual(enabledMarketState.registry.enabledMarkets, ["sg", "us"]);
   assert.deepEqual(
     enabledMarketState.profiles.map((profile) => profile.id),
-    ["sg", "us"],
+    enabledMarketState.registry.enabledMarkets,
   );
+  assert.ok(enabledMarketState.registry.enabledMarkets.includes("sg"));
+  assert.ok(enabledMarketState.registry.enabledMarkets.includes("us"));
   assert.equal(
     sg.publication.repository,
     us.publication.repository,
@@ -242,7 +244,7 @@ test("enabled-market registry rejects ambiguous profile lists", () => {
 
 test("workflow config selects one shared checkout and each market artifact", async () => {
   const configurations = await Promise.all(
-    ["sg", "us"].map(async (marketId) => {
+    enabledMarketState.registry.enabledMarkets.map(async (marketId) => {
       const { stdout } = await execFileAsync(
         process.execPath,
         ["scripts/print-market-workflow-config.mjs", marketId],
@@ -251,7 +253,11 @@ test("workflow config selects one shared checkout and each market artifact", asy
       return stdout.trim().split("\u001f");
     }),
   );
-  const [sgWorkflow, usWorkflow] = configurations;
+  const configurationsById = new Map(
+    configurations.map((configuration) => [configuration[0], configuration]),
+  );
+  const sgWorkflow = configurationsById.get("sg");
+  const usWorkflow = configurationsById.get("us");
   assert.equal(sgWorkflow[9], "outputs/markets/sg");
   assert.equal(usWorkflow[9], "outputs/markets/us");
   assert.equal(sgWorkflow[14], usWorkflow[14]);
@@ -262,6 +268,37 @@ test("workflow config selects one shared checkout and each market artifact", asy
   assert.equal(usWorkflow[18], "false");
   assert.equal(sgWorkflow[12], "cloudflare-pages");
   assert.equal(usWorkflow[12], "cloudflare-pages");
+});
+
+test("publication manifest derives every market path from enabled profiles", () => {
+  const futureProfile = structuredClone(us);
+  futureProfile.id = "ca";
+  futureProfile.ranking.policyPath = "config/ranking-policy.ca.json";
+  futureProfile.namespace = {
+    catalog: "data/markets/ca/catalog.json",
+    featured: "data/markets/ca/featured.json",
+    site: "data/markets/ca/site.json",
+    updateStatus: "data/markets/ca/update-status.json",
+    updateDelta: "data/markets/ca/update-delta.json",
+    changelog: "data/markets/ca/changelog.json",
+    artifactDirectory: "outputs/markets/ca",
+  };
+  futureProfile.publication.artifactDirectory = "markets/ca";
+  const manifest = buildPublicationManifest([sg, us, futureProfile]);
+
+  assert.deepEqual(manifest.marketIds, ["sg", "us", "ca"]);
+  for (const expectedPath of [
+    "config/markets/ca.json",
+    "config/ranking-policy.ca.json",
+    "data/markets/ca/catalog.json",
+    "data/markets/ca/changelog.json",
+    "markets/ca/index.html",
+  ]) {
+    assert.ok(
+      manifest.publicationPaths.includes(expectedPath),
+      `missing ${expectedPath}`,
+    );
+  }
 });
 
 test("both profiles use the same parser, exact-match, catalog, and ranking path", () => {
@@ -432,13 +469,32 @@ test("US currency adapter is an identity conversion and performs no rate fetch",
   }
 });
 
-test("explicit Singapore profile reproduces the current featured artifact", async () => {
-  const [catalog, expectedFeatured] = await Promise.all([
-    readFile(sgContext.paths.catalog, "utf8").then(JSON.parse),
-    readFile(sgContext.paths.featured, "utf8"),
-  ]);
-  const actual = renderFeaturedJson(rankCatalog(catalog, sgPolicy, sg));
-  assert.equal(actual, expectedFeatured);
+test("enabled profiles reproduce their selected featured artifacts", async () => {
+  const stagedMarketId = process.env.MACBOOK_STAGED_MARKET_ID;
+  const stagedNamespaceRoot =
+    process.env.MACBOOK_STAGED_NAMESPACE_ROOT;
+  const profilesToCheck = stagedMarketId
+    ? enabledMarketState.profiles.filter(
+        (profile) => profile.id === stagedMarketId,
+      )
+    : enabledMarketState.profiles;
+  assert.ok(profilesToCheck.length > 0);
+
+  for (const profile of profilesToCheck) {
+    const context = await loadMarketContext(profile.id, {
+      namespaceRoot:
+        profile.id === stagedMarketId ? stagedNamespaceRoot : undefined,
+    });
+    const [catalog, expectedFeatured, policy] = await Promise.all([
+      readFile(context.paths.catalog, "utf8").then(JSON.parse),
+      readFile(context.paths.featured, "utf8"),
+      readFile(context.policyPath, "utf8").then(JSON.parse),
+    ]);
+    const actual = renderFeaturedJson(
+      rankCatalog(catalog, policy, profile),
+    );
+    assert.equal(actual, expectedFeatured);
+  }
 });
 
 test("the shared UI builder renders the US profile without Singapore assumptions", async () => {

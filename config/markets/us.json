@@ -27,6 +27,10 @@
       "siteField": null
     }
   },
+  "currentNewPricing": {
+    "minimumExactMatchCount": 1,
+    "minimumExactMatchRatio": 0.5
+  },
   "tax": {
     "model": "verified-fixed-location-estimate",
     "acquisition": {

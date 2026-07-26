@@ -34,14 +34,21 @@ Singapore сохраняет исторические `data/*` как собст
 
 Эталон обоих первых профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
 Политики изолированы: `config/ranking-policy.json` для SG и
-`config/ranking-policy.us.json` для US. Цветовые дубли не занимают несколько
-featured-мест; порядок полностью детерминирован.
+`config/ranking-policy.us.json` для US. Цветовые дубли одной точной
+`configurationKey` не занимают несколько featured-мест; различия display,
+CPU/GPU, памяти или SSD считаются отдельными конфигурациями. Порядок полностью
+детерминирован.
 
 ## Цены и налоги
 
 Точная цена нового устройства принимается только при полном совпадении экрана,
 типа дисплея, чипа/tier, CPU/GPU, памяти и SSD. Standard и Nano-texture —
 разные конфигурации.
+
+Отсутствие отдельной новой конфигурации не останавливает refresh: её поля
+остаются `null`. Каждый профиль при этом задаёт минимальные count/ratio
+успешных exact matches, поэтому массовый сбой Apple или matcher-а останавливает
+pipeline fail-closed.
 
 SGD конвертируется в основную валюту USD по существующему официальному
 кросс-курсу. Для US исходная и основная валюты — USD, поэтому курс равен 1.
@@ -70,14 +77,21 @@ Beverly Center, а не окончательным счётом Apple.
 
 ```zsh
 npm test
+npm run build
 npm run build:catalog -- --market sg
 npm run build:catalog -- --market us
 npm run catalog:rank:check -- --market sg
 node scripts/initialize-market.mjs --market sg --check
 ```
 
-Полный действующий Singapore workflow по-прежнему запускается неизменной
-командой:
+Единый ежедневный workflow обходит все enabled-профили из registry
+последовательно:
+
+```zsh
+./work/update-all-markets.zsh
+```
+
+Singapore compatibility-команда сохраняется:
 
 ```zsh
 ./work/update-published-site.zsh
@@ -92,6 +106,8 @@ node scripts/initialize-market.mjs --market sg --check
 Общий workflow выполняет fetch, exact matching, currency/tax adapters,
 validation, ranking, changelog, двойную детерминированную сборку, тесты,
 private-repository sync, Cloudflare Pages deployment и live hash verification.
+Новые данные сначала собираются в отдельном staging namespace; canonical JSON
+и HTML продвигаются только после успешных проверок и live verification.
 Оба рынка используют существующий checkout `work/gh-pages-site` и один remote;
 публикуемые файлы изолированы как `markets/sg/index.html` и
 `markets/us/index.html`. Старый корневой `index.html` SG удаляется при следующей
@@ -107,10 +123,15 @@ private-repository sync, Cloudflare Pages deployment и live hash verification.
 Workflow выбирает артефакт и Cloudflare Pages project только из выбранного
 market profile, поэтому данные и deployment targets SG и US не смешиваются.
 
-## Ежедневное обновление Singapore
+## Ежедневное обновление всех рынков
 
-`work/daily-update.zsh` продолжает вызывать
-`work/update-published-site.zsh`, сохраняет отчёт в
+`work/daily-update.zsh` вызывает `work/update-all-markets.zsh`, сохраняет общий
+отчёт в
 `outputs/latest-update-summary.txt` и показывает macOS notification.
-LaunchAgent `dev.chezz.macbook-refurbished-sg.daily-update` остаётся
-Singapore-only и не изменяется.
+Codex automation в 08:00 Europe/Minsk использует тот же registry-driven
+entrypoint. Добавление enabled market не требует отдельной scheduled-команды.
+
+Production UI существует в одном варианте:
+`work/build-expanded-standalone.mjs`. `npm run build` валидирует и собирает
+этот общий путь для каждого enabled-профиля; отдельного Vinext/Sites starter
+в проекте нет.

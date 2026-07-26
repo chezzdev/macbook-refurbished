@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "policyVersion": "2026-07-26.1",
+  "policyVersion": "2026-07-26.2",
   "scoreUnit": "milli-points",
   "shortlistSize": 3,
   "ideal": {
@@ -17,14 +17,8 @@
     ]
   },
   "featuredSelection": {
-    "recommendationKeyFields": [
-      "family",
-      "screen",
-      "chip",
-      "memory",
-      "storage"
-    ],
-    "method": "first-ranked-per-recommendation-key"
+    "key": "configurationKey",
+    "method": "top-ranked-unique-configurations"
   },
   "components": {
     "memory": {

@@ -36,6 +36,7 @@ if (compact) {
       ? `Изменений: ${totalChanges}; +${delta.counts.added}, −${delta.counts.removed}, цены ${
           delta.counts.refurbPriceChanges +
           delta.counts.newPriceChanges +
+          (delta.counts.configurationChanges ?? 0) +
           (delta.counts.taxInclusivePriceChanges ?? 0)
         }.`
       : `Без изменений: ${status.counts.products} позиций, топ ${topCodes}.`,
@@ -44,6 +45,7 @@ if (compact) {
   const lines = [
     `${profile.siteName} · ${formatDate(delta.checkedAt)}`,
     `Каталог: ${status.counts.products} позиций — ${status.counts.air} Air и ${status.counts.pro} Pro.`,
+    `Точная новая цена: ${status.counts.pricedProducts} позиций / ${status.counts.pricedConfigurations} конфигураций; недоступно ${status.counts.unavailableCurrentConfigurations ?? 0} конфигураций.`,
   ];
   if (!delta.hasChanges) {
     lines.push("Изменений с предыдущего запуска нет.");
@@ -52,6 +54,7 @@ if (compact) {
       `Изменения: +${delta.counts.added}, −${delta.counts.removed}, ` +
         `refurb-цены ${delta.counts.refurbPriceChanges}, ` +
         `новые цены ${delta.counts.newPriceChanges}, ` +
+        `конфигурации ${delta.counts.configurationChanges ?? 0}, ` +
         `топ-3 ${delta.counts.featuredChanges}.`,
     );
     lines.push(...detailLines(delta).slice(0, 12));
@@ -102,6 +105,13 @@ function detailLines(latestDelta) {
       } → ${price(item[changeToField])}.`,
     );
   }
+  for (const item of latestDelta.configurationChanges ?? []) {
+    lines.push(
+      `• Конфигурация ${item.productCode}: ${configurationLabel(
+        item.before,
+      )} → ${configurationLabel(item.after)}.`,
+    );
+  }
   for (const item of latestDelta.taxInclusivePriceChanges ?? []) {
     const before =
       ["resolved", "estimated"].includes(item.before?.status)
@@ -122,6 +132,14 @@ function detailLines(latestDelta) {
     );
   }
   return lines;
+}
+
+function configurationLabel(configuration) {
+  return (
+    `${configuration.family} ${configuration.screen} · ${configuration.display} · ` +
+    `${configuration.chip} ${configuration.cpuCores}/${configuration.gpuCores} · ` +
+    `${configuration.memory}/${configuration.storage}`
+  );
 }
 
 function productLabel(product) {

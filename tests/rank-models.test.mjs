@@ -150,35 +150,41 @@ test("collapses colour duplicates and selects by price, then product code", () =
   );
 });
 
-test("suppresses recommendation duplicates after ranking full configurations", () => {
-  const catalog = representativeCatalog();
-  catalog.products.push(
+test("keeps distinct hardware configurations and collapses only colours", () => {
+  const catalog = {
+    schemaVersion: 1,
+    products: [
+      product(),
+      product({
+        productCode: "IDEAL-COLOUR",
+      }),
     product({
       configurationKey: "aaa-weaker-ideal",
       productCode: "IDEAL-WEAKER",
       gpuCores: 8,
     }),
     product({
-      configurationKey: "zzz-stronger-ideal",
-      productCode: "IDEAL-STRONGER",
-    }),
-  );
-  catalog.products = catalog.products.filter(
-    ({ productCode }) => productCode !== "IDEAL-A",
-  );
+        configurationKey: "nano-ideal",
+        productCode: "IDEAL-NANO",
+        display: "Nano-texture",
+      }),
+    ],
+  };
 
   const featured = rankCatalog(catalog, policy);
-  assert.equal(featured.items[0].productCode, "IDEAL-STRONGER");
+  assert.deepEqual(
+    new Set(featured.items.map((item) => item.configurationKey)),
+    new Set([
+      "air-13-m2-8-10-24-1tb",
+      "aaa-weaker-ideal",
+      "nano-ideal",
+    ]),
+  );
   assert.equal(
     featured.items.filter(
-      ({ recommendationKey }) =>
-        recommendationKey === "Air|13″|M2|24GB|1TB",
+      (item) => item.configurationKey === "air-13-m2-8-10-24-1tb",
     ).length,
     1,
-  );
-  assert.deepEqual(
-    featured.items.map((item) => item.productCode),
-    ["IDEAL-STRONGER", "AIR13-M5", "AIR15-M5"],
   );
 });
 

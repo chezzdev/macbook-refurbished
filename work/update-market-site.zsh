@@ -9,7 +9,7 @@ while (( $# > 0 )); do
   case "$1" in
     --market)
       if [[ -z "${2:-}" ]]; then
-        print -u2 "Usage: $0 [--market sg|us] [--prepare-only]"
+        print -u2 "Usage: $0 --market <enabled-market> [--prepare-only]"
         exit 2
       fi
       market_id="$2"
@@ -20,7 +20,7 @@ while (( $# > 0 )); do
       shift
       ;;
     *)
-      print -u2 "Usage: $0 [--market sg|us] [--prepare-only]"
+      print -u2 "Usage: $0 --market <enabled-market> [--prepare-only]"
       exit 2
       ;;
   esac
@@ -56,53 +56,16 @@ temporary_root="${TMPDIR:-/tmp}"
 deployment_dir=""
 metadata_dir=""
 snapshot_dir=""
+staging_dir=""
+canonical_promotion_started=false
+workflow_succeeded=false
 allowed_ssh_remote="$repository_url"
 allowed_https_remote="${repository_url/git@github.com:/https://github.com/}"
 allowed_https_remote_short="${allowed_https_remote%.git}"
 allowed_ssh_url_remote="${repository_url/git@github.com:/ssh://git@github.com/}"
 
-publish_owned_paths=(
-  .gitignore
-  README.md
-  "${publication_artifact_directory}/index.html"
-  package.json
-  package-lock.json
-  config/publish.gitignore
-  config/markets/registry.json
-  "$profile_relative"
-  config/markets/sg.json
-  config/markets/us.json
-  config/ranking-policy.us.json
-  "$policy_relative"
-  "$catalog_relative"
-  "$changelog_relative"
-  "$featured_relative"
-  "$site_relative"
-  "$update_delta_relative"
-  "$update_status_relative"
-  scripts/apple-catalog-lib.mjs
-  scripts/apple-catalog-lib.test.mjs
-  scripts/html-escape.mjs
-  scripts/initialize-market.mjs
-  scripts/market-profile.mjs
-  scripts/print-market-workflow-config.mjs
-  scripts/summarize-update.mjs
-  scripts/update-apple-catalog.mjs
-  scripts/update-changelog.mjs
-  scripts/update-exchange-rate.mjs
-  scripts/validate-apple-catalog.mjs
-  scripts/rank-models.mjs
-  tests/changelog.test.mjs
-  tests/exchange-rate.test.mjs
-  tests/html-escape.test.mjs
-  tests/market-engine.test.mjs
-  tests/rank-models.test.mjs
-  tests/standalone-catalog.test.mjs
-  work/build-expanded-standalone.mjs
-  work/daily-update.zsh
-  work/update-market-site.zsh
-  work/update-published-site.zsh
-)
+source_owned_paths=("${(@f)$(node "${workspace_dir}/scripts/publication-manifest.mjs" --source)}")
+publish_owned_paths=("${(@f)$(node "${workspace_dir}/scripts/publication-manifest.mjs" --publish)}")
 
 if [[ -d "${workspace_dir}/.git" && \
       -f "${workspace_dir}/scripts/update-apple-catalog.mjs" && \
@@ -111,12 +74,34 @@ if [[ -d "${workspace_dir}/.git" && \
 else
   publish_dir="$default_publish_dir"
 fi
-if [[ -e "${publish_dir}/index.html" ]] || \
-    git -C "$publish_dir" ls-files --error-unmatch index.html >/dev/null 2>&1; then
-  publish_owned_paths+=(index.html)
-fi
+canonical_output_relatives=(
+  "$catalog_relative"
+  "$featured_relative"
+  "$site_relative"
+  "$update_status_relative"
+  "$update_delta_relative"
+  "$changelog_relative"
+  "${artifact_directory_relative}/index.html"
+)
+typeset -A staged_output_by_relative
+typeset -A snapshot_by_relative
 
 cleanup() {
+  exit_code=$?
+  if [[ "$canonical_promotion_started" == "true" && \
+        "$workflow_succeeded" != "true" ]]; then
+    for relative_file in "${canonical_output_relatives[@]}"; do
+      target_file="${workspace_dir}/${relative_file}"
+      snapshot_file="${snapshot_by_relative[$relative_file]:-}"
+      if [[ "$snapshot_file" == "__MISSING__" ]]; then
+        rm -f -- "$target_file"
+      elif [[ -n "$snapshot_file" && -f "$snapshot_file" ]]; then
+        mkdir -p "${target_file:h}"
+        cp "$snapshot_file" "${target_file}.restore"
+        mv "${target_file}.restore" "$target_file"
+      fi
+    done
+  fi
   if [[ -n "$deployment_dir" && -d "$deployment_dir" && \
         "$deployment_dir" == "${temporary_root%/}/macbook-pages."* ]]; then
     rm -rf -- "$deployment_dir"
@@ -126,17 +111,24 @@ cleanup() {
     rm -rf -- "$metadata_dir"
   fi
   if [[ -n "$snapshot_dir" && -d "$snapshot_dir" && \
-        "$snapshot_dir" == "${temporary_root%/}/macbook-catalog-before."* ]]; then
+        "$snapshot_dir" == "${temporary_root%/}/macbook-canonical-before."* ]]; then
     rm -rf -- "$snapshot_dir"
   fi
+  if [[ -n "$staging_dir" && -d "$staging_dir" && \
+        "$staging_dir" == "${temporary_root%/}/macbook-market-stage."* ]]; then
+    rm -rf -- "$staging_dir"
+  fi
   rmdir "$lock_dir" 2>/dev/null || true
+  return "$exit_code"
 }
 
 if ! mkdir "$lock_dir" 2>/dev/null; then
   print -u2 "Another catalog update is already running: $lock_dir"
   exit 1
 fi
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 if [[ ! -d "${publish_dir}/.git" ]]; then
   print -u2 "Private GitHub checkout is missing: $publish_dir"
@@ -153,29 +145,77 @@ if [[ -n "$preexisting_changes" ]]; then
 fi
 
 cd "$workspace_dir"
-node scripts/initialize-market.mjs --market "$market_id"
-snapshot_dir="$(mktemp -d "${temporary_root%/}/macbook-catalog-before.XXXXXX")"
-if [[ -f "$catalog_relative" ]]; then
-  cp "$catalog_relative" "${snapshot_dir}/catalog.json"
-fi
-if [[ -f "$featured_relative" ]]; then
-  cp "$featured_relative" "${snapshot_dir}/featured.json"
-fi
+snapshot_dir="$(mktemp -d "${temporary_root%/}/macbook-canonical-before.XXXXXX")"
+staging_dir="$(mktemp -d "${temporary_root%/}/macbook-market-stage.XXXXXX")"
+snapshot_number=0
+for relative_file in "${canonical_output_relatives[@]}"; do
+  canonical_file="${workspace_dir}/${relative_file}"
+  snapshot_number=$((snapshot_number + 1))
+  snapshot_file="${snapshot_dir}/${snapshot_number}"
+  if [[ -f "$canonical_file" ]]; then
+    cp "$canonical_file" "$snapshot_file"
+    snapshot_by_relative[$relative_file]="$snapshot_file"
+  else
+    snapshot_by_relative[$relative_file]="__MISSING__"
+  fi
+done
+
+for relative_file in \
+  "$catalog_relative" \
+  "$featured_relative" \
+  "$site_relative" \
+  "$update_status_relative" \
+  "$update_delta_relative" \
+  "$changelog_relative"; do
+  canonical_file="${workspace_dir}/${relative_file}"
+  staged_file="${staging_dir}/${relative_file:t}"
+  staged_output_by_relative[$relative_file]="$staged_file"
+  if [[ -f "$canonical_file" ]]; then
+    cp "$canonical_file" "$staged_file"
+  fi
+done
+staged_output_by_relative["${artifact_directory_relative}/index.html"]="${staging_dir}/index.html"
+
+promote_staged_outputs() {
+  canonical_promotion_started=true
+  for relative_file in "${canonical_output_relatives[@]}"; do
+    staged_file="${staged_output_by_relative[$relative_file]}"
+    canonical_file="${workspace_dir}/${relative_file}"
+    if [[ ! -f "$staged_file" ]]; then
+      print -u2 "Validated staged output is missing: $staged_file"
+      return 1
+    fi
+    mkdir -p "${canonical_file:h}"
+    cp "$staged_file" "${canonical_file}.promote"
+    mv "${canonical_file}.promote" "$canonical_file"
+  done
+}
+
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/initialize-market.mjs --market "$market_id"
 
 print "1/8 Fetching ${site_name} prices and currency data"
-node scripts/update-apple-catalog.mjs --market "$market_id"
-node scripts/validate-apple-catalog.mjs --market "$market_id"
-node scripts/update-exchange-rate.mjs --market "$market_id"
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/update-apple-catalog.mjs --market "$market_id"
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/validate-apple-catalog.mjs --market "$market_id"
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/update-exchange-rate.mjs --market "$market_id"
 
 print "2/8 Applying deterministic ranking policy"
-node scripts/rank-models.mjs --market "$market_id"
-node scripts/rank-models.mjs --market "$market_id" --check
-node scripts/update-changelog.mjs \
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/rank-models.mjs --market "$market_id"
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/rank-models.mjs --market "$market_id" --check
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/update-changelog.mjs \
   --market "$market_id" \
-  --previous-catalog "${snapshot_dir}/catalog.json" \
-  --previous-featured "${snapshot_dir}/featured.json"
+  --previous-catalog "${workspace_dir}/${catalog_relative}" \
+  --previous-featured "${workspace_dir}/${featured_relative}"
 
 print "3/8 Running parser, currency, and ranking tests"
+MACBOOK_STAGED_MARKET_ID="$market_id" \
+MACBOOK_STAGED_NAMESPACE_ROOT="$staging_dir" \
 node --test \
   scripts/apple-catalog-lib.test.mjs \
   tests/changelog.test.mjs \
@@ -185,17 +225,19 @@ node --test \
   tests/rank-models.test.mjs
 
 print "4/8 Building the standalone page twice"
-node work/build-expanded-standalone.mjs --market "$market_id"
-artifact_directory="${workspace_dir}/${artifact_directory_relative}"
-artifact_file="${artifact_directory}/index.html"
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node work/build-expanded-standalone.mjs --market "$market_id"
+artifact_file="${staging_dir}/index.html"
 first_hash="$(shasum -a 256 "$artifact_file" | awk '{print $1}')"
-node work/build-expanded-standalone.mjs --market "$market_id"
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node work/build-expanded-standalone.mjs --market "$market_id"
 second_hash="$(shasum -a 256 "$artifact_file" | awk '{print $1}')"
 if [[ "$first_hash" != "$second_hash" ]]; then
   print -u2 "Standalone build is not deterministic: $first_hash != $second_hash"
   exit 1
 fi
-MACBOOK_MARKET_ID="$market_id" node --test tests/standalone-catalog.test.mjs
+MACBOOK_MARKET_ID="$market_id" MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node --test tests/standalone-catalog.test.mjs
 
 print "5/8 Preparing the exact immutable deployment artifact"
 deployment_dir="$(mktemp -d "${temporary_root%/}/macbook-pages.XXXXXX")"
@@ -207,6 +249,8 @@ if [[ "$deployment_hash" != "$second_hash" ]]; then
 fi
 
 if [[ "$prepare_only" == "true" ]]; then
+  promote_staged_outputs
+  workflow_succeeded=true
   print "Validated ${site_name} without syncing or deploying."
   print "Artifact SHA-256: $second_hash"
   node scripts/summarize-update.mjs --market "$market_id"
@@ -234,49 +278,14 @@ if ! git -C "$publish_dir" merge-base --is-ancestor "origin/${publication_branch
 fi
 
 if [[ "$publish_dir" != "$workspace_dir" ]]; then
-  owned_files=(
-    README.md
-    package.json
-    package-lock.json
-    config/publish.gitignore
-    config/markets/registry.json
-    "$profile_relative"
-    config/markets/sg.json
-    config/markets/us.json
-    config/ranking-policy.us.json
-    "$policy_relative"
-    "$catalog_relative"
-    "$changelog_relative"
-    "$featured_relative"
-    "$site_relative"
-    "$update_delta_relative"
-    "$update_status_relative"
-    scripts/apple-catalog-lib.mjs
-    scripts/apple-catalog-lib.test.mjs
-    scripts/html-escape.mjs
-    scripts/initialize-market.mjs
-    scripts/market-profile.mjs
-    scripts/print-market-workflow-config.mjs
-    scripts/summarize-update.mjs
-    scripts/update-exchange-rate.mjs
-    scripts/update-apple-catalog.mjs
-    scripts/update-changelog.mjs
-    scripts/validate-apple-catalog.mjs
-    scripts/rank-models.mjs
-    tests/changelog.test.mjs
-    tests/rank-models.test.mjs
-    tests/exchange-rate.test.mjs
-    tests/html-escape.test.mjs
-    tests/market-engine.test.mjs
-    tests/standalone-catalog.test.mjs
-    work/build-expanded-standalone.mjs
-    work/daily-update.zsh
-    work/update-market-site.zsh
-    work/update-published-site.zsh
-  )
-  for relative_file in "${owned_files[@]}"; do
+  for relative_file in "${source_owned_paths[@]}"; do
+    source_file="${staged_output_by_relative[$relative_file]:-${workspace_dir}/${relative_file}}"
+    if [[ ! -f "$source_file" ]]; then
+      print -u2 "Publication source is missing: $source_file"
+      exit 1
+    fi
     mkdir -p "${publish_dir}/${relative_file:h}"
-    cp "${workspace_dir}/${relative_file}" "${publish_dir}/${relative_file}"
+    cp "$source_file" "${publish_dir}/${relative_file}"
   done
 fi
 cp "${workspace_dir}/config/publish.gitignore" "${publish_dir}/.gitignore"
@@ -284,7 +293,7 @@ rm -f "${publish_dir}/index.html"
 mkdir -p "${publish_dir}/${publication_artifact_directory}"
 cp "$artifact_file" "${publish_dir}/${publication_artifact_directory}/index.html"
 
-git -C "$publish_dir" add -- "${publish_owned_paths[@]}"
+git -C "$publish_dir" add -A -- "${publish_owned_paths[@]}"
 
 if ! git -C "$publish_dir" diff --cached --quiet; then
   git -C "$publish_dir" commit -m "Refresh ${site_name} catalog"
@@ -328,6 +337,8 @@ if [[ "$live_matches" != true ]]; then
   exit 1
 fi
 
+promote_staged_outputs
+workflow_succeeded=true
 print "Catalog refresh, tests, private sync, deployment, and live hash verification succeeded."
 print "Artifact SHA-256: $second_hash"
 print "Production: $production_url"

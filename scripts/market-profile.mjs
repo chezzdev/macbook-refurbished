@@ -86,6 +86,17 @@ export function validateMarketProfile(profile) {
   if (!["identity", "cbr-cross-rate"].includes(profile.currency?.conversion?.type)) {
     throw new Error("currency.conversion.type is unsupported");
   }
+  if (
+    !Number.isSafeInteger(profile.currentNewPricing?.minimumExactMatchCount) ||
+    profile.currentNewPricing.minimumExactMatchCount < 1 ||
+    !Number.isFinite(profile.currentNewPricing?.minimumExactMatchRatio) ||
+    profile.currentNewPricing.minimumExactMatchRatio <= 0 ||
+    profile.currentNewPricing.minimumExactMatchRatio > 1
+  ) {
+    throw new Error(
+      "currentNewPricing must declare a positive minimum count and ratio in (0, 1]",
+    );
+  }
 
   if (
     profile.tax?.availabilityPolicy !== "catalog-wide" ||

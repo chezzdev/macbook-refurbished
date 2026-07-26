@@ -254,6 +254,8 @@ const priceTransition = (fromPrice, toPrice) =>
   `${fromPrice === null ? "нет точной цены" : usdPrice(fromPrice)} → ${
     toPrice === null ? "нет точной цены" : usdPrice(toPrice)
   }`;
+const configurationSummary = (configuration) =>
+  `${configuration.family} ${configuration.screen} · ${configuration.display} · ${configuration.chip} ${configuration.cpuCores}/${configuration.gpuCores} · ${configuration.memory}/${configuration.storage}`;
 const changeItems = (entry) => {
   const items = [];
   if (entry.featured) {
@@ -275,6 +277,11 @@ const changeItems = (entry) => {
       `Цена нового ${item.product.productCode}: ${
         priceTransition(item[changeFromField], item[changeToField])
       }`,
+    );
+  }
+  for (const item of entry.configurationChanges || []) {
+    items.push(
+      `Конфигурация ${item.productCode}: ${configurationSummary(item.before)} → ${configurationSummary(item.after)}`,
     );
   }
   for (const item of entry.taxInclusivePriceChanges || []) {
