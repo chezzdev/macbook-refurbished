@@ -61,6 +61,7 @@ if [[ "$prepare_only" != "true" ]]; then
   }
   trap cleanup_bootstrap_snapshot EXIT
 fi
+source "${execution_root}/work/publication-guards.zsh"
 
 workflow_config="$(
   node "${execution_root}/scripts/print-market-workflow-config.mjs" "$market_id"
@@ -99,10 +100,6 @@ snapshot_dir=""
 staging_dir=""
 canonical_promotion_started=false
 workflow_succeeded=false
-allowed_ssh_remote="$repository_url"
-allowed_https_remote="${repository_url/git@github.com:/https://github.com/}"
-allowed_https_remote_short="${allowed_https_remote%.git}"
-allowed_ssh_url_remote="${repository_url/git@github.com:/ssh://git@github.com/}"
 
 source_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --source)}")
 immutable_source_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --immutable-source)}")
@@ -221,19 +218,8 @@ if [[ "$prepare_only" != "true" ]]; then
 fi
 
 if [[ "$prepare_only" != "true" ]]; then
-  if [[ ! -d "${publish_dir}/.git" ]]; then
-    print -u2 "Private GitHub checkout is missing: $publish_dir"
-    exit 1
-  fi
-  preexisting_changes="$(
-    git -C "$publish_dir" status --porcelain --untracked-files=all -- \
-      "${publish_owned_paths[@]}"
-  )"
-  if [[ -n "$preexisting_changes" ]]; then
-    print -u2 "The private checkout has pre-existing changes in pipeline-owned files:"
-    print -u2 "$preexisting_changes"
-    exit 1
-  fi
+  publication_require_clean_synced_checkout \
+    "$publish_dir" "$repository_url" "$publication_branch"
 fi
 
 cd "$execution_root"
@@ -358,24 +344,8 @@ if [[ "$prepare_only" == "true" ]]; then
 fi
 
 print "6/8 Syncing the unified public GitHub repository"
-remote_url="$(git -C "$publish_dir" remote get-url origin)"
-case "$remote_url" in
-  "$allowed_ssh_remote"|"$allowed_https_remote"|"$allowed_https_remote_short"|"$allowed_ssh_url_remote") ;;
-  *)
-    print -u2 "Unexpected GitHub remote: $remote_url"
-    exit 1
-    ;;
-esac
-current_branch="$(git -C "$publish_dir" branch --show-current)"
-if [[ "$current_branch" != "$publication_branch" ]]; then
-  print -u2 "Expected the private checkout to be on ${publication_branch}, found: $current_branch"
-  exit 1
-fi
-git -C "$publish_dir" fetch origin "$publication_branch"
-if ! git -C "$publish_dir" merge-base --is-ancestor "origin/${publication_branch}" HEAD; then
-  print -u2 "The private checkout is behind or diverged from origin/${publication_branch}"
-  exit 1
-fi
+publication_require_clean_synced_checkout \
+  "$publish_dir" "$repository_url" "$publication_branch"
 
 if [[ "$publish_dir" != "$workspace_dir" ]]; then
   for relative_file in "${retired_publication_paths[@]}"; do
@@ -418,10 +388,16 @@ for relative_file in "${retired_publication_paths[@]}"; do
   fi
 done
 
+publication_require_cached_paths \
+  "$publish_dir" "${publish_owned_paths[@]}"
+publication_fetch_and_require_remote_head \
+  "$publish_dir" "$publication_branch"
 if ! git -C "$publish_dir" diff --cached --quiet; then
   git -C "$publish_dir" commit -m "Refresh ${site_name} catalog"
   git -C "$publish_dir" push origin "$publication_branch"
 fi
+publication_require_clean_synced_checkout \
+  "$publish_dir" "$repository_url" "$publication_branch"
 publish_commit="$(git -C "$publish_dir" rev-parse HEAD)"
 
 if [[ "$publication_provider" == "cloudflare-pages" ]]; then

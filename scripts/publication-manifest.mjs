@@ -47,6 +47,9 @@ function uniqueSorted(paths) {
 
 export function buildPublicationManifest(profiles) {
   assertUniqueProfileOwnedPaths(profiles);
+  if (profiles.length === 0) {
+    throw new Error("publication manifest requires at least one market");
+  }
   const marketSourcePaths = profiles.flatMap((profile) => [
     `config/markets/${profile.id}.json`,
     profile.ranking.policyPath,
@@ -73,6 +76,12 @@ export function buildPublicationManifest(profiles) {
   ]);
   return {
     marketIds: profiles.map((profile) => profile.id),
+    marketArtifacts: profiles.map((profile) => ({
+      marketId: profile.id,
+      relativePath: `${profile.publication.artifactDirectory}/index.html`,
+    })),
+    repository: profiles[0].publication.repository,
+    branch: profiles[0].publication.branch,
     sourcePaths,
     immutableSourcePaths,
     retiredPublicationPaths: uniqueSorted(retiredPublicationPaths),
@@ -89,6 +98,14 @@ if (process.argv[1] === import.meta.filename) {
   const mode = process.argv[2] ?? "--source";
   const { profiles } = await loadEnabledMarketProfiles();
   const manifest = buildPublicationManifest(profiles);
+  if (mode === "--repository") {
+    process.stdout.write(`${manifest.repository}\n`);
+    process.exit(0);
+  }
+  if (mode === "--branch") {
+    process.stdout.write(`${manifest.branch}\n`);
+    process.exit(0);
+  }
   const values =
     mode === "--source"
       ? manifest.sourcePaths
@@ -100,11 +117,17 @@ if (process.argv[1] === import.meta.filename) {
           ? manifest.retiredPublicationPaths
           : mode === "--market-ids"
             ? manifest.marketIds
+            : mode === "--market-artifacts"
+              ? manifest.marketArtifacts.map(
+                  ({ marketId, relativePath }) =>
+                    `${marketId}\u001f${relativePath}`,
+                )
             : null;
   if (!values) {
     throw new Error(
       "Usage: publication-manifest.mjs " +
-        "--source|--immutable-source|--publish|--retired|--market-ids",
+        "--source|--immutable-source|--publish|--retired|--market-ids|" +
+        "--market-artifacts|--repository|--branch",
     );
   }
   process.stdout.write(`${values.join("\n")}\n`);

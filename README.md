@@ -19,6 +19,24 @@ Apple Store. Рынок является частью URL одного GitHub Pa
 несуществующие для каталога значения игнорируются, а параметры по умолчанию в
 URL не добавляются.
 
+## Актуальность документации
+
+Этот README описывает только текущее устройство проекта. Operational source of
+truth для агентов — workflow проекта в skill `update-macbook-catalog`. Любая
+работа, которая меняет UI-контракт, market profile, команды, validation,
+publication topology, scheduling или пользовательские приоритеты, обязана в той
+же работе обновить workflow и затронутые разделы README.
+
+Устаревший текст заменяется или удаляется: документы не хранят snapshots,
+предыдущее поведение и историю миграций. История каталога принадлежит
+pipeline-owned `data/markets/<id>/changelog.json`, а состояние последнего
+запуска — `update-status.json` и `update-delta.json`.
+Даты refresh (`checkedAt`), датированные записи catalog changelog и их
+отображение на сайте обязательны: это операционные данные, а не история
+документации.
+`work/gh-pages-site/README.md` — генерируемое зеркало этого файла; его
+синхронизирует только канонический publication workflow.
+
 ## Архитектура рынков
 
 Профили находятся в `config/markets/`. Каждый профиль владеет:
@@ -37,7 +55,7 @@ adapter, validator, ranker, changelog, builder и publication workflow.
 `data/markets/sg/*` и `data/markets/us/*`,
 `outputs/markets/sg/index.html` и `outputs/markets/us/index.html`.
 
-Эталон обоих первых профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
+Текущий эталон обоих профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
 Политики изолированы: `config/ranking-policy.sg.json` для SG и
 `config/ranking-policy.us.json` для US. Цветовые дубли одной точной
 `configurationKey` не занимают несколько featured-мест; различия display,
@@ -65,13 +83,13 @@ US catalog market-wide и не фильтруется по delivery или picku
 
 Для фиксированной точки используется проверенная расчётная модель: sales tax
 10,5% округляется до цента, затем добавляется официальный California recycling
-fee — $4 для экранов меньше 15″ и $5 для экранов от 15″. Контрольная модель
-`FDH94LL/A` дала в корзине Apple ровно тот же результат:
+fee — $4 для экранов меньше 15″ и $5 для экранов от 15″. Текущая контрольная
+конфигурация профиля `FDH94LL/A` воспроизводит
 $1,529.00 + $160.55 + $4.00 = $1,693.55.
 
 На US-сайте tax location переключается в runtime, без перехода на другую
-страницу. Профиль содержит три checkout-проверки для одного и того же
-`FDH94LL/A`:
+страницу. Профиль содержит три актуальные контрольные проверки для одного и
+того же `FDH94LL/A`:
 
 - California, Apple Beverly Center / ZIP 90048:
   `$1,529.00 + $160.55 tax + $4.00 CA recycling fee = $1,693.55`;
@@ -83,8 +101,17 @@ $1,529.00 + $160.55 + $4.00 = $1,693.55.
 У Apple нет retail store в South Dakota, поэтому этот вариант явно обозначен
 как delivery ZIP. Выбор `CA / CO / SD` меняет total, компактную формулу,
 featured-карточки, диапазон цен, таблицу, скидки и price sorting на месте.
-Состояние отражается в query-параметре `state`, но HTML и catalog остаются
-одними и теми же.
+California — default и не добавляется в URL; `CO` и `SD` канонично отражаются
+в query-параметре `state`. Некорректное значение удаляется, а filters, sorting,
+сторонние query parameters и hash сохраняются. HTML и catalog остаются одними
+и теми же.
+
+Переключатель штатов находится в header и использует те же размеры и
+типографику, что и market switcher. Price columns не меняют положение между
+штатами, а таблица целиком помещается в desktop viewport 1366 px без
+горизонтального overflow. Refurb total является ссылкой на refurbished product
+у Apple, exact-new total — на точную новую конфигурацию. Отдельной Apple-колонки
+на US нет; `Nano-texture` выводится третьей строкой модели.
 
 Валюта, точность minor unit и сборы принадлежат tax policy и обязаны совпадать
 с исходной валютой профиля; контрольный checkout указывает размер экрана, а
@@ -109,6 +136,7 @@ checkout в выбранной локации, а не окончательны�
 
 ```zsh
 npm test
+npm run lint
 npm run build
 npm run build:catalog -- --market sg
 npm run build:catalog -- --market us
@@ -149,6 +177,12 @@ Git HEAD, затем выполняет fetch/tests/build и source sync из в
 `git archive` этого зафиксированного HEAD. Изменения workspace во время
 длительного refresh не могут попасть в публикацию. Незакоммиченные
 pipeline-generated JSON/HTML не блокируют preflight.
+Publication checkout при этом должен быть полностью чистым, находиться на
+ожидаемой ветке и после `fetch` побайтово указывать тем же `HEAD`, что
+`origin/<branch>`. Перед commit workflow повторно проверяет remote HEAD и
+отклоняет любой staged path вне publication manifest, поэтому локальный
+ahead-коммит или заранее подготовленный посторонний файл не может попасть в
+публичную ветку.
 Для провайдера без автоматического deploy `--prepare-only` оставляет canonical
 state неизменным и возвращает путь к проверенному временному артефакту и его
 SHA-256. Оба рынка используют checkout `work/gh-pages-site`, один public remote
@@ -175,8 +209,14 @@ MACBOOK_PUBLISH_DIR=/absolute/path/to/work/gh-pages-site \
   ./work/deploy-unified-cloudflare-fallback.zsh
 ```
 
-Fallback-команда публикует корневой redirect и оба пути `markets/sg/` и
-`markets/us/` в каждый проект, затем проверяет точный SHA-256 обеих страниц.
+Fallback-команда использует тот же общий publication lock, требует полностью
+чистый checkout на ожидаемых remote/branch и точное `HEAD == origin/main`.
+Она фиксирует этот commit, читает enabled markets и их artifact routes из
+registry-driven publication manifest внутри `git archive`, а затем публикует
+именно распакованный immutable archive в каждый проект. Для каждого enabled
+market проверяется точный SHA-256 его страницы; dirty-checkout override не
+используется. Поэтому новый enabled market автоматически появляется на обоих
+fallback-доменах без отдельной правки deploy-скрипта.
 
 Workflow выбирает артефакт и market URL только из выбранного профиля, поэтому
 данные SG и US не смешиваются, хотя публикуются на одном сайте.
@@ -240,7 +280,8 @@ Production UI существует в одном варианте:
    `markets/<id>/` внутри общего GitHub Pages site.
 3. До явного одобрения нового market URL оставить публикацию approval-gated.
 4. Добавить market id в `config/markets/registry.json`. После этого общий
-   switcher, build и daily batch подхватят рынок без bespoke-кода.
+   switcher, build, daily batch и Cloudflare fallback подхватят рынок без
+   bespoke-кода.
 5. Покрыть специфичную currency/tax policy synthetic profile-тестом и
    выполнить `npm test` и `npm run build` до канонического refresh.
 

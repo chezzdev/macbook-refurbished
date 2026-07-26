@@ -52,6 +52,7 @@ export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
   "work/build-expanded-standalone.mjs",
   "work/daily-update.zsh",
   "work/deploy-unified-cloudflare-fallback.zsh",
+  "work/publication-guards.zsh",
   "work/update-all-markets.zsh",
   "work/update-market-site.zsh",
   "work/update-published-site.zsh",

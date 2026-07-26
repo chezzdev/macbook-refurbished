@@ -52,6 +52,10 @@ const [sg, us, sgContext, usContext, enabledMarketState] = await Promise.all([
 ]);
 const execFileAsync = promisify(execFile);
 const projectRoot = resolve(import.meta.dirname, "..");
+const publicationGuardScript = join(
+  projectRoot,
+  "work/publication-guards.zsh",
+);
 const dependabotConfigText = await readFile(
   join(projectRoot, ".github/dependabot.yml"),
   "utf8",
@@ -63,6 +67,84 @@ const [sgPolicy, usPolicy] = await Promise.all([
   readFile(sgContext.policyPath, "utf8").then(JSON.parse),
   readFile(usContext.policyPath, "utf8").then(JSON.parse),
 ]);
+
+async function runGit(cwd, args) {
+  return execFileAsync("git", args, { cwd });
+}
+
+async function createPublicationGuardFixture() {
+  const fixtureRoot = await mkdtemp(
+    join(tmpdir(), "macbook-publication-guard-"),
+  );
+  const remoteDirectory = join(fixtureRoot, "origin.git");
+  const checkoutDirectory = join(fixtureRoot, "checkout");
+  await runGit(fixtureRoot, ["init", "--bare", remoteDirectory]);
+  await runGit(fixtureRoot, ["init", checkoutDirectory]);
+  await runGit(checkoutDirectory, ["config", "user.name", "Guard Test"]);
+  await runGit(checkoutDirectory, [
+    "config",
+    "user.email",
+    "guard@example.invalid",
+  ]);
+  await writeFile(
+    join(checkoutDirectory, "allowed.txt"),
+    "initial\n",
+    "utf8",
+  );
+  await runGit(checkoutDirectory, ["add", "allowed.txt"]);
+  await runGit(checkoutDirectory, ["commit", "-m", "Initial"]);
+  await runGit(checkoutDirectory, ["branch", "-M", "main"]);
+  await runGit(checkoutDirectory, [
+    "remote",
+    "add",
+    "origin",
+    remoteDirectory,
+  ]);
+  await runGit(checkoutDirectory, ["push", "-u", "origin", "main"]);
+  return {
+    fixtureRoot,
+    remoteDirectory,
+    checkoutDirectory,
+  };
+}
+
+async function runCleanPublicationGuard({
+  checkoutDirectory,
+  remoteDirectory,
+  branch = "main",
+}) {
+  return execFileAsync(
+    "/bin/zsh",
+    [
+      "-c",
+      'source "$1"; publication_require_clean_synced_checkout "$2" "$3" "$4"',
+      "publication-guard-test",
+      publicationGuardScript,
+      checkoutDirectory,
+      remoteDirectory,
+      branch,
+    ],
+    { cwd: projectRoot },
+  );
+}
+
+async function runCachedPublicationGuard(
+  checkoutDirectory,
+  allowedEntries,
+) {
+  return execFileAsync(
+    "/bin/zsh",
+    [
+      "-c",
+      'source "$1"; shift; publication_require_cached_paths "$@"',
+      "publication-cached-test",
+      publicationGuardScript,
+      checkoutDirectory,
+      ...allowedEntries,
+    ],
+    { cwd: projectRoot },
+  );
+}
 
 function tile({
   productCode,
@@ -802,7 +884,12 @@ test("workflow config selects one shared checkout and each market artifact", asy
 });
 
 test("publication workflow shares one lock and keeps prepare-only non-canonical", async () => {
-  const [perMarketWorkflow, allMarketsWorkflow, fallbackWorkflow] =
+  const [
+    perMarketWorkflow,
+    allMarketsWorkflow,
+    fallbackWorkflow,
+    publicationGuards,
+  ] =
     await Promise.all([
       readFile(
         join(projectRoot, "work/update-market-site.zsh"),
@@ -816,6 +903,7 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
         join(projectRoot, "work/deploy-unified-cloudflare-fallback.zsh"),
         "utf8",
       ),
+      readFile(publicationGuardScript, "utf8"),
     ]);
   assert.match(perMarketWorkflow, /\.publication-update\.lock/);
   assert.match(allMarketsWorkflow, /\.publication-update\.lock/);
@@ -875,11 +963,146 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
     /staged_file="\$\{staging_dir\}\/\$\{relative_file\}"/,
   );
   assert.doesNotMatch(perMarketWorkflow, /relative_file:t/);
+  assert.match(
+    perMarketWorkflow,
+    /publication_require_clean_synced_checkout/,
+  );
+  assert.match(perMarketWorkflow, /publication_require_cached_paths/);
+  assert.match(
+    perMarketWorkflow,
+    /publication_fetch_and_require_remote_head/,
+  );
+  assert.match(publicationGuards, /status --porcelain=v1 --untracked-files=all/);
+  assert.match(
+    publicationGuards,
+    /Publication HEAD must exactly match origin\//,
+  );
+  assert.match(
+    publicationGuards,
+    /Publication index contains a path outside the manifest/,
+  );
   assert.match(fallbackWorkflow, /macbook-sg-refurbished/);
   assert.match(fallbackWorkflow, /macbook-us-refurbished/);
-  assert.match(fallbackWorkflow, /markets\/\$\{market_id\}\//);
+  assert.match(fallbackWorkflow, /\.publication-update\.lock/);
+  assert.match(fallbackWorkflow, /publication_require_clean_synced_checkout/);
+  assert.match(fallbackWorkflow, /git -C "\$publish_dir" archive "\$publish_commit"/);
+  assert.match(fallbackWorkflow, /--market-artifacts/);
+  assert.match(fallbackWorkflow, /route_by_market/);
+  assert.doesNotMatch(fallbackWorkflow, /markets\/sg\/index\.html/);
+  assert.doesNotMatch(fallbackWorkflow, /markets\/us\/index\.html/);
+  assert.doesNotMatch(fallbackWorkflow, /for market_id in sg us/);
+  assert.doesNotMatch(fallbackWorkflow, /--commit-dirty/);
   assert.match(fallbackWorkflow, /node_modules\/\.bin\/wrangler/);
   assert.doesNotMatch(fallbackWorkflow, /npx --yes/);
+});
+
+test("publication checkout guards fail closed on dirty, ahead, and over-staged state", async () => {
+  const fixtures = [];
+  try {
+    const cleanFixture = await createPublicationGuardFixture();
+    fixtures.push(cleanFixture.fixtureRoot);
+    await assert.doesNotReject(() =>
+      runCleanPublicationGuard(cleanFixture),
+    );
+
+    const dirtyFixture = await createPublicationGuardFixture();
+    fixtures.push(dirtyFixture.fixtureRoot);
+    await writeFile(
+      join(dirtyFixture.checkoutDirectory, "untracked.txt"),
+      "must fail\n",
+      "utf8",
+    );
+    await assert.rejects(
+      () => runCleanPublicationGuard(dirtyFixture),
+      (error) => {
+        assert.match(error.stderr, /must be completely clean/);
+        assert.match(error.stderr, /untracked\.txt/);
+        return true;
+      },
+    );
+
+    const aheadFixture = await createPublicationGuardFixture();
+    fixtures.push(aheadFixture.fixtureRoot);
+    await writeFile(
+      join(aheadFixture.checkoutDirectory, "allowed.txt"),
+      "local ahead\n",
+      "utf8",
+    );
+    await runGit(aheadFixture.checkoutDirectory, ["add", "allowed.txt"]);
+    await runGit(aheadFixture.checkoutDirectory, ["commit", "-m", "Ahead"]);
+    await assert.rejects(
+      () => runCleanPublicationGuard(aheadFixture),
+      (error) => {
+        assert.match(error.stderr, /must exactly match origin\/main/);
+        return true;
+      },
+    );
+
+    const wrongBranchFixture = await createPublicationGuardFixture();
+    fixtures.push(wrongBranchFixture.fixtureRoot);
+    await runGit(wrongBranchFixture.checkoutDirectory, [
+      "switch",
+      "-c",
+      "other",
+    ]);
+    await assert.rejects(
+      () => runCleanPublicationGuard(wrongBranchFixture),
+      (error) => {
+        assert.match(error.stderr, /Expected publication branch main/);
+        return true;
+      },
+    );
+
+    const cachedFixture = await createPublicationGuardFixture();
+    fixtures.push(cachedFixture.fixtureRoot);
+    await writeFile(
+      join(cachedFixture.checkoutDirectory, "allowed.txt"),
+      "allowed change\n",
+      "utf8",
+    );
+    await runGit(cachedFixture.checkoutDirectory, ["add", "allowed.txt"]);
+    await assert.doesNotReject(() =>
+      runCachedPublicationGuard(
+        cachedFixture.checkoutDirectory,
+        ["allowed.txt"],
+      ),
+    );
+
+    const overStagedFixture = await createPublicationGuardFixture();
+    fixtures.push(overStagedFixture.fixtureRoot);
+    await writeFile(
+      join(overStagedFixture.checkoutDirectory, "allowed.txt"),
+      "allowed change\n",
+      "utf8",
+    );
+    await writeFile(
+      join(overStagedFixture.checkoutDirectory, "outside.txt"),
+      "must not be committed\n",
+      "utf8",
+    );
+    await runGit(overStagedFixture.checkoutDirectory, [
+      "add",
+      "allowed.txt",
+      "outside.txt",
+    ]);
+    await assert.rejects(
+      () =>
+        runCachedPublicationGuard(
+          overStagedFixture.checkoutDirectory,
+          ["allowed.txt"],
+        ),
+      (error) => {
+        assert.match(error.stderr, /path outside the manifest: outside\.txt/);
+        return true;
+      },
+    );
+  } finally {
+    await Promise.all(
+      fixtures.map((fixtureRoot) =>
+        rm(fixtureRoot, { recursive: true, force: true }),
+      ),
+    );
+  }
 });
 
 test("publication manifest derives every market path from enabled profiles", () => {
@@ -904,6 +1127,16 @@ test("publication manifest derives every market path from enabled profiles", () 
   const manifest = buildPublicationManifest([sg, us, futureProfile]);
 
   assert.deepEqual(manifest.marketIds, ["sg", "us", "ca"]);
+  assert.deepEqual(manifest.marketArtifacts, [
+    { marketId: "sg", relativePath: "markets/sg/index.html" },
+    { marketId: "us", relativePath: "markets/us/index.html" },
+    { marketId: "ca", relativePath: "markets/ca/index.html" },
+  ]);
+  assert.equal(
+    manifest.repository,
+    "git@github.com:chezzdev/macbook-refurbished.git",
+  );
+  assert.equal(manifest.branch, "main");
   for (const expectedPath of [
     "config/markets/ca.json",
     "config/ranking-policy.ca.json",
@@ -934,6 +1167,9 @@ test("publication manifest derives every market path from enabled profiles", () 
     manifest.sourcePaths.includes(
       "work/deploy-unified-cloudflare-fallback.zsh",
     ),
+  );
+  assert.ok(
+    manifest.sourcePaths.includes("work/publication-guards.zsh"),
   );
   assert.ok(manifest.publicationPaths.includes("index.html"));
   assert.ok(manifest.publicationPaths.includes(".nojekyll"));
