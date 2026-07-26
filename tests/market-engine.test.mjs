@@ -145,10 +145,18 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     topLevel: Object.keys(profile).sort(),
     storefront: Object.keys(profile.storefront).sort(),
     currency: Object.keys(profile.currency).sort(),
+    priceFields: Object.keys(profile.currency.priceFields).sort(),
     namespace: Object.keys(profile.namespace).sort(),
     publication: Object.keys(profile.publication).sort(),
   });
   assert.deepEqual(commonShape(sg), commonShape(us));
+  assert.equal(sg.currency.priceFields.taxInclusive, null);
+  assert.equal(sg.currency.priceFields.newTaxInclusive, null);
+  assert.equal(us.currency.priceFields.taxInclusive, "taxInclusivePriceUsd");
+  assert.equal(
+    us.currency.priceFields.newTaxInclusive,
+    "newTaxInclusivePriceUsd",
+  );
   assert.equal(sg.siteName, "MacBook SG Refurbished");
   assert.equal(us.siteName, "MacBook US Refurbished");
   assert.equal(
@@ -311,6 +319,9 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
     ],
     us,
   );
+  products[0].newPriceUsd = 1799;
+  products[0].newSourceUrl =
+    "https://www.apple.com/shop/buy-mac/macbook-air/13-inch";
   const estimated = await hydrateTaxInclusivePrices(products, {
     marketProfile: us,
   });
@@ -321,9 +332,20 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
   assert.equal(estimated.products[0].taxInclusivePricing.salesTaxAmount, 157.5);
   assert.equal(estimated.products[0].taxInclusivePricing.recyclingFeeAmount, 4);
   assert.equal(estimated.products[0].taxInclusivePriceUsd, 1661.5);
+  assert.equal(
+    estimated.products[0].newTaxInclusivePricing.salesTaxAmount,
+    188.9,
+  );
+  assert.equal(
+    estimated.products[0].newTaxInclusivePricing.recyclingFeeAmount,
+    4,
+  );
+  assert.equal(estimated.products[0].newTaxInclusivePriceUsd, 1991.9);
   assert.equal(estimated.products[1].taxInclusivePricing.salesTaxAmount, 168);
   assert.equal(estimated.products[1].taxInclusivePricing.recyclingFeeAmount, 5);
   assert.equal(estimated.products[1].taxInclusivePriceUsd, 1773);
+  assert.equal(estimated.products[1].newTaxInclusivePriceUsd, null);
+  assert.equal(estimated.products[1].newTaxInclusivePricing, null);
   for (const product of estimated.products) {
     assert.equal(product.taxInclusivePricing.status, "estimated");
     assert.equal(product.taxInclusivePricing.locationId, "apple-beverly-center");
@@ -363,6 +385,12 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
   assert.throws(
     () => buildCatalog(tampered, us),
     /tax estimate does not match its profile policy/,
+  );
+  const tamperedNew = structuredClone(estimated.products);
+  tamperedNew[0].newTaxInclusivePriceUsd += 1;
+  assert.throws(
+    () => buildCatalog(tamperedNew, us),
+    /new tax estimate does not match its profile policy/,
   );
 });
 
@@ -445,6 +473,9 @@ test("the shared UI builder renders the US profile without Singapore assumptions
       ],
       us,
     );
+    parsedProducts[0].newPriceUsd = 1799;
+    parsedProducts[0].newSourceUrl =
+      "https://www.apple.com/shop/buy-mac/macbook-air/13-inch";
     const { products } = await hydrateTaxInclusivePrices(parsedProducts, {
       marketProfile: us,
     });
@@ -528,9 +559,12 @@ test("the shared UI builder renders the US profile without Singapore assumptions
     );
     assert.match(html, /MacBook US Refurbished/);
     assert.match(html, /Apple Beverly Center/);
-    assert.match(html, /Расчётный итог/);
+    assert.match(html, /Расчётный total/);
     assert.match(html, /10\.5%/);
     assert.match(html, /\$1,661\.50/);
+    assert.match(html, /\$1,500\.00 \+ \$157\.50 \+ \$4\.00/);
+    assert.match(html, /"newTaxInclusivePriceUsd":1991\.9/);
+    assert.match(html, /priceFormula\(p\.newTaxInclusivePricing\)/);
     assert.ok(
       html.includes(
         `<link rel="canonical" href="${us.publication.canonicalUrl}">`,

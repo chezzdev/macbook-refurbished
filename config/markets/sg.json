@@ -19,7 +19,8 @@
     "priceFields": {
       "refurbished": "priceSgd",
       "new": "newPriceSgd",
-      "taxInclusive": null
+      "taxInclusive": null,
+      "newTaxInclusive": null
     },
     "conversion": {
       "type": "cbr-cross-rate",

@@ -47,12 +47,17 @@ export function roundCurrency(value) {
 export function calculateFixedLocationTaxEstimate(
   product,
   marketProfile,
+  {
+    priceField = marketProfile.currency.priceFields.refurbished,
+  } = {},
 ) {
   if (marketProfile.tax.model !== "verified-fixed-location-estimate") {
     throw new Error("market profile does not use a fixed-location estimate");
   }
-  const fields = priceFields(marketProfile);
-  const preTaxAmount = product[fields.refurbished];
+  const preTaxAmount = product[priceField];
+  if (!Number.isFinite(preTaxAmount) || preTaxAmount <= 0) {
+    throw new Error(`${priceField} must be a positive number`);
+  }
   const screenInches = String(
     Number(String(product.screen).replace(/\D/g, "")),
   );
@@ -273,6 +278,10 @@ export function parseRefurbishedTile(
       marketProfile,
       "apple-tax-quote-not-attempted",
     );
+    if (fields.newTaxInclusive) {
+      product[fields.newTaxInclusive] = null;
+      product.newTaxInclusivePricing = null;
+    }
   }
   product.configurationKey = buildConfigurationKey(product);
   return product;
@@ -516,10 +525,19 @@ export async function hydrateTaxInclusivePrices(
         product,
         marketProfile,
       );
+      const hasNewPrice =
+        Number.isFinite(product[fields.new]) && product[fields.new] > 0;
+      const newPricing = hasNewPrice
+        ? calculateFixedLocationTaxEstimate(product, marketProfile, {
+            priceField: fields.new,
+          })
+        : null;
       return {
         ...product,
         [fields.taxInclusive]: pricing.amount,
         taxInclusivePricing: pricing,
+        [fields.newTaxInclusive]: newPricing?.amount ?? null,
+        newTaxInclusivePricing: newPricing,
       };
     });
     return {
@@ -769,6 +787,33 @@ export function validateProducts(
           );
         }
       }
+      if (marketProfile.tax.model === "verified-fixed-location-estimate") {
+        const newPricing = product.newTaxInclusivePricing;
+        if (!hasNewPrice) {
+          if (
+            product[fields.newTaxInclusive] !== null ||
+            newPricing !== null
+          ) {
+            throw new Error(
+              `products[${index}] unpriced new total fields must be explicit null`,
+            );
+          }
+        } else {
+          const expectedNew = calculateFixedLocationTaxEstimate(
+            product,
+            marketProfile,
+            { priceField: fields.new },
+          );
+          if (
+            product[fields.newTaxInclusive] !== expectedNew.amount ||
+            JSON.stringify(newPricing) !== JSON.stringify(expectedNew)
+          ) {
+            throw new Error(
+              `products[${index}] new tax estimate does not match its profile policy`,
+            );
+          }
+        }
+      }
     }
   }
 
@@ -884,6 +929,15 @@ export function buildSuccessStatus(
             taxInclusiveAppleResolvedProducts: taxResolvedCount,
             taxInclusiveEstimatedProducts: taxEstimatedCount,
             taxInclusiveUnresolvedProducts: taxUnresolvedCount,
+            ...(marketProfile.tax.model ===
+            "verified-fixed-location-estimate"
+              ? {
+                  newTaxInclusiveEstimatedProducts: products.filter(
+                    (product) =>
+                      product.newTaxInclusivePricing?.status === "estimated",
+                  ).length,
+                }
+              : {}),
           }
         : {}),
     },

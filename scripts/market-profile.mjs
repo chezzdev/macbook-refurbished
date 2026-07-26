@@ -115,6 +115,12 @@ export function validateMarketProfile(profile) {
       profile.currency.priceFields.taxInclusive,
       "currency.priceFields.taxInclusive",
     );
+    if (profile.tax.model === "verified-fixed-location-estimate") {
+      requireString(
+        profile.currency.priceFields.newTaxInclusive,
+        "currency.priceFields.newTaxInclusive",
+      );
+    }
     if (profile.tax.model === "apple-checkout-reference-location") {
       if (profile.tax.taxInclusiveSourcePolicy !== "apple-flow-only") {
         throw new Error(
@@ -204,6 +210,13 @@ export function validateMarketProfile(profile) {
     }
   } else if (profile.tax?.model !== "included-in-list-price") {
     throw new Error(`unsupported tax model: ${profile.tax?.model}`);
+  } else if (
+    profile.currency.priceFields.taxInclusive !== null ||
+    profile.currency.priceFields.newTaxInclusive !== null
+  ) {
+    throw new Error(
+      "included-in-list-price markets must not declare tax-inclusive output fields",
+    );
   }
 
   requireString(profile.ranking?.policyPath, "ranking.policyPath");

@@ -19,7 +19,8 @@
     "priceFields": {
       "refurbished": "priceUsd",
       "new": "newPriceUsd",
-      "taxInclusive": "taxInclusivePriceUsd"
+      "taxInclusive": "taxInclusivePriceUsd",
+      "newTaxInclusive": "newTaxInclusivePriceUsd"
     },
     "conversion": {
       "type": "identity",

@@ -16,6 +16,18 @@ if (!enabledMarketProfiles.some((marketProfile) => marketProfile.id === profile.
 const refurbishedPriceField = profile.currency.priceFields.refurbished;
 const newPriceField = profile.currency.priceFields.new;
 const taxInclusivePriceField = profile.currency.priceFields.taxInclusive;
+const newTaxInclusivePriceField =
+  profile.currency.priceFields.newTaxInclusive;
+const hasReferenceLocationTax =
+  [
+    "apple-checkout-reference-location",
+    "verified-fixed-location-estimate",
+  ].includes(profile.tax.model);
+const hasVerifiedTaxEstimate =
+  profile.tax.model === "verified-fixed-location-estimate";
+const displayedRefurbishedPriceField = hasVerifiedTaxEstimate
+  ? taxInclusivePriceField
+  : refurbishedPriceField;
 const sourceCurrency = profile.currency.source;
 const displayCurrency = profile.currency.display;
 const currencySuffix =
@@ -105,6 +117,14 @@ const taxDisplayFormatter = new Intl.NumberFormat("en-US", {
 const usdPrice = (amount) => displayFormatter.format(amount * rate);
 const taxDisplayPrice = (amount) =>
   taxDisplayFormatter.format(amount * rate);
+const mainPrice = (amount) =>
+  hasVerifiedTaxEstimate ? taxDisplayPrice(amount) : usdPrice(amount);
+const taxFormula = (pricing) =>
+  [
+    pricing.preTaxAmount,
+    pricing.salesTaxAmount,
+    pricing.recyclingFeeAmount,
+  ].map(taxDisplayPrice).join(" + ");
 const capacityNumber = (value) => Number(value.replace(/\D/g, "")) * (value.endsWith("TB") ? 1024 : 1);
 const chipNumber = (value) => Number(value.match(/\d+/)?.[0] || 0);
 const chipTier = (value) => (value.includes("Max") ? 2 : value.includes("Pro") ? 1 : 0);
@@ -122,10 +142,10 @@ const configurationKeyFor = (product) => product.configurationKey || [
 const airCount = products.filter((product) => product.family === "Air").length;
 const proCount = products.filter((product) => product.family === "Pro").length;
 const minimumPrice = Math.min(
-  ...products.map((product) => product[refurbishedPriceField]),
+  ...products.map((product) => product[displayedRefurbishedPriceField]),
 );
 const maximumPrice = Math.max(
-  ...products.map((product) => product[refurbishedPriceField]),
+  ...products.map((product) => product[displayedRefurbishedPriceField]),
 );
 const chips = [...new Set(products.map((product) => product.chip))].sort((a, b) =>
   chipNumber(a) - chipNumber(b) || chipTier(a) - chipTier(b),
@@ -302,17 +322,17 @@ const changelogHtml = changelogDocument.entries
   .map(changelogEntry)
   .join("");
 
+const cardPrice = (product) =>
+  hasVerifiedTaxEstimate
+    ? `<strong>${taxDisplayPrice(product[taxInclusivePriceField])}</strong><span>total · расчёт</span><small class="price-formula">${taxFormula(product.taxInclusivePricing)}</small>`
+    : `<strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>`;
 const card = ({ product, label, heading, body, score, highlighted = false }) =>
   `<article class="pick-card${highlighted ? " featured" : ""}" data-score="${escapeHtml(score)}">
     <span class="pick-label">${escapeHtml(label)} · ${escapeHtml(formatScore(score))} / 100</span>
     <div class="pick-chip">${escapeHtml(product.chip)}</div>
     <h3>${escapeHtml(heading)}</h3>
     <p>${escapeHtml(body)}</p>
-    <div class="pick-price"><strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>${
-      product.taxInclusivePricing?.status === "estimated"
-        ? `<small>расчётный итог ${taxDisplayPrice(product[taxInclusivePriceField])}</small>`
-        : ""
-    }</div>
+    <div class="pick-price">${cardPrice(product)}</div>
     <a class="pick-link" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">Открыть у Apple ↗</a>
   </article>`;
 
@@ -327,12 +347,12 @@ const shortlistHtml = featured.map((item, index) => card({
 const leadingPick = featured[0];
 const runnerUp = featured[1];
 const priceDelta = Math.abs(
-  leadingPick.product[refurbishedPriceField] -
-    runnerUp.product[refurbishedPriceField],
+  leadingPick.product[displayedRefurbishedPriceField] -
+    runnerUp.product[displayedRefurbishedPriceField],
 );
 const priceComparison = priceDelta === 0
   ? "Они стоят одинаково."
-  : `${leadingPick.product[refurbishedPriceField] > runnerUp.product[refurbishedPriceField] ? "Первый вариант дороже второго" : "Первый вариант дешевле второго"} на ${usdPrice(priceDelta)}.`;
+  : `${leadingPick.product[displayedRefurbishedPriceField] > runnerUp.product[displayedRefurbishedPriceField] ? "Первый вариант дороже второго" : "Первый вариант дешевле второго"} на ${mainPrice(priceDelta)}.`;
 
 const checkboxes = (name, values, labels = {}) => values
   .map((value, index) => `<label class="check-option" for="${name}-${index}"><input id="${name}-${index}" type="checkbox" name="${name}" value="${value}"><span>${labels[value] || value}</span></label>`)
@@ -364,27 +384,24 @@ const marketSwitcherHtml = enabledMarketProfiles
 const rateLink = rateSourceUrl
   ? `<a href="${escapeHtml(rateSourceUrl)}" target="_blank" rel="noreferrer">Курс валют ↗</a>`
   : "";
-const hasReferenceLocationTax =
-  [
-    "apple-checkout-reference-location",
-    "verified-fixed-location-estimate",
-  ].includes(profile.tax.model);
-const hasVerifiedTaxEstimate =
-  profile.tax.model === "verified-fixed-location-estimate";
 const taxLocation = profile.tax.referenceLocation;
 const taxReferenceLabel = taxLocation
   ? `${taxLocation.name}, ${taxLocation.street}, ${taxLocation.city}, ${taxLocation.region} ${taxLocation.postalCode}`
   : "";
 const heroCurrencyCopy =
-  sourceCurrency === displayCurrency
+  hasVerifiedTaxEstimate
+    ? "Total = цена + налог + сбор"
+    : sourceCurrency === displayCurrency
     ? `Цены Apple уже указаны в ${displayCurrency}; конвертация не применяется`
     : `Пересчёт по официальному кросс-курсу на ${rateDateFormatted}, округление до $1`;
 const heroMarketCopy =
-  hasReferenceLocationTax
+  hasVerifiedTaxEstimate
+    ? `В US крупно показан расчётный total для ${taxLocation.name}; каталог остаётся общенациональным.`
+    : hasReferenceLocationTax
     ? `Цены Apple указаны в ${sourceCurrency}. Каталог ${profile.storefront.countryName} остаётся общенациональным; налоговый ориентир привязан к одной точке.`
     : `Цены в ${displayCurrency} крупно, исходные ${sourceCurrency} — рядом.`;
 const taxMethodCopy = hasVerifiedTaxEstimate
-  ? `<article><span>03</span><h3>Расчётный итог</h3><p>Для ${escapeHtml(taxReferenceLabel)} применяется ставка ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}%, округлённая до цента, плюс официальный CA recycling fee по диагонали. Формула проверена в корзине Apple на ${escapeHtml(profile.tax.acquisition.verification.productCode)}; окончательный счёт Apple может отличаться.</p></article>`
+  ? `<article><span>03</span><h3>Расчётный total</h3><p>Цена + налог ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}% + сбор. Ориентир: ${escapeHtml(taxReferenceLabel)}.</p></article>`
   : hasReferenceLocationTax
     ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.</p></article>`
   : `<article><span>03</span><h3>USD — ориентир</h3><p>Конвертация сделана по официальному кросс-курсу на ${formatRussianLongDate(rateDate)}. Банк или карта могут посчитать иначе.</p></article>`;
@@ -394,21 +411,41 @@ const clientPriceFormatterSource =
     const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong> <span class="source-secondary">(${escapeHtml(profile.currency.secondarySymbol || sourceCurrency)}'+sourcePrice.format(amount)+')</span>';`
     : `const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong>';`;
 const clientTaxFormatterSource = hasVerifiedTaxEstimate
-  ? `const taxPrice=p=>p[taxInclusivePriceField]?
-      '<small class="tax-inclusive">Расчётный итог: '+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</small>'+
-      '<small class="tax-details">налог '+taxCurrency.format(p.taxInclusivePricing.salesTaxAmount*rate)+' · сбор '+taxCurrency.format(p.taxInclusivePricing.recyclingFeeAmount*rate)+'</small>':
-      '<small class="tax-unresolved">Итого с налогом: не рассчитано</small>';`
+  ? `const priceFormula=pricing=>'<small class="price-formula">'+
+      taxCurrency.format(pricing.preTaxAmount*rate)+' + '+
+      taxCurrency.format(pricing.salesTaxAmount*rate)+' + '+
+      taxCurrency.format(pricing.recyclingFeeAmount*rate)+'</small>';
+    const refurbishedPrice=p=>'<strong class="primary-currency">'+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.taxInclusivePricing);
+    const exactNewPrice=p=>p[newTaxInclusivePriceField]?
+      '<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple"><strong class="primary-currency">'+taxCurrency.format(p[newTaxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.newTaxInclusivePricing)+'</a>':
+      '<span class="na">—</span>';
+    const comparableRefurbishedPrice=p=>p[taxInclusivePriceField];
+    const comparableNewPrice=p=>p[newTaxInclusivePriceField];
+    const comparisonPrice=amount=>'<strong class="primary-currency">'+taxCurrency.format(amount*rate)+'</strong>';`
   : hasReferenceLocationTax
     ? `const taxPrice=p=>p[taxInclusivePriceField]?
       '<small class="tax-inclusive">Итого Apple: '+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</small>':
-      '<small class="tax-unresolved">Итого с налогом: не получено</small>';`
-  : `const taxPrice=()=>"";`;
-const refurbishedHeader = hasReferenceLocationTax
-  ? "Цена refurb до налога"
-  : "Цена refurb";
-const newHeader = hasReferenceLocationTax
-  ? "Цена нового до налога"
-  : "Цена нового";
+      '<small class="tax-unresolved">Итого с налогом: не получено</small>';
+    const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField])+taxPrice(p);
+    const exactNewPrice=p=>p[newPriceField]?'<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">'+tablePrice(p[newPriceField])+'</a>':'<span class="na">—</span>';
+    const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
+    const comparableNewPrice=p=>p[newPriceField];
+    const comparisonPrice=tablePrice;`
+  : `const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField]);
+    const exactNewPrice=p=>p[newPriceField]?'<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">'+tablePrice(p[newPriceField])+'</a>':'<span class="na">—</span>';
+    const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
+    const comparableNewPrice=p=>p[newPriceField];
+    const comparisonPrice=tablePrice;`;
+const refurbishedHeader = hasVerifiedTaxEstimate
+  ? "Refurb total · расчёт"
+  : hasReferenceLocationTax
+    ? "Цена refurb до налога"
+    : "Цена refurb";
+const newHeader = hasVerifiedTaxEstimate
+  ? "Новый total · расчёт"
+  : hasReferenceLocationTax
+    ? "Цена нового до налога"
+    : "Цена нового";
 
 const html = `<!doctype html>
 <html lang="${escapeHtml(profile.language)}">
@@ -491,7 +528,7 @@ const html = `<!doctype html>
     .chip-name{display:inline-block;background:#e8e5dc;padding:7px 9px;font-weight:850}.chip-m5{background:var(--blue);color:white}
     .dot{display:inline-block;width:12px;height:12px;border:1px solid #777;border-radius:50%;margin-right:7px;vertical-align:-1px}
     .silver{background:#e7e8e8}.midnight{background:#252a32}.space-grey{background:#838487}.space-black{background:#222}.starlight{background:#f1e5c9}.sky-blue{background:#b9d5e7}
-    .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-details,.tax-unresolved{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.pick-price small{flex-basis:100%;font-size:12px;color:var(--muted)}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+    .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-unresolved,.price-formula{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.pick-price small{flex-basis:100%;font-size:12px;color:var(--muted)}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
     .price-link{color:inherit;text-decoration-color:#aaa;text-underline-offset:3px}
     .saving{font-weight:800;color:#187235}.overpay{font-weight:800;color:#c12b22}.na{color:var(--muted)}
     .open{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--ink);text-decoration:none}.open:hover{background:var(--blue);color:white}
@@ -529,7 +566,7 @@ const html = `<!doctype html>
       <div class="hero-stats">
         <div><strong>${products.length}</strong><span>актуальные позиции</span></div>
         <div><strong>${airCount} Air · ${proCount} Pro</strong><span>весь каталог ноутбуков</span></div>
-        <div class="price-range"><strong>${usdPrice(minimumPrice)} – ${usdPrice(maximumPrice)}</strong><span>${hasReferenceLocationTax ? "диапазон до налога" : "диапазон цен"}</span></div>
+        <div class="price-range"><strong>${mainPrice(minimumPrice)} – ${mainPrice(maximumPrice)}</strong><span>${hasVerifiedTaxEstimate ? "диапазон total · расчёт" : hasReferenceLocationTax ? "диапазон до налога" : "диапазон цен"}</span></div>
       </div>
     </section>
 
@@ -587,6 +624,7 @@ const html = `<!doctype html>
     const refurbishedPriceField=${JSON.stringify(refurbishedPriceField)};
     const newPriceField=${JSON.stringify(newPriceField)};
     const taxInclusivePriceField=${JSON.stringify(taxInclusivePriceField)};
+    const newTaxInclusivePriceField=${JSON.stringify(newTaxInclusivePriceField)};
     const featured=${embeddedFeatured};
     const recommendedCodes=${JSON.stringify(recommendedCodes)};
     const escapeHtml=${embeddedEscapeHtml};
@@ -622,19 +660,21 @@ const html = `<!doctype html>
       const selections=Object.fromEntries(filterNames.map(name=>[name,selected(name)]));
       let result=products.filter(p=>filterNames.every(name=>selections[name].size===0||selections[name].has(p[name])));
       result.sort((a,b)=>
-        sorting.value==="price-asc"?a[refurbishedPriceField]-b[refurbishedPriceField]:
-        sorting.value==="price-desc"?b[refurbishedPriceField]-a[refurbishedPriceField]:
-        sorting.value==="memory"?memoryNumber(b.memory)-memoryNumber(a.memory)||storageNumber(b.storage)-storageNumber(a.storage)||a[refurbishedPriceField]-b[refurbishedPriceField]:
-        sorting.value==="newest"?chipNumber(b.chip)-chipNumber(a.chip)||chipTier(b.chip)-chipTier(a.chip)||a[refurbishedPriceField]-b[refurbishedPriceField]:
+        sorting.value==="price-asc"?comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
+        sorting.value==="price-desc"?comparableRefurbishedPrice(b)-comparableRefurbishedPrice(a):
+        sorting.value==="memory"?memoryNumber(b.memory)-memoryNumber(a.memory)||storageNumber(b.storage)-storageNumber(a.storage)||comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
+        sorting.value==="newest"?chipNumber(b.chip)-chipNumber(a.chip)||chipTier(b.chip)-chipTier(a.chip)||comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
         score(b)-score(a)||a[refurbishedPriceField]-b[refurbishedPriceField]
       );
       document.querySelector("#count").textContent=result.length+" из "+products.length+" позиций";
       document.querySelector("#empty").hidden=result.length!==0;
       document.querySelector("#rows").innerHTML=result.map(p=>{
-        const difference=p[newPriceField]?p[newPriceField]-p[refurbishedPriceField]:null;
+        const refurbishedComparisonPrice=comparableRefurbishedPrice(p);
+        const newComparisonPrice=comparableNewPrice(p);
+        const difference=newComparisonPrice?newComparisonPrice-refurbishedComparisonPrice:null;
         const discount=difference===null?'<span class="na">нет цены</span>':difference>=0?
-          \`<span class="saving">−\${tablePrice(difference)} · \${Math.round(difference/p[newPriceField]*100)}%</span>\`:
-          \`<span class="overpay">+\${tablePrice(-difference)} · \${Math.round(-difference/p[newPriceField]*100)}%</span>\`;
+          \`<span class="saving">−\${comparisonPrice(difference)} · \${Math.round(difference/newComparisonPrice*100)}%</span>\`:
+          \`<span class="overpay">+\${comparisonPrice(-difference)} · \${Math.round(-difference/newComparisonPrice*100)}%</span>\`;
         const rowClass=recommendedCodes.includes(p.productCode)?"recommended":"";
         const chipClass=p.chip.startsWith("M5")?"chip-m5":"";
         const colourClass=classes[p.colour]||"";
@@ -647,8 +687,8 @@ const html = `<!doctype html>
           <td><strong>\${escapeHtml(p.storage)}</strong></td>
           <td>\${escapeHtml(p.cpuCores)} / \${escapeHtml(p.gpuCores)} ядер</td>
           <td><span class="dot \${colourClass}"></span>\${escapeHtml(colourName)}</td>
-          <td>\${tablePrice(p[refurbishedPriceField])}\${taxPrice(p)}</td>
-          <td>\${p[newPriceField]?\`<a class="price-link" href="\${escapeHtml(p.newSourceUrl)}" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">\${tablePrice(p[newPriceField])}</a>\`:'<span class="na">—</span>'}</td>
+          <td>\${refurbishedPrice(p)}</td>
+          <td>\${exactNewPrice(p)}</td>
           <td>\${discount}</td>
           <td><a class="open" href="\${escapeHtml(p.sourceUrl)}" target="_blank" rel="noreferrer" aria-label="Открыть \${escapeHtml(p.productCode)} у Apple">↗</a></td>
         </tr>\`;

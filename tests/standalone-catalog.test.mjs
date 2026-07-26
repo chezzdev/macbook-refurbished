@@ -18,6 +18,8 @@ const [html, catalog, featured, changelog] = await Promise.all([
   readFile(paths.changelog, "utf8").then(JSON.parse),
 ]);
 const newPriceField = profile.currency.priceFields.new;
+const newTaxInclusivePriceField =
+  profile.currency.priceFields.newTaxInclusive;
 
 const shortlist = html.match(
   /<section class="section-shell" id="shortlist">([\s\S]*?)<section class="section-shell" id="comparison">/,
@@ -157,9 +159,43 @@ test("renders explicit fixed-location tax estimates for the US market", () => {
         product.taxInclusivePriceUsd > product.priceUsd,
     ),
   );
-  assert.match(html, /Расчётный итог/);
-  assert.match(html, /налог .+ · сбор/);
+  const exactNewProducts = catalog.products.filter(
+    (product) => product[newPriceField] !== null,
+  );
+  const unavailableNewProducts = catalog.products.filter(
+    (product) => product[newPriceField] === null,
+  );
+  assert.ok(exactNewProducts.length > 0);
+  assert.ok(
+    exactNewProducts.every(
+      (product) =>
+        product.newTaxInclusivePricing?.status === "estimated" &&
+        Number.isFinite(product[newTaxInclusivePriceField]) &&
+        product[newTaxInclusivePriceField] > product[newPriceField],
+    ),
+  );
+  assert.ok(
+    unavailableNewProducts.every(
+      (product) =>
+        product.newTaxInclusivePricing === null &&
+        product[newTaxInclusivePriceField] === null,
+    ),
+  );
+  assert.match(html, /Расчётный total/);
+  assert.match(html, /priceFormula\(p\.taxInclusivePricing\)/);
+  assert.match(html, /priceFormula\(p\.newTaxInclusivePricing\)/);
+  assert.match(html, /Refurb total · расчёт/);
+  assert.match(html, /Новый total · расчёт/);
   assert.doesNotMatch(html, /Итого Apple/);
+});
+
+test("keeps Singapore on its existing list-price display contract", () => {
+  if (profile.id !== "sg") return;
+  assert.equal(profile.tax.model, "included-in-list-price");
+  assert.equal(profile.currency.priceFields.taxInclusive, null);
+  assert.equal(profile.currency.priceFields.newTaxInclusive, null);
+  assert.doesNotMatch(html, /Refurb total · расчёт|Новый total · расчёт/);
+  assert.doesNotMatch(html, /priceFormula\(p\.(?:tax|newTax)InclusivePricing\)/);
 });
 
 function escapeRegex(value) {
