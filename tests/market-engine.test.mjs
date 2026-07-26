@@ -226,12 +226,12 @@ function futureCaProfile() {
   };
   profile.publication = {
     ...profile.publication,
-    projectSlug: "macbook-refurbished-sg",
+    projectSlug: "macbook-refurbished",
     artifactDirectory: "markets/ca",
     productionUrl:
-      "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/",
+      "https://chezzdev.github.io/macbook-refurbished/markets/ca/",
     canonicalUrl:
-      "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/",
+      "https://chezzdev.github.io/macbook-refurbished/markets/ca/",
   };
   return profile;
 }
@@ -392,11 +392,11 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
   );
   assert.equal(
     sg.publication.productionUrl,
-    "https://chezzdev.github.io/macbook-refurbished-sg/markets/sg/",
+    "https://chezzdev.github.io/macbook-refurbished/markets/sg/",
   );
   assert.equal(
     us.publication.productionUrl,
-    "https://chezzdev.github.io/macbook-refurbished-sg/markets/us/",
+    "https://chezzdev.github.io/macbook-refurbished/markets/us/",
   );
   assert.equal(sg.publication.provider, "github-pages");
   assert.equal(us.publication.provider, "github-pages");
@@ -581,12 +581,12 @@ test("identity tax-included market renders no conversion methodology", async () 
     };
     profile.publication = {
       ...profile.publication,
-      projectSlug: "macbook-refurbished-sg",
+      projectSlug: "macbook-refurbished",
       artifactDirectory: "markets/jp",
       productionUrl:
-        "https://chezzdev.github.io/macbook-refurbished-sg/markets/jp/",
+        "https://chezzdev.github.io/macbook-refurbished/markets/jp/",
       canonicalUrl:
-        "https://chezzdev.github.io/macbook-refurbished-sg/markets/jp/",
+        "https://chezzdev.github.io/macbook-refurbished/markets/jp/",
     };
     validateMarketProfile(profile);
 
@@ -795,16 +795,21 @@ test("workflow config selects one shared checkout and each market artifact", asy
 });
 
 test("publication workflow shares one lock and keeps prepare-only non-canonical", async () => {
-  const [perMarketWorkflow, allMarketsWorkflow] = await Promise.all([
-    readFile(
-      join(projectRoot, "work/update-market-site.zsh"),
-      "utf8",
-    ),
-    readFile(
-      join(projectRoot, "work/update-all-markets.zsh"),
-      "utf8",
-    ),
-  ]);
+  const [perMarketWorkflow, allMarketsWorkflow, fallbackWorkflow] =
+    await Promise.all([
+      readFile(
+        join(projectRoot, "work/update-market-site.zsh"),
+        "utf8",
+      ),
+      readFile(
+        join(projectRoot, "work/update-all-markets.zsh"),
+        "utf8",
+      ),
+      readFile(
+        join(projectRoot, "work/deploy-unified-cloudflare-fallback.zsh"),
+        "utf8",
+      ),
+    ]);
   assert.match(perMarketWorkflow, /\.publication-update\.lock/);
   assert.match(allMarketsWorkflow, /\.publication-update\.lock/);
   assert.match(
@@ -863,12 +868,17 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
     /staged_file="\$\{staging_dir\}\/\$\{relative_file\}"/,
   );
   assert.doesNotMatch(perMarketWorkflow, /relative_file:t/);
+  assert.match(fallbackWorkflow, /macbook-sg-refurbished/);
+  assert.match(fallbackWorkflow, /macbook-us-refurbished/);
+  assert.match(fallbackWorkflow, /markets\/\$\{market_id\}\//);
+  assert.match(fallbackWorkflow, /node_modules\/\.bin\/wrangler/);
+  assert.doesNotMatch(fallbackWorkflow, /npx --yes/);
 });
 
 test("publication manifest derives every market path from enabled profiles", () => {
   const futureProfile = structuredClone(us);
   futureProfile.id = "ca";
-  futureProfile.publication.projectSlug = "macbook-refurbished-sg";
+  futureProfile.publication.projectSlug = "macbook-refurbished";
   futureProfile.ranking.policyPath = "config/ranking-policy.ca.json";
   futureProfile.namespace = {
     catalog: "data/markets/ca/catalog.json",
@@ -881,9 +891,9 @@ test("publication manifest derives every market path from enabled profiles", () 
   };
   futureProfile.publication.artifactDirectory = "markets/ca";
   futureProfile.publication.productionUrl =
-    "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/";
+    "https://chezzdev.github.io/macbook-refurbished/markets/ca/";
   futureProfile.publication.canonicalUrl =
-    "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/";
+    "https://chezzdev.github.io/macbook-refurbished/markets/ca/";
   const manifest = buildPublicationManifest([sg, us, futureProfile]);
 
   assert.deepEqual(manifest.marketIds, ["sg", "us", "ca"]);
@@ -913,6 +923,11 @@ test("publication manifest derives every market path from enabled profiles", () 
   }
   assert.ok(manifest.sourcePaths.includes("index.html"));
   assert.ok(manifest.sourcePaths.includes(".nojekyll"));
+  assert.ok(
+    manifest.sourcePaths.includes(
+      "work/deploy-unified-cloudflare-fallback.zsh",
+    ),
+  );
   assert.ok(manifest.publicationPaths.includes("index.html"));
   assert.ok(manifest.publicationPaths.includes(".nojekyll"));
   assert.ok(!manifest.retiredPublicationPaths.includes("index.html"));
@@ -957,7 +972,7 @@ test("enabled market profiles cannot share state or policy paths", () => {
 
   const baseFutureMarket = structuredClone(us);
   baseFutureMarket.id = "ca";
-  baseFutureMarket.publication.projectSlug = "macbook-refurbished-sg";
+  baseFutureMarket.publication.projectSlug = "macbook-refurbished";
   baseFutureMarket.ranking.policyPath = "config/ranking-policy.ca.json";
   baseFutureMarket.namespace = {
     catalog: "data/markets/ca/catalog.json",
@@ -970,9 +985,9 @@ test("enabled market profiles cannot share state or policy paths", () => {
   };
   baseFutureMarket.publication.artifactDirectory = "markets/ca";
   baseFutureMarket.publication.productionUrl =
-    "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/";
+    "https://chezzdev.github.io/macbook-refurbished/markets/ca/";
   baseFutureMarket.publication.canonicalUrl =
-    "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/";
+    "https://chezzdev.github.io/macbook-refurbished/markets/ca/";
   assert.doesNotThrow(() => validateMarketProfile(baseFutureMarket));
 
   const aliasedMarket = structuredClone(baseFutureMarket);
@@ -1610,11 +1625,11 @@ test("the shared UI builder renders the US profile without Singapore assumptions
     );
     assert.match(
       html,
-      /href="https:\/\/chezzdev\.github\.io\/macbook-refurbished-sg\/markets\/sg\/"[^>]*aria-label="MacBook SG Refurbished"/,
+      /href="\.\.\/sg\/"[^>]*aria-label="MacBook SG Refurbished"/,
     );
     assert.ok(
       html.includes(
-        `href="${us.publication.canonicalUrl}" aria-current="page" aria-label="MacBook US Refurbished"`,
+        'href="../us/" aria-current="page" aria-label="MacBook US Refurbished"',
       ),
     );
     assert.doesNotMatch(html, /class="source-secondary"/);

@@ -10,10 +10,10 @@ import {
 export const DEFAULT_MARKET_ID = "sg";
 export const projectRoot = resolve(import.meta.dirname, "..");
 export const UNIFIED_PUBLICATION_REPOSITORY =
-  "git@github.com:chezzdev/macbook-refurbished-sg.git";
-export const UNIFIED_PAGES_PROJECT_SLUG = "macbook-refurbished-sg";
+  "git@github.com:chezzdev/macbook-refurbished.git";
+export const UNIFIED_PAGES_PROJECT_SLUG = "macbook-refurbished";
 export const UNIFIED_PAGES_BASE_URL =
-  "https://chezzdev.github.io/macbook-refurbished-sg/";
+  "https://chezzdev.github.io/macbook-refurbished/";
 export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
   ".nojekyll",
   "index.html",
@@ -50,6 +50,7 @@ export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
   "tests/standalone-catalog.test.mjs",
   "work/build-expanded-standalone.mjs",
   "work/daily-update.zsh",
+  "work/deploy-unified-cloudflare-fallback.zsh",
   "work/update-all-markets.zsh",
   "work/update-market-site.zsh",
   "work/update-published-site.zsh",

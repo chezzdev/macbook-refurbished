@@ -417,7 +417,8 @@ const canonicalLink = canonicalUrl
 const marketSwitcherHtml = enabledMarketProfiles
   .map((marketProfile) => {
     const isCurrent = marketProfile.id === profile.id;
-    return `<a class="market-option${isCurrent ? " active" : ""}" href="${escapeHtml(marketProfile.publication.canonicalUrl)}"${isCurrent ? ' aria-current="page"' : ""} aria-label="${escapeHtml(marketProfile.siteName)}">${escapeHtml(marketProfile.storefront.countryCode)}</a>`;
+    const siblingMarketUrl = `../${marketProfile.id}/`;
+    return `<a class="market-option${isCurrent ? " active" : ""}" href="${escapeHtml(siblingMarketUrl)}"${isCurrent ? ' aria-current="page"' : ""} aria-label="${escapeHtml(marketProfile.siteName)}">${escapeHtml(marketProfile.storefront.countryCode)}</a>`;
   })
   .join("");
 const rateLink = rateSourceUrl

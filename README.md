@@ -4,9 +4,9 @@
 Apple Store. Рынок является частью URL одного GitHub Pages site:
 
 - **MacBook SG Refurbished**:
-  <https://chezzdev.github.io/macbook-refurbished-sg/markets/sg/>
+  <https://chezzdev.github.io/macbook-refurbished/markets/sg/>
 - **MacBook US Refurbished**:
-  <https://chezzdev.github.io/macbook-refurbished-sg/markets/us/>.
+  <https://chezzdev.github.io/macbook-refurbished/markets/us/>.
 
 В интерфейсе есть переключатель рынков, построенный из
 `config/markets/registry.json`. Он меняет market path внутри общего сайта и не
@@ -160,6 +160,17 @@ workflow использует тот же общий путь без отдел�
 ```zsh
 ./work/update-market-site.zsh --market us
 ```
+
+Если GitHub Pages недоступен, одна и та же проверенная публикационная сборка
+разворачивается на обоих существующих Cloudflare Pages проектах:
+
+```zsh
+MACBOOK_PUBLISH_DIR=/absolute/path/to/work/gh-pages-site \
+  ./work/deploy-unified-cloudflare-fallback.zsh
+```
+
+Fallback-команда публикует корневой redirect и оба пути `markets/sg/` и
+`markets/us/` в каждый проект, затем проверяет точный SHA-256 обеих страниц.
 
 Workflow выбирает артефакт и market URL только из выбранного профиля, поэтому
 данные SG и US не смешиваются, хотя публикуются на одном сайте.

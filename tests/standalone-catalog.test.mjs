@@ -120,7 +120,7 @@ test("retains exact Apple new-price links and the permanent canonical URL", () =
   }
 });
 
-test("renders every enabled market as an independent canonical-site link", () => {
+test("renders every enabled market as a portable sibling route", () => {
   assert.equal(
     (html.match(/<nav class="market-switcher"/g) ?? []).length,
     1,
@@ -130,7 +130,7 @@ test("renders every enabled market as an independent canonical-site link", () =>
       html,
       new RegExp(
         `href="${escapeRegex(
-          marketProfile.publication.canonicalUrl,
+          `../${marketProfile.id}/`,
         )}"[^>]*aria-label="${escapeRegex(marketProfile.siteName)}"`,
       ),
     );
