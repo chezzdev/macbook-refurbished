@@ -1,30 +1,19 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-07-26T16:17:42.824Z",
-  "hasChanges": true,
+  "checkedAt": "2026-07-26T16:20:36.164Z",
+  "hasChanges": false,
   "counts": {
     "added": 0,
     "removed": 0,
     "refurbPriceChanges": 0,
     "newPriceChanges": 0,
     "configurationChanges": 0,
-    "featuredChanges": 1
+    "featuredChanges": 0
   },
   "added": [],
   "removed": [],
   "refurbPriceChanges": [],
   "newPriceChanges": [],
   "configurationChanges": [],
-  "featured": {
-    "before": [
-      "G15T6ZP/A",
-      "G1L61ZP/A",
-      "FDVN4ZP/A"
-    ],
-    "after": [
-      "G15T6ZP/A",
-      "G15Y9ZP/A",
-      "G1L61ZP/A"
-    ]
-  }
+  "featured": null
 }

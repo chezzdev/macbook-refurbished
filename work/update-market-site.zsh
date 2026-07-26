@@ -88,6 +88,7 @@ typeset -A snapshot_by_relative
 
 cleanup() {
   exit_code=$?
+  set +e
   if [[ "$canonical_promotion_started" == "true" && \
         "$workflow_succeeded" != "true" ]]; then
     for relative_file in "${canonical_output_relatives[@]}"; do
@@ -174,17 +175,20 @@ for relative_file in \
     cp "$canonical_file" "$staged_file"
   fi
 done
-staged_output_by_relative["${artifact_directory_relative}/index.html"]="${staging_dir}/index.html"
+staged_output_by_relative[${artifact_directory_relative}/index.html]="${staging_dir}/index.html"
 
 promote_staged_outputs() {
+  for relative_file in "${canonical_output_relatives[@]}"; do
+    staged_file="${staged_output_by_relative[$relative_file]:-}"
+    if [[ -z "$staged_file" || ! -f "$staged_file" ]]; then
+      print -u2 "Validated staged output is missing: $staged_file"
+      return 1
+    fi
+  done
   canonical_promotion_started=true
   for relative_file in "${canonical_output_relatives[@]}"; do
     staged_file="${staged_output_by_relative[$relative_file]}"
     canonical_file="${workspace_dir}/${relative_file}"
-    if [[ ! -f "$staged_file" ]]; then
-      print -u2 "Validated staged output is missing: $staged_file"
-      return 1
-    fi
     mkdir -p "${canonical_file:h}"
     cp "$staged_file" "${canonical_file}.promote"
     mv "${canonical_file}.promote" "$canonical_file"
