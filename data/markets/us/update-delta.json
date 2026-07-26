@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-07-26T17:19:35.114Z",
-  "hasChanges": true,
+  "checkedAt": "2026-07-26T17:38:14.002Z",
+  "hasChanges": false,
   "counts": {
     "added": 0,
-    "removed": 2,
+    "removed": 0,
     "refurbPriceChanges": 0,
     "newPriceChanges": 0,
     "configurationChanges": 0,
@@ -12,72 +12,7 @@
     "featuredChanges": 0
   },
   "added": [],
-  "removed": [
-    {
-      "productCode": "FDH74LL/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 8,
-      "memory": "16GB",
-      "storage": "512GB",
-      "priceUsd": 1099,
-      "newPriceUsd": 1299,
-      "taxInclusivePriceUsd": 1218.4,
-      "taxInclusivePricing": {
-        "status": "estimated",
-        "amount": 1218.4,
-        "currency": "USD",
-        "preTaxAmount": 1099,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 115.4,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      }
-    },
-    {
-      "productCode": "G1ML7LL/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Nano-texture",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "memory": "48GB",
-      "storage": "1TB",
-      "priceUsd": 2929,
-      "newPriceUsd": 3449,
-      "taxInclusivePriceUsd": 3240.55,
-      "taxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3240.55,
-        "currency": "USD",
-        "preTaxAmount": 2929,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 307.55,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      }
-    }
-  ],
+  "removed": [],
   "refurbPriceChanges": [],
   "newPriceChanges": [],
   "configurationChanges": [],
