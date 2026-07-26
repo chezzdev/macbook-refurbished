@@ -4,6 +4,12 @@ import {
   DEFAULT_MARKET_ID,
   loadMarketProfile,
 } from "./market-profile.mjs";
+import {
+  calculateFixedLocationTaxAmounts,
+  screenInchesFromLabel,
+} from "./fixed-location-tax.mjs";
+
+export { roundCurrency } from "./fixed-location-tax.mjs";
 
 export const SCHEMA_VERSION = 1;
 export const DEFAULT_MARKET_PROFILE =
@@ -44,11 +50,6 @@ function hasReferenceLocationTax(marketProfile) {
   ].includes(marketProfile.tax.model);
 }
 
-export function roundCurrency(value, minorUnitDigits = 2) {
-  const factor = 10 ** minorUnitDigits;
-  return Math.floor(value * factor + 0.5 + 1e-9) / factor;
-}
-
 export function calculateFixedLocationTaxEstimate(
   product,
   marketProfile,
@@ -69,32 +70,19 @@ export function calculateFixedLocationTaxEstimate(
   if (!Number.isFinite(preTaxAmount) || preTaxAmount <= 0) {
     throw new Error(`${priceField} must be a positive number`);
   }
-  const screenInches = String(
-    Number(String(product.screen).replace(/\D/g, "")),
-  );
-  const recyclingFee =
-    estimate.recyclingFeeByScreenInches[screenInches];
-  if (!Number.isFinite(recyclingFee)) {
-    throw new Error(
-      `No recycling fee is configured for ${product.screen}`,
-    );
-  }
-  const salesTaxAmount = roundCurrency(
-    preTaxAmount * estimate.salesTaxRate,
-    estimate.minorUnitDigits,
-  );
-  const amount = roundCurrency(
-    preTaxAmount + salesTaxAmount + recyclingFee,
-    estimate.minorUnitDigits,
-  );
+  const amounts = calculateFixedLocationTaxAmounts({
+    preTaxAmount,
+    screenInches: screenInchesFromLabel(product.screen),
+    estimate,
+  });
   return {
     status: "estimated",
-    amount,
+    amount: amounts.estimatedTotalAmount,
     currency: estimate.currency,
     preTaxAmount,
     salesTaxRate: estimate.salesTaxRate,
-    salesTaxAmount,
-    recyclingFeeAmount: recyclingFee,
+    salesTaxAmount: amounts.salesTaxAmount,
+    recyclingFeeAmount: amounts.recyclingFeeAmount,
     locationId: marketProfile.tax.referenceLocation.id,
     provenance: {
       provider: "Calculated estimate",

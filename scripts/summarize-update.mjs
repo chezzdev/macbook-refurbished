@@ -76,7 +76,8 @@ function detailLines(latestDelta) {
   const displayPrice = new Intl.NumberFormat(profile.currency.displayLocale, {
     style: "currency",
     currency: profile.currency.display,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: profile.currency.displayFractionDigits,
+    maximumFractionDigits: profile.currency.displayFractionDigits,
   });
   const price = (amount) =>
     amount === null ? "нет точной цены" : displayPrice.format(amount * rate);

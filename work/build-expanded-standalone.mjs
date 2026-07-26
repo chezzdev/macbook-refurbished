@@ -102,15 +102,16 @@ const embeddedProducts = JSON.stringify(products).replaceAll("<", "\\u003c");
 const displayFormatter = new Intl.NumberFormat(profile.currency.displayLocale, {
   style: "currency",
   currency: displayCurrency,
-  maximumFractionDigits: 0,
+  minimumFractionDigits: profile.currency.displayFractionDigits,
+  maximumFractionDigits: profile.currency.displayFractionDigits,
 });
 const taxDisplayFormatter = new Intl.NumberFormat(
   profile.currency.displayLocale,
   {
     style: "currency",
     currency: displayCurrency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: profile.currency.displayFractionDigits,
+    maximumFractionDigits: profile.currency.displayFractionDigits,
   },
 );
 const displayPrice = (amount) => displayFormatter.format(amount * rate);
@@ -415,7 +416,7 @@ const taxMethodCopy = hasVerifiedTaxEstimate
   : `<article><span>03</span><h3>${escapeHtml(currencyMethodHeading)}</h3><p>${escapeHtml(currencyMethodBody)}</p></article>`;
 const clientPriceFormatterSource =
   sourceCurrency !== displayCurrency
-    ? `const sourcePrice=new Intl.NumberFormat(${JSON.stringify(profile.currency.secondaryLocale)},{maximumFractionDigits:0});
+    ? `const sourcePrice=new Intl.NumberFormat(${JSON.stringify(profile.currency.secondaryLocale)},{minimumFractionDigits:${profile.currency.sourceFractionDigits},maximumFractionDigits:${profile.currency.sourceFractionDigits}});
     const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong> <span class="source-secondary">(${escapeHtml(profile.currency.secondarySymbol || sourceCurrency)}'+sourcePrice.format(amount)+')</span>';`
     : `const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong>';`;
 const clientTaxFormatterSource = hasVerifiedTaxEstimate
@@ -638,8 +639,8 @@ const html = `<!doctype html>
     const escapeHtml=${embeddedEscapeHtml};
     const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
     const classes={Silver:"silver",Midnight:"midnight","Space Grey":"space-grey","Space Black":"space-black",Starlight:"starlight","Sky Blue":"sky-blue"};
-    const primaryCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},maximumFractionDigits:0});
-    const taxCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:2,maximumFractionDigits:2});
+    const primaryCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:${profile.currency.displayFractionDigits},maximumFractionDigits:${profile.currency.displayFractionDigits}});
+    const taxCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:${profile.currency.displayFractionDigits},maximumFractionDigits:${profile.currency.displayFractionDigits}});
     ${clientPriceFormatterSource}
     ${clientTaxFormatterSource}
     const filterNames=["family","screen","chip","memory","storage"];

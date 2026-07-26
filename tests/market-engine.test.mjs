@@ -323,6 +323,8 @@ test("identity tax-included market renders no conversion methodology", async () 
     profile.currency = {
       source: "JPY",
       display: "JPY",
+      sourceFractionDigits: 0,
+      displayFractionDigits: 0,
       displayLocale: "ja-JP",
       secondarySymbol: null,
       secondaryLocale: "ja-JP",
@@ -489,6 +491,8 @@ test("identity tax-included market renders no conversion methodology", async () 
       /Конвертация сделана по официальному кросс-курсу/,
     );
     assert.doesNotMatch(html, /JPY — ориентир/);
+    assert.match(html, /￥200,000/);
+    assert.doesNotMatch(html, /￥200,000\.00/);
   } finally {
     await rm(fixtureRoot, { recursive: true, force: true });
   }
@@ -958,6 +962,8 @@ test("fixed-location tax policy is currency-explicit for a future market", () =>
   futureProfile.currency = {
     source: "CAD",
     display: "EUR",
+    sourceFractionDigits: 2,
+    displayFractionDigits: 2,
     displayLocale: "de-DE",
     secondarySymbol: "C$",
     secondaryLocale: "en-CA",
@@ -997,6 +1003,7 @@ test("fixed-location tax policy is currency-explicit for a future market", () =>
     productUrl:
       "https://www.apple.com/ca/shop/product/ca-verify/example",
     currency: "CAD",
+    screenInches: 13,
     preTaxAmount: 1000,
     salesTaxAmount: 130,
     recyclingFeeAmount: 5,
@@ -1030,6 +1037,16 @@ test("fixed-location tax policy is currency-explicit for a future market", () =>
   assert.equal(estimate.recyclingFeeAmount, 5);
   assert.equal(estimate.amount, 1135);
 
+  const mismatchedVerificationFee = structuredClone(futureProfile);
+  mismatchedVerificationFee.tax.acquisition.verification.recyclingFeeAmount =
+    99;
+  mismatchedVerificationFee.tax.acquisition.verification.estimatedTotalAmount =
+    1229;
+  assert.throws(
+    () => validateMarketProfile(mismatchedVerificationFee),
+    /does not reproduce/,
+  );
+
   const mismatchedCurrency = structuredClone(futureProfile);
   mismatchedCurrency.tax.estimate.currency = "USD";
   assert.throws(
@@ -1043,6 +1060,13 @@ test("fixed-location tax policy is currency-explicit for a future market", () =>
         mismatchedCurrency,
       ),
     /currency must match the source currency/,
+  );
+
+  const invalidDisplayPrecision = structuredClone(futureProfile);
+  invalidDisplayPrecision.currency.displayFractionDigits = 5;
+  assert.throws(
+    () => validateMarketProfile(invalidDisplayPrecision),
+    /displayFractionDigits/,
   );
 });
 

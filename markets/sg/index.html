@@ -231,9 +231,9 @@
 };
     const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
     const classes={Silver:"silver",Midnight:"midnight","Space Grey":"space-grey","Space Black":"space-black",Starlight:"starlight","Sky Blue":"sky-blue"};
-    const primaryCurrency=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
-    const taxCurrency=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2});
-    const sourcePrice=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
+    const primaryCurrency=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:0,maximumFractionDigits:0});
+    const taxCurrency=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:0,maximumFractionDigits:0});
+    const sourcePrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
     const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong> <span class="source-secondary">(S$'+sourcePrice.format(amount)+')</span>';
     const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField]);
     const exactNewPrice=p=>p[newPriceField]?'<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">'+tablePrice(p[newPriceField])+'</a>':'<span class="na">—</span>';

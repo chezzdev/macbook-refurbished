@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
+import { calculateFixedLocationTaxAmounts } from "./fixed-location-tax.mjs";
+
 export const DEFAULT_MARKET_ID = "sg";
 export const projectRoot = resolve(import.meta.dirname, "..");
 export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
@@ -14,6 +16,7 @@ export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
   "scripts/apple-catalog-lib.mjs",
   "scripts/apple-catalog-lib.test.mjs",
   "scripts/build-enabled-markets.mjs",
+  "scripts/fixed-location-tax.mjs",
   "scripts/html-escape.mjs",
   "scripts/initialize-market.mjs",
   "scripts/market-display-copy.mjs",
@@ -138,11 +141,6 @@ function assertCanonicalProfileLayout(profile) {
   }
 }
 
-function roundCurrency(value, minorUnitDigits = 2) {
-  const factor = 10 ** minorUnitDigits;
-  return Math.floor(value * factor + 0.5 + 1e-9) / factor;
-}
-
 export function validateMarketProfile(profile) {
   if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
     throw new Error("market profile must be an object");
@@ -179,6 +177,22 @@ export function validateMarketProfile(profile) {
     profile.currency?.displayLocale,
     "currency.displayLocale",
   );
+  requireString(
+    profile.currency?.secondaryLocale,
+    "currency.secondaryLocale",
+  );
+  for (const field of [
+    "sourceFractionDigits",
+    "displayFractionDigits",
+  ]) {
+    if (
+      !Number.isSafeInteger(profile.currency?.[field]) ||
+      profile.currency[field] < 0 ||
+      profile.currency[field] > 4
+    ) {
+      throw new Error(`currency.${field} must be an integer from 0 to 4`);
+    }
+  }
   for (const field of ["refurbished", "new"]) {
     requireString(
       profile.currency?.priceFields?.[field],
@@ -328,6 +342,14 @@ export function validateMarketProfile(profile) {
         verification?.productUrl,
         "tax.acquisition.verification.productUrl",
       );
+      if (
+        !Number.isSafeInteger(verification?.screenInches) ||
+        verification.screenInches <= 0
+      ) {
+        throw new Error(
+          "tax.acquisition.verification.screenInches must be a positive integer",
+        );
+      }
       for (const field of [
         "preTaxAmount",
         "salesTaxAmount",
@@ -340,19 +362,15 @@ export function validateMarketProfile(profile) {
           );
         }
       }
-      const expectedTax = roundCurrency(
-        verification.preTaxAmount * estimate.salesTaxRate,
-        estimate.minorUnitDigits,
-      );
-      const expectedTotal = roundCurrency(
-        verification.preTaxAmount +
-          expectedTax +
-          verification.recyclingFeeAmount,
-        estimate.minorUnitDigits,
-      );
+      const expected = calculateFixedLocationTaxAmounts({
+        preTaxAmount: verification.preTaxAmount,
+        screenInches: verification.screenInches,
+        estimate,
+      });
       if (
-        verification.salesTaxAmount !== expectedTax ||
-        verification.estimatedTotalAmount !== expectedTotal
+        verification.salesTaxAmount !== expected.salesTaxAmount ||
+        verification.recyclingFeeAmount !== expected.recyclingFeeAmount ||
+        verification.estimatedTotalAmount !== expected.estimatedTotalAmount
       ) {
         throw new Error(
           "fixed-location tax policy does not reproduce its Apple checkout verification",
