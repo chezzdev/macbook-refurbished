@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { escapeHtml } from "../scripts/html-escape.mjs";
+import { buildMarketDisplayCopy } from "../scripts/market-display-copy.mjs";
 import {
   loadEnabledMarketProfiles,
   loadMarketContext,
@@ -98,22 +99,25 @@ const checkedDate = formatRussianDate(checkedAt);
 const checkedDateLong = formatRussianLongDate(checkedAt);
 const rateDateFormatted = formatRussianDate(rateDate);
 const embeddedProducts = JSON.stringify(products).replaceAll("<", "\\u003c");
-const displayFormatter = new Intl.NumberFormat("en-US", {
+const displayFormatter = new Intl.NumberFormat(profile.currency.displayLocale, {
   style: "currency",
   currency: displayCurrency,
   maximumFractionDigits: 0,
 });
-const taxDisplayFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: displayCurrency,
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const usdPrice = (amount) => displayFormatter.format(amount * rate);
+const taxDisplayFormatter = new Intl.NumberFormat(
+  profile.currency.displayLocale,
+  {
+    style: "currency",
+    currency: displayCurrency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  },
+);
+const displayPrice = (amount) => displayFormatter.format(amount * rate);
 const taxDisplayPrice = (amount) =>
   taxDisplayFormatter.format(amount * rate);
 const mainPrice = (amount) =>
-  hasVerifiedTaxEstimate ? taxDisplayPrice(amount) : usdPrice(amount);
+  hasVerifiedTaxEstimate ? taxDisplayPrice(amount) : displayPrice(amount);
 const taxFormula = (pricing) =>
   [
     pricing.preTaxAmount,
@@ -246,8 +250,8 @@ const productChangeLabel = (product) => {
 const changeCount = (counts = {}) =>
   Object.values(counts).reduce((sum, count) => sum + Number(count || 0), 0);
 const priceTransition = (fromPrice, toPrice) =>
-  `${fromPrice === null ? "нет точной цены" : usdPrice(fromPrice)} → ${
-    toPrice === null ? "нет точной цены" : usdPrice(toPrice)
+  `${fromPrice === null ? "нет точной цены" : displayPrice(fromPrice)} → ${
+    toPrice === null ? "нет точной цены" : displayPrice(toPrice)
   }`;
 const configurationSummary = (configuration) =>
   `${configuration.family} ${configuration.screen} · ${configuration.display} · ${configuration.chip} ${configuration.cpuCores}/${configuration.gpuCores} · ${configuration.memory}/${configuration.storage}`;
@@ -293,7 +297,7 @@ const changeItems = (entry) => {
   for (const item of entry.added || []) {
     items.push(
       `Добавлено: ${productChangeLabel(item)} · ${
-        usdPrice(item[refurbishedPriceField])
+        displayPrice(item[refurbishedPriceField])
       }`,
     );
   }
@@ -328,8 +332,8 @@ const cardPrice = (product) =>
   hasVerifiedTaxEstimate
     ? `<strong>${taxDisplayPrice(product[taxInclusivePriceField])}</strong><span>total · расчёт</span><small class="price-formula">${taxFormula(product.taxInclusivePricing)}</small>`
     : profile.tax.model === "included-in-list-price"
-      ? `<strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb · налог включён</span>`
-      : `<strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>`;
+      ? `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb · налог включён</span>`
+      : `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>`;
 const card = ({ product, label, heading, body, score, highlighted = false }) =>
   `<article class="pick-card${highlighted ? " featured" : ""}" data-score="${escapeHtml(score)}">
     <span class="pick-label">${escapeHtml(label)} · рейтинг ${escapeHtml(formatScore(score))}</span>
@@ -392,23 +396,21 @@ const taxLocation = profile.tax.referenceLocation;
 const taxReferenceLabel = taxLocation
   ? `${taxLocation.name}, ${taxLocation.street}, ${taxLocation.city}, ${taxLocation.region} ${taxLocation.postalCode}`
   : "";
-const heroCurrencyCopy =
-  hasVerifiedTaxEstimate
-    ? "Total = цена + налог + сбор"
-    : sourceCurrency === displayCurrency
-    ? `Цены Apple уже указаны в ${displayCurrency}; конвертация не применяется`
-    : `Пересчёт по официальному кросс-курсу на ${rateDateFormatted}, округление до $1`;
-const heroMarketCopy =
-  hasVerifiedTaxEstimate
-    ? `В US крупно показан расчётный total для ${taxLocation.name}; каталог остаётся общенациональным.`
-    : hasReferenceLocationTax
-    ? `Цены Apple указаны в ${sourceCurrency}. Каталог ${profile.storefront.countryName} остаётся общенациональным; налоговый ориентир привязан к одной точке.`
-    : `Цены в ${displayCurrency} крупно, исходные ${sourceCurrency} — рядом.`;
+const {
+  convertedPriceHeading,
+  heroCurrencyCopy,
+  heroMarketCopy,
+} = buildMarketDisplayCopy(profile, {
+  hasVerifiedTaxEstimate,
+  hasReferenceLocationTax,
+  taxLocationName: taxLocation?.name,
+  rateDateFormatted,
+});
 const taxMethodCopy = hasVerifiedTaxEstimate
   ? `<article><span>03</span><h3>Расчётный total</h3><p>Цена + налог ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}% + сбор. Ориентир: ${escapeHtml(taxReferenceLabel)}.</p></article>`
   : hasReferenceLocationTax
     ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.</p></article>`
-  : `<article><span>03</span><h3>USD — ориентир</h3><p>Конвертация сделана по официальному кросс-курсу на ${formatRussianLongDate(rateDate)}. Банк или карта могут посчитать иначе.</p></article>`;
+  : `<article><span>03</span><h3>${escapeHtml(convertedPriceHeading)}</h3><p>Конвертация сделана по официальному кросс-курсу на ${formatRussianLongDate(rateDate)}. Банк или карта могут посчитать иначе.</p></article>`;
 const clientPriceFormatterSource =
   sourceCurrency !== displayCurrency
     ? `const sourcePrice=new Intl.NumberFormat(${JSON.stringify(profile.currency.secondaryLocale)},{maximumFractionDigits:0});
@@ -634,8 +636,8 @@ const html = `<!doctype html>
     const escapeHtml=${embeddedEscapeHtml};
     const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
     const classes={Silver:"silver",Midnight:"midnight","Space Grey":"space-grey","Space Black":"space-black",Starlight:"starlight","Sky Blue":"sky-blue"};
-    const primaryCurrency=new Intl.NumberFormat(${JSON.stringify(profile.locale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},maximumFractionDigits:0});
-    const taxCurrency=new Intl.NumberFormat(${JSON.stringify(profile.locale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:2,maximumFractionDigits:2});
+    const primaryCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},maximumFractionDigits:0});
+    const taxCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:2,maximumFractionDigits:2});
     ${clientPriceFormatterSource}
     ${clientTaxFormatterSource}
     const filterNames=["family","screen","chip","memory","storage"];

@@ -15,6 +15,7 @@
   "currency": {
     "source": "USD",
     "display": "USD",
+    "displayLocale": "en-US",
     "secondarySymbol": null,
     "secondaryLocale": "en-US",
     "priceFields": {

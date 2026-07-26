@@ -24,6 +24,7 @@ import {
   buildInitialSiteDocument,
   initializeMarketNamespace,
 } from "../scripts/initialize-market.mjs";
+import { buildMarketDisplayCopy } from "../scripts/market-display-copy.mjs";
 import {
   assertUniqueProfileOwnedPaths,
   loadEnabledMarketProfiles,
@@ -249,6 +250,35 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
   assert.notEqual(sgContext.policyPath, usContext.policyPath);
   assert.deepEqual(sgPolicy.ideal, sg.ranking.reference);
   assert.deepEqual(usPolicy.ideal, us.ranking.reference);
+});
+
+test("third-market copy is driven by country and display currency", () => {
+  const futureProfile = structuredClone(us);
+  futureProfile.id = "ca";
+  futureProfile.storefront.countryCode = "CA";
+  futureProfile.storefront.countryName = "Canada";
+  futureProfile.currency.source = "CAD";
+  futureProfile.currency.display = "EUR";
+  futureProfile.currency.displayLocale = "de-DE";
+
+  const fixedEstimateCopy = buildMarketDisplayCopy(futureProfile, {
+    hasVerifiedTaxEstimate: true,
+    hasReferenceLocationTax: true,
+    taxLocationName: "Apple Toronto",
+    rateDateFormatted: "26.07.2026",
+  });
+  assert.match(fixedEstimateCopy.heroMarketCopy, /^В CA /);
+  assert.doesNotMatch(fixedEstimateCopy.heroMarketCopy, /\bUS\b/);
+  assert.equal(fixedEstimateCopy.convertedPriceHeading, "EUR — ориентир");
+
+  const convertedCopy = buildMarketDisplayCopy(futureProfile, {
+    hasVerifiedTaxEstimate: false,
+    hasReferenceLocationTax: false,
+    rateDateFormatted: "26.07.2026",
+  });
+  assert.match(convertedCopy.heroCurrencyCopy, /до 1 EUR$/);
+  assert.match(convertedCopy.heroMarketCopy, /Цены в EUR/);
+  assert.doesNotMatch(convertedCopy.heroCurrencyCopy, /\$1|USD/);
 });
 
 test("enabled-market registry rejects ambiguous profile lists", () => {

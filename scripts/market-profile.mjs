@@ -16,6 +16,7 @@ export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
   "scripts/build-enabled-markets.mjs",
   "scripts/html-escape.mjs",
   "scripts/initialize-market.mjs",
+  "scripts/market-display-copy.mjs",
   "scripts/market-profile.mjs",
   "scripts/print-market-workflow-config.mjs",
   "scripts/publication-manifest.mjs",
@@ -173,6 +174,10 @@ export function validateMarketProfile(profile) {
       throw new Error(`currency.${field} must be an ISO 4217 code`);
     }
   }
+  requireString(
+    profile.currency?.displayLocale,
+    "currency.displayLocale",
+  );
   for (const field of ["refurbished", "new"]) {
     requireString(
       profile.currency?.priceFields?.[field],

@@ -113,7 +113,7 @@
       <h1>MacBook Air<br>или Pro?</h1>
       <div class="hero-grid">
         <p class="lede">В одной таблице — все доступные 13″ и 15″ Air плюс все 14″ и 16″ MacBook Pro. Цены в USD крупно, исходные SGD — рядом.</p>
-        <div class="hero-note"><span>Основная валюта</span><strong>USD</strong><small>Пересчёт по официальному кросс-курсу на 25.07.2026, округление до $1</small></div>
+        <div class="hero-note"><span>Основная валюта</span><strong>USD</strong><small>Пересчёт по официальному кросс-курсу на 25.07.2026, округление до 1 USD</small></div>
       </div>
       <div class="hero-stats">
         <div><strong>92</strong><span>актуальные позиции</span></div>
@@ -231,8 +231,8 @@
 };
     const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
     const classes={Silver:"silver",Midnight:"midnight","Space Grey":"space-grey","Space Black":"space-black",Starlight:"starlight","Sky Blue":"sky-blue"};
-    const primaryCurrency=new Intl.NumberFormat("ru-RU",{style:"currency",currency:"USD",maximumFractionDigits:0});
-    const taxCurrency=new Intl.NumberFormat("ru-RU",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2});
+    const primaryCurrency=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
+    const taxCurrency=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2});
     const sourcePrice=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
     const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong> <span class="source-secondary">(S$'+sourcePrice.format(amount)+')</span>';
     const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField]);

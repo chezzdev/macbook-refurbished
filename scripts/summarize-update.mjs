@@ -73,7 +73,7 @@ function detailLines(latestDelta) {
     profile.currency.conversion.type === "identity"
       ? 1
       : site.currency[profile.currency.conversion.siteField];
-  const displayPrice = new Intl.NumberFormat("en-US", {
+  const displayPrice = new Intl.NumberFormat(profile.currency.displayLocale, {
     style: "currency",
     currency: profile.currency.display,
     maximumFractionDigits: 0,

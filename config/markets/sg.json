@@ -15,6 +15,7 @@
   "currency": {
     "source": "SGD",
     "display": "USD",
+    "displayLocale": "en-US",
     "secondarySymbol": "S$",
     "secondaryLocale": "en-US",
     "priceFields": {

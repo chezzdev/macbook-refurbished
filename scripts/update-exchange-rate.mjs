@@ -16,12 +16,19 @@ export const CBR_DAILY_XML_URL =
 
 export function parseCbrCrossRate(
   xml,
-  {
-    sourceCurrency = "SGD",
-    displayCurrency = "USD",
-    siteField = "sgdToUsd",
-  } = {},
+  options,
 ) {
+  const { sourceCurrency, displayCurrency, siteField } = options ?? {};
+  if (
+    !/^[A-Z]{3}$/.test(sourceCurrency ?? "") ||
+    !/^[A-Z]{3}$/.test(displayCurrency ?? "") ||
+    typeof siteField !== "string" ||
+    siteField.length === 0
+  ) {
+    throw new Error(
+      "CBR cross-rate requires sourceCurrency, displayCurrency, and siteField",
+    );
+  }
   const dateMatch = xml.match(/<ValCurs[^>]*\bDate="(\d{2})\.(\d{2})\.(\d{4})"/i);
   if (!dateMatch) {
     throw new Error("CBR response does not contain a daily rate date");
@@ -145,7 +152,10 @@ if (process.argv[1] === import.meta.filename) {
     marketProfile: profile,
   });
   if (profile.currency.conversion.type === "identity") {
-    console.log(`Confirmed identity USD display conversion for ${profile.siteName}.`);
+    console.log(
+      `Confirmed identity ${profile.currency.display} display conversion ` +
+        `for ${profile.siteName}.`,
+    );
   } else {
     const siteField = profile.currency.conversion.siteField;
     console.log(

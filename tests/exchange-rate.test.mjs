@@ -27,20 +27,32 @@ const fixture = `<?xml version="1.0" encoding="windows-1251"?>
     <CharCode>CAD</CharCode>
     <Value>57,2500</Value>
   </Valute>
+  <Valute ID="R01239">
+    <Nominal>1</Nominal>
+    <CharCode>EUR</CharCode>
+    <Value>92,3400</Value>
+  </Valute>
 </ValCurs>`;
 
 test("calculates a deterministic SGD to USD cross-rate", () => {
-  assert.deepEqual(parseCbrCrossRate(fixture), {
-    sgdToUsd: 60.8099 / 78.5796,
-    sourceCurrency: "SGD",
-    displayCurrency: "USD",
-    conversionType: "cbr-cross-rate",
-    sourceToDisplayRate: 60.8099 / 78.5796,
-    rateDate: "2026-07-25",
-    sourceUrl:
-      "https://www.cbr.ru/currency_base/daily/" +
-      "?UniDbQuery.Posted=True&UniDbQuery.To=25.07.2026",
-  });
+  assert.deepEqual(
+    parseCbrCrossRate(fixture, {
+      sourceCurrency: "SGD",
+      displayCurrency: "USD",
+      siteField: "sgdToUsd",
+    }),
+    {
+      sgdToUsd: 60.8099 / 78.5796,
+      sourceCurrency: "SGD",
+      displayCurrency: "USD",
+      conversionType: "cbr-cross-rate",
+      sourceToDisplayRate: 60.8099 / 78.5796,
+      rateDate: "2026-07-25",
+      sourceUrl:
+        "https://www.cbr.ru/currency_base/daily/" +
+        "?UniDbQuery.Posted=True&UniDbQuery.To=25.07.2026",
+    },
+  );
 });
 
 test("drives a future market conversion and builder lookup from its profile", async () => {
@@ -52,10 +64,10 @@ test("drives a future market conversion and builder lookup from its profile", as
     id: "ca",
     currency: {
       source: "CAD",
-      display: "USD",
+      display: "EUR",
       conversion: {
         type: "cbr-cross-rate",
-        siteField: "cadToUsd",
+        siteField: "cadToEur",
       },
     },
   };
@@ -71,13 +83,13 @@ test("drives a future market conversion and builder lookup from its profile", as
       marketProfile,
       fetchTextImpl: async () => ({ html: fixture }),
     });
-    assert.equal(updatedSite.currency.cadToUsd, 57.25 / 78.5796);
+    assert.equal(updatedSite.currency.cadToEur, 57.25 / 92.34);
     assert.equal(
       sourceToDisplayRateFromSite(updatedSite, marketProfile),
-      57.25 / 78.5796,
+      57.25 / 92.34,
     );
     assert.equal(updatedSite.currency.sourceCurrency, "CAD");
-    assert.equal(updatedSite.currency.displayCurrency, "USD");
+    assert.equal(updatedSite.currency.displayCurrency, "EUR");
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }
@@ -122,7 +134,16 @@ test("fails closed on missing or invalid currency data", () => {
       parseCbrCrossRate(
         '<ValCurs Date="25.07.2026"><Valute><CharCode>USD</CharCode>' +
           "<Nominal>1</Nominal><Value>78,5</Value></Valute></ValCurs>",
+        {
+          sourceCurrency: "SGD",
+          displayCurrency: "USD",
+          siteField: "sgdToUsd",
+        },
       ),
     /valid SGD rate/,
+  );
+  assert.throws(
+    () => parseCbrCrossRate(fixture),
+    /requires sourceCurrency, displayCurrency, and siteField/,
   );
 });
