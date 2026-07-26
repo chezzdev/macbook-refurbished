@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "latestRun": {
     "schemaVersion": 1,
-    "checkedAt": "2026-07-26T18:49:08.141Z",
-    "hasChanges": false,
+    "checkedAt": "2026-07-26T19:35:28.027Z",
+    "hasChanges": true,
     "counts": {
       "added": 0,
-      "removed": 0,
+      "removed": 2,
       "refurbPriceChanges": 0,
       "newPriceChanges": 0,
       "configurationChanges": 0,
@@ -14,7 +14,72 @@
       "featuredChanges": 0
     },
     "added": [],
-    "removed": [],
+    "removed": [
+      {
+        "productCode": "FDH74LL/A",
+        "family": "Air",
+        "screen": "13″",
+        "display": "Standard",
+        "chip": "M5",
+        "cpuCores": 10,
+        "gpuCores": 8,
+        "memory": "16GB",
+        "storage": "512GB",
+        "priceUsd": 1099,
+        "newPriceUsd": 1299,
+        "taxInclusivePriceUsd": 1218.4,
+        "taxInclusivePricing": {
+          "status": "estimated",
+          "amount": 1218.4,
+          "currency": "USD",
+          "preTaxAmount": 1099,
+          "salesTaxRate": 0.105,
+          "salesTaxAmount": 115.4,
+          "recyclingFeeAmount": 4,
+          "locationId": "apple-beverly-center",
+          "provenance": {
+            "provider": "Calculated estimate",
+            "method": "verified-fixed-location",
+            "sourceUrl": "https://www.apple.com/shop/help/payments",
+            "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+            "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+          },
+          "reason": null
+        }
+      },
+      {
+        "productCode": "G1MKLLL/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Nano-texture",
+        "chip": "M5 Max",
+        "cpuCores": 18,
+        "gpuCores": 40,
+        "memory": "64GB",
+        "storage": "2TB",
+        "priceUsd": 4459,
+        "newPriceUsd": 5249,
+        "taxInclusivePriceUsd": 4931.2,
+        "taxInclusivePricing": {
+          "status": "estimated",
+          "amount": 4931.2,
+          "currency": "USD",
+          "preTaxAmount": 4459,
+          "salesTaxRate": 0.105,
+          "salesTaxAmount": 468.2,
+          "recyclingFeeAmount": 4,
+          "locationId": "apple-beverly-center",
+          "provenance": {
+            "provider": "Calculated estimate",
+            "method": "verified-fixed-location",
+            "sourceUrl": "https://www.apple.com/shop/help/payments",
+            "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+            "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+          },
+          "reason": null
+        }
+      }
+    ],
     "refurbPriceChanges": [],
     "newPriceChanges": [],
     "configurationChanges": [],
@@ -22,6 +87,91 @@
     "featured": null
   },
   "entries": [
+    {
+      "type": "changes",
+      "checkedAt": "2026-07-26T19:35:28.027Z",
+      "counts": {
+        "added": 0,
+        "removed": 2,
+        "refurbPriceChanges": 0,
+        "newPriceChanges": 0,
+        "configurationChanges": 0,
+        "taxInclusivePriceChanges": 0,
+        "featuredChanges": 0
+      },
+      "added": [],
+      "removed": [
+        {
+          "productCode": "FDH74LL/A",
+          "family": "Air",
+          "screen": "13″",
+          "display": "Standard",
+          "chip": "M5",
+          "cpuCores": 10,
+          "gpuCores": 8,
+          "memory": "16GB",
+          "storage": "512GB",
+          "priceUsd": 1099,
+          "newPriceUsd": 1299,
+          "taxInclusivePriceUsd": 1218.4,
+          "taxInclusivePricing": {
+            "status": "estimated",
+            "amount": 1218.4,
+            "currency": "USD",
+            "preTaxAmount": 1099,
+            "salesTaxRate": 0.105,
+            "salesTaxAmount": 115.4,
+            "recyclingFeeAmount": 4,
+            "locationId": "apple-beverly-center",
+            "provenance": {
+              "provider": "Calculated estimate",
+              "method": "verified-fixed-location",
+              "sourceUrl": "https://www.apple.com/shop/help/payments",
+              "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+              "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+            },
+            "reason": null
+          }
+        },
+        {
+          "productCode": "G1MKLLL/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Nano-texture",
+          "chip": "M5 Max",
+          "cpuCores": 18,
+          "gpuCores": 40,
+          "memory": "64GB",
+          "storage": "2TB",
+          "priceUsd": 4459,
+          "newPriceUsd": 5249,
+          "taxInclusivePriceUsd": 4931.2,
+          "taxInclusivePricing": {
+            "status": "estimated",
+            "amount": 4931.2,
+            "currency": "USD",
+            "preTaxAmount": 4459,
+            "salesTaxRate": 0.105,
+            "salesTaxAmount": 468.2,
+            "recyclingFeeAmount": 4,
+            "locationId": "apple-beverly-center",
+            "provenance": {
+              "provider": "Calculated estimate",
+              "method": "verified-fixed-location",
+              "sourceUrl": "https://www.apple.com/shop/help/payments",
+              "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+              "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+            },
+            "reason": null
+          }
+        }
+      ],
+      "refurbPriceChanges": [],
+      "newPriceChanges": [],
+      "configurationChanges": [],
+      "taxInclusivePriceChanges": [],
+      "featured": null
+    },
     {
       "type": "changes",
       "checkedAt": "2026-07-26T18:20:15.264Z",
