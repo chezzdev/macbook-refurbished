@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   readCatalogViewState,
   writeCatalogViewSearch,
+  writeOwnedChoiceSearch,
 } from "../scripts/catalog-view-state.mjs";
 
 const options = {
@@ -95,6 +96,43 @@ test("reset removes owned params while keeping unrelated query state", () => {
       },
       options,
     ),
+    "?utm_campaign=test",
+  );
+});
+
+test("writes a non-default owned choice while preserving unrelated params", () => {
+  assert.equal(
+    writeOwnedChoiceSearch(
+      "?utm_source=friend&state=invalid&family=Air",
+      {
+        parameter: "state",
+        value: "co",
+        allowedValues: ["ca", "co", "sd"],
+        defaultValue: "ca",
+      },
+    ),
+    "?utm_source=friend&family=Air&state=co",
+  );
+});
+
+test("removes default or unsupported owned choices from the query", () => {
+  const choiceOptions = {
+    parameter: "state",
+    allowedValues: ["ca", "co", "sd"],
+    defaultValue: "ca",
+  };
+  assert.equal(
+    writeOwnedChoiceSearch("?state=xx&utm_campaign=test", {
+      ...choiceOptions,
+      value: "ca",
+    }),
+    "?utm_campaign=test",
+  );
+  assert.equal(
+    writeOwnedChoiceSearch("?state=sd&utm_campaign=test", {
+      ...choiceOptions,
+      value: "xx",
+    }),
     "?utm_campaign=test",
   );
 });

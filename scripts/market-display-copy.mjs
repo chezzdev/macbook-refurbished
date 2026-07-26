@@ -3,6 +3,7 @@ export function buildMarketDisplayCopy(
   {
     hasVerifiedTaxEstimate,
     hasReferenceLocationTax,
+    hasTaxLocationSwitcher = false,
     taxLocationName = "",
     rateDateFormatted = "",
     rateDateLong = "",
@@ -19,14 +20,19 @@ export function buildMarketDisplayCopy(
     },
   ).format(10 ** -profile.currency.displayFractionDigits);
   const heroCurrencyCopy = hasVerifiedTaxEstimate
-    ? "Total = цена + налог + сбор"
+    ? hasTaxLocationSwitcher
+      ? "Total = цена + налог + применимые сборы"
+      : "Total = цена + налог + сбор"
     : source === display
       ? `Цены Apple уже указаны в ${display}; конвертация не применяется`
       : `Пересчёт по официальному кросс-курсу на ${rateDateFormatted}, ` +
         `округление до ${roundingQuantum} ${display}`;
   const heroMarketCopy = hasVerifiedTaxEstimate
-    ? `В ${profile.storefront.countryCode} крупно показан расчётный total ` +
-      `для ${taxLocationName}; каталог остаётся общенациональным.`
+    ? hasTaxLocationSwitcher
+      ? `В ${profile.storefront.countryCode} крупно показан расчётный total ` +
+        "для выбранного штата; каталог остаётся общенациональным."
+      : `В ${profile.storefront.countryCode} крупно показан расчётный total ` +
+        `для ${taxLocationName}; каталог остаётся общенациональным.`
     : hasReferenceLocationTax
       ? `Цены Apple указаны в ${source}. Каталог ` +
         `${profile.storefront.countryName} остаётся общенациональным; ` +

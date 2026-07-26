@@ -78,6 +78,139 @@
       "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
       "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
     },
+    "locationSwitcher": {
+      "defaultLocationId": "apple-beverly-center",
+      "locations": [
+        {
+          "id": "apple-beverly-center",
+          "label": "California",
+          "shortLabel": "CA",
+          "kind": "apple-store",
+          "referenceLocation": {
+            "name": "Apple Beverly Center",
+            "street": "8500 Beverly Boulevard",
+            "city": "Los Angeles",
+            "region": "CA",
+            "postalCode": "90048",
+            "country": "US",
+            "sourceUrl": "https://www.apple.com/retail/beverlycenter/"
+          },
+          "estimate": {
+            "currency": "USD",
+            "salesTaxRate": 0.105,
+            "rounding": "nearest-minor-unit",
+            "minorUnitDigits": 2,
+            "additionalFees": [
+              {
+                "id": "ca-recycling-fee",
+                "label": "CA recycling fee",
+                "type": "screen-size",
+                "amountByScreenInches": {
+                  "13": 4,
+                  "14": 4,
+                  "15": 5,
+                  "16": 5
+                }
+              }
+            ]
+          },
+          "verification": {
+            "verifiedAt": "2026-07-26",
+            "productCode": "FDH94LL/A",
+            "productUrl": "https://www.apple.com/shop/product/fdh94ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Silver",
+            "currency": "USD",
+            "screenInches": 13,
+            "preTaxAmount": 1529,
+            "salesTaxAmount": 160.55,
+            "feeAmounts": [
+              {
+                "id": "ca-recycling-fee",
+                "amount": 4
+              }
+            ],
+            "estimatedTotalAmount": 1693.55
+          }
+        },
+        {
+          "id": "apple-cherry-creek",
+          "label": "Colorado",
+          "shortLabel": "CO",
+          "kind": "apple-store",
+          "referenceLocation": {
+            "name": "Apple Cherry Creek",
+            "street": "3000 E 1st Avenue",
+            "city": "Denver",
+            "region": "CO",
+            "postalCode": "80206",
+            "country": "US",
+            "sourceUrl": "https://www.apple.com/retail/cherrycreek/"
+          },
+          "estimate": {
+            "currency": "USD",
+            "salesTaxRate": 0.0915,
+            "rounding": "nearest-minor-unit",
+            "minorUnitDigits": 2,
+            "additionalFees": [
+              {
+                "id": "state-delivery-fee",
+                "label": "State Delivery Fee",
+                "type": "fixed",
+                "amount": 0.31
+              }
+            ]
+          },
+          "verification": {
+            "verifiedAt": "2026-07-26",
+            "productCode": "FDH94LL/A",
+            "productUrl": "https://www.apple.com/shop/product/fdh94ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Silver",
+            "currency": "USD",
+            "screenInches": 13,
+            "preTaxAmount": 1529,
+            "salesTaxAmount": 139.9,
+            "feeAmounts": [
+              {
+                "id": "state-delivery-fee",
+                "amount": 0.31
+              }
+            ],
+            "estimatedTotalAmount": 1669.21
+          }
+        },
+        {
+          "id": "sioux-falls-delivery-57105",
+          "label": "South Dakota",
+          "shortLabel": "SD",
+          "kind": "delivery-zip",
+          "methodNote": "Для South Dakota используется delivery ZIP: Apple retail store в штате нет.",
+          "referenceLocation": {
+            "name": "Sioux Falls delivery",
+            "city": "Sioux Falls",
+            "region": "SD",
+            "postalCode": "57105",
+            "country": "US",
+            "sourceUrl": "https://www.apple.com/retail/storelist/"
+          },
+          "estimate": {
+            "currency": "USD",
+            "salesTaxRate": 0.062,
+            "rounding": "nearest-minor-unit",
+            "minorUnitDigits": 2,
+            "additionalFees": []
+          },
+          "verification": {
+            "verifiedAt": "2026-07-26",
+            "productCode": "FDH94LL/A",
+            "productUrl": "https://www.apple.com/shop/product/fdh94ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Silver",
+            "currency": "USD",
+            "screenInches": 13,
+            "preTaxAmount": 1529,
+            "salesTaxAmount": 94.8,
+            "feeAmounts": [],
+            "estimatedTotalAmount": 1623.8
+          }
+        }
+      ]
+    },
     "availabilityPolicy": "catalog-wide",
     "filterByDeliveryOrPickup": false
   },
@@ -101,14 +234,14 @@
   },
   "publication": {
     "status": "active",
-    "provider": "cloudflare-pages",
-    "projectSlug": "macbook-us-refurbished",
+    "provider": "github-pages",
+    "projectSlug": "macbook-refurbished-sg",
     "repository": "git@github.com:chezzdev/macbook-refurbished-sg.git",
     "checkoutPath": "work/gh-pages-site",
     "artifactDirectory": "markets/us",
     "branch": "main",
-    "productionUrl": "https://macbook-us-refurbished.pages.dev/",
-    "canonicalUrl": "https://macbook-us-refurbished.pages.dev/",
+    "productionUrl": "https://chezzdev.github.io/macbook-refurbished-sg/markets/us/",
+    "canonicalUrl": "https://chezzdev.github.io/macbook-refurbished-sg/markets/us/",
     "plannedUrl": null,
     "approvalRequired": false
   }

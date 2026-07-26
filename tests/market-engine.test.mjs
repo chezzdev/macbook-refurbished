@@ -25,6 +25,7 @@ import {
   buildInitialSiteDocument,
   initializeMarketNamespace,
 } from "../scripts/initialize-market.mjs";
+import { calculateTaxLocationAmounts } from "../scripts/fixed-location-tax.mjs";
 import { buildMarketDisplayCopy } from "../scripts/market-display-copy.mjs";
 import {
   assertUniqueProfileOwnedPaths,
@@ -151,6 +152,7 @@ function rankingCatalog(profile) {
 
 function futureCaProfile() {
   const profile = structuredClone(us);
+  delete profile.tax.locationSwitcher;
   profile.id = "ca";
   profile.siteName = "MacBook CA Refurbished";
   profile.pageTitle = "MacBook CA Refurbished — comparison";
@@ -224,10 +226,12 @@ function futureCaProfile() {
   };
   profile.publication = {
     ...profile.publication,
-    projectSlug: "macbook-ca-refurbished",
+    projectSlug: "macbook-refurbished-sg",
     artifactDirectory: "markets/ca",
-    productionUrl: "https://macbook-ca-refurbished.pages.dev/",
-    canonicalUrl: "https://macbook-ca-refurbished.pages.dev/",
+    productionUrl:
+      "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/",
+    canonicalUrl:
+      "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/",
   };
   return profile;
 }
@@ -388,14 +392,14 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
   );
   assert.equal(
     sg.publication.productionUrl,
-    "https://macbook-sg-refurbished.pages.dev/",
+    "https://chezzdev.github.io/macbook-refurbished-sg/markets/sg/",
   );
   assert.equal(
     us.publication.productionUrl,
-    "https://macbook-us-refurbished.pages.dev/",
+    "https://chezzdev.github.io/macbook-refurbished-sg/markets/us/",
   );
-  assert.equal(sg.publication.provider, "cloudflare-pages");
-  assert.equal(us.publication.provider, "cloudflare-pages");
+  assert.equal(sg.publication.provider, "github-pages");
+  assert.equal(us.publication.provider, "github-pages");
   assert.equal(us.publication.approvalRequired, false);
   assert.equal(us.publication.status, "active");
   assert.deepEqual(
@@ -412,7 +416,7 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     sg.publication.checkoutPath,
     us.publication.checkoutPath,
   );
-  assert.notEqual(
+  assert.equal(
     sg.publication.projectSlug,
     us.publication.projectSlug,
   );
@@ -577,10 +581,12 @@ test("identity tax-included market renders no conversion methodology", async () 
     };
     profile.publication = {
       ...profile.publication,
-      projectSlug: "macbook-jp-refurbished",
+      projectSlug: "macbook-refurbished-sg",
       artifactDirectory: "markets/jp",
-      productionUrl: "https://macbook-jp-refurbished.pages.dev/",
-      canonicalUrl: "https://macbook-jp-refurbished.pages.dev/",
+      productionUrl:
+        "https://chezzdev.github.io/macbook-refurbished-sg/markets/jp/",
+      canonicalUrl:
+        "https://chezzdev.github.io/macbook-refurbished-sg/markets/jp/",
     };
     validateMarketProfile(profile);
 
@@ -747,6 +753,19 @@ test("enabled-market registry rejects ambiguous profile lists", () => {
   );
 });
 
+test("the GitHub Pages root redirects to the registry default market", async () => {
+  const rootIndex = await readFile(join(projectRoot, "index.html"), "utf8");
+  const defaultMarket = enabledMarketState.registry.defaultMarket;
+  assert.match(
+    rootIndex,
+    new RegExp(`url=markets/${defaultMarket}/`),
+  );
+  assert.match(
+    rootIndex,
+    new RegExp(`new URL\\("markets/${defaultMarket}/", location\\.href\\)`),
+  );
+});
+
 test("workflow config selects one shared checkout and each market artifact", async () => {
   const configurations = await Promise.all(
     enabledMarketState.registry.enabledMarkets.map(async (marketId) => {
@@ -771,8 +790,8 @@ test("workflow config selects one shared checkout and each market artifact", asy
   assert.equal(usWorkflow[16], "markets/us");
   assert.equal(sgWorkflow[18], "false");
   assert.equal(usWorkflow[18], "false");
-  assert.equal(sgWorkflow[12], "cloudflare-pages");
-  assert.equal(usWorkflow[12], "cloudflare-pages");
+  assert.equal(sgWorkflow[12], "github-pages");
+  assert.equal(usWorkflow[12], "github-pages");
 });
 
 test("publication workflow shares one lock and keeps prepare-only non-canonical", async () => {
@@ -791,6 +810,10 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
   assert.match(
     perMarketWorkflow,
     /MACBOOK_PUBLICATION_LOCK_OWNER:-market-\$\{market_id\}-\$\$/,
+  );
+  assert.match(
+    perMarketWorkflow,
+    /MACBOOK_PUBLISH_DIR:-/,
   );
   assert.match(
     allMarketsWorkflow,
@@ -845,7 +868,7 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
 test("publication manifest derives every market path from enabled profiles", () => {
   const futureProfile = structuredClone(us);
   futureProfile.id = "ca";
-  futureProfile.publication.projectSlug = "macbook-ca-refurbished";
+  futureProfile.publication.projectSlug = "macbook-refurbished-sg";
   futureProfile.ranking.policyPath = "config/ranking-policy.ca.json";
   futureProfile.namespace = {
     catalog: "data/markets/ca/catalog.json",
@@ -857,6 +880,10 @@ test("publication manifest derives every market path from enabled profiles", () 
     artifactDirectory: "outputs/markets/ca",
   };
   futureProfile.publication.artifactDirectory = "markets/ca";
+  futureProfile.publication.productionUrl =
+    "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/";
+  futureProfile.publication.canonicalUrl =
+    "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/";
   const manifest = buildPublicationManifest([sg, us, futureProfile]);
 
   assert.deepEqual(manifest.marketIds, ["sg", "us", "ca"]);
@@ -880,11 +907,15 @@ test("publication manifest derives every market path from enabled profiles", () 
     "data/site.json",
     "data/update-delta.json",
     "data/update-status.json",
-    "index.html",
   ]) {
     assert.ok(manifest.retiredPublicationPaths.includes(retiredPath));
     assert.ok(manifest.publicationPaths.includes(retiredPath));
   }
+  assert.ok(manifest.sourcePaths.includes("index.html"));
+  assert.ok(manifest.sourcePaths.includes(".nojekyll"));
+  assert.ok(manifest.publicationPaths.includes("index.html"));
+  assert.ok(manifest.publicationPaths.includes(".nojekyll"));
+  assert.ok(!manifest.retiredPublicationPaths.includes("index.html"));
   assert.ok(
     manifest.immutableSourcePaths.includes("config/markets/ca.json"),
   );
@@ -926,7 +957,7 @@ test("enabled market profiles cannot share state or policy paths", () => {
 
   const baseFutureMarket = structuredClone(us);
   baseFutureMarket.id = "ca";
-  baseFutureMarket.publication.projectSlug = "macbook-ca-refurbished";
+  baseFutureMarket.publication.projectSlug = "macbook-refurbished-sg";
   baseFutureMarket.ranking.policyPath = "config/ranking-policy.ca.json";
   baseFutureMarket.namespace = {
     catalog: "data/markets/ca/catalog.json",
@@ -938,6 +969,10 @@ test("enabled market profiles cannot share state or policy paths", () => {
     artifactDirectory: "outputs/markets/ca",
   };
   baseFutureMarket.publication.artifactDirectory = "markets/ca";
+  baseFutureMarket.publication.productionUrl =
+    "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/";
+  baseFutureMarket.publication.canonicalUrl =
+    "https://chezzdev.github.io/macbook-refurbished-sg/markets/ca/";
   assert.doesNotThrow(() => validateMarketProfile(baseFutureMarket));
 
   const aliasedMarket = structuredClone(baseFutureMarket);
@@ -988,7 +1023,7 @@ test("enabled market profiles cannot share state or policy paths", () => {
     "git@github.com:chezzdev/macbook-refurbished-ca.git";
   assert.throws(
     () => validateMarketProfile(splitRepositoryMarket),
-    /must use the unified Cloudflare publication repository/,
+    /must use the unified GitHub Pages repository/,
   );
 });
 
@@ -1171,6 +1206,44 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
   assert.throws(
     () => buildCatalog(tamperedNew, us),
     /new tax estimate does not match its profile policy/,
+  );
+});
+
+test("US state switcher reproduces all verified Apple cart totals", () => {
+  const switcher = us.tax.locationSwitcher;
+  assert.equal(switcher.defaultLocationId, "apple-beverly-center");
+  assert.deepEqual(
+    switcher.locations.map((location) => location.shortLabel),
+    ["CA", "CO", "SD"],
+  );
+
+  const expected = new Map([
+    ["CA", { tax: 160.55, fee: 4, total: 1693.55 }],
+    ["CO", { tax: 139.9, fee: 0.31, total: 1669.21 }],
+    ["SD", { tax: 94.8, fee: 0, total: 1623.8 }],
+  ]);
+  for (const location of switcher.locations) {
+    const calculated = calculateTaxLocationAmounts({
+      preTaxAmount: location.verification.preTaxAmount,
+      screenInches: location.verification.screenInches,
+      estimate: location.estimate,
+    });
+    const checkout = expected.get(location.shortLabel);
+    assert.equal(calculated.salesTaxAmount, checkout.tax);
+    assert.equal(calculated.additionalFeeAmount, checkout.fee);
+    assert.equal(calculated.estimatedTotalAmount, checkout.total);
+  }
+  assert.equal(
+    switcher.locations.find((location) => location.shortLabel === "SD")
+      ?.methodNote,
+    "Для South Dakota используется delivery ZIP: Apple retail store в штате нет.",
+  );
+
+  const tampered = structuredClone(us);
+  tampered.tax.locationSwitcher.locations[1].estimate.salesTaxRate = 0.09;
+  assert.throws(
+    () => validateMarketProfile(tampered),
+    /does not reproduce its Apple checkout verification/,
   );
 });
 
@@ -1524,7 +1597,12 @@ test("the shared UI builder renders the US profile without Singapore assumptions
     assert.match(html, /\$1,661\.50/);
     assert.match(html, /\$1,500\.00 \+ \$157\.50 \+ \$4\.00/);
     assert.match(html, /"newTaxInclusivePriceUsd":1991\.9/);
-    assert.match(html, /priceFormula\(p\.newTaxInclusivePricing\)/);
+    assert.match(html, /const taxLocations=\[/);
+    assert.match(html, /requestedTaxState/);
+    assert.match(html, /taxPricingFor\(p,newPriceField\)/);
+    assert.match(html, /data-tax-location="apple-cherry-creek"/);
+    assert.match(html, /data-tax-location="sioux-falls-delivery-57105"/);
+    assert.match(html, /State Delivery Fee/);
     assert.ok(
       html.includes(
         `<link rel="canonical" href="${us.publication.canonicalUrl}">`,
@@ -1532,7 +1610,7 @@ test("the shared UI builder renders the US profile without Singapore assumptions
     );
     assert.match(
       html,
-      /href="https:\/\/macbook-sg-refurbished\.pages\.dev\/"[^>]*aria-label="MacBook SG Refurbished"/,
+      /href="https:\/\/chezzdev\.github\.io\/macbook-refurbished-sg\/markets\/sg\/"[^>]*aria-label="MacBook SG Refurbished"/,
     );
     assert.ok(
       html.includes(

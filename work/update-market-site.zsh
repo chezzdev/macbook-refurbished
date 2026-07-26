@@ -68,7 +68,7 @@ workflow_config="$(
 IFS=$'\x1f' read -r \
   market_id site_name profile_relative catalog_relative featured_relative site_relative \
   update_status_relative update_delta_relative changelog_relative \
-  artifact_directory_relative policy_relative cloudflare_project publication_provider \
+  artifact_directory_relative policy_relative hosting_project publication_provider \
   production_url repository_url publish_checkout_relative publication_artifact_directory \
   publication_branch approval_required <<< "$workflow_config"
 
@@ -77,7 +77,9 @@ if [[ "$approval_required" == "true" && "$prepare_only" != "true" ]]; then
   print -u2 "Approve the hosting project and final URL in config/markets/${market_id}.json before a live refresh or deployment."
   exit 1
 fi
-if [[ "$prepare_only" != "true" && "$publication_provider" != "cloudflare-pages" ]]; then
+if [[ "$prepare_only" != "true" && \
+      "$publication_provider" != "github-pages" && \
+      "$publication_provider" != "cloudflare-pages" ]]; then
   print -u2 "${site_name} uses ${publication_provider}; run this workflow with --prepare-only and publish the validated artifact through its hosting provider."
   exit 1
 fi
@@ -107,7 +109,9 @@ immutable_source_paths=("${(@f)$(node "${execution_root}/scripts/publication-man
 publish_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --publish)}")
 retired_publication_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --retired)}")
 
-if [[ -d "${workspace_dir}/.git" && \
+if [[ -n "${MACBOOK_PUBLISH_DIR:-}" ]]; then
+  publish_dir="${MACBOOK_PUBLISH_DIR:A}"
+elif [[ -d "${workspace_dir}/.git" && \
       -f "${workspace_dir}/scripts/update-apple-catalog.mjs" && \
       ! -d "${default_publish_dir}/.git" ]]; then
   publish_dir="$workspace_dir"
@@ -353,7 +357,7 @@ if [[ "$prepare_only" == "true" ]]; then
   exit 0
 fi
 
-print "6/8 Syncing the private GitHub repository"
+print "6/8 Syncing the unified public GitHub repository"
 remote_url="$(git -C "$publish_dir" remote get-url origin)"
 case "$remote_url" in
   "$allowed_ssh_remote"|"$allowed_https_remote"|"$allowed_https_remote_short"|"$allowed_ssh_url_remote") ;;
@@ -420,27 +424,37 @@ if ! git -C "$publish_dir" diff --cached --quiet; then
 fi
 publish_commit="$(git -C "$publish_dir" rev-parse HEAD)"
 
-print "7/8 Deploying the tested artifact to the existing Cloudflare Pages project"
-metadata_dir="$(mktemp -d "${temporary_root%/}/macbook-deploy-git.XXXXXX")"
-git -C "$metadata_dir" init --quiet
-git -C "$metadata_dir" fetch --quiet --no-tags "$publish_dir" "$publish_commit"
-git -C "$metadata_dir" update-ref "refs/heads/${publication_branch}" "$publish_commit"
-git -C "$metadata_dir" symbolic-ref HEAD "refs/heads/${publication_branch}"
-(
-  cd "$metadata_dir"
-  "${workspace_dir}/node_modules/.bin/wrangler" pages deploy "$deployment_dir" \
-    --project-name "$cloudflare_project" \
-    --branch "$publication_branch" \
-    --commit-hash "$publish_commit" \
-    --commit-dirty=true
-)
+if [[ "$publication_provider" == "cloudflare-pages" ]]; then
+  print "7/8 Deploying the tested artifact to the existing Cloudflare Pages project"
+  metadata_dir="$(mktemp -d "${temporary_root%/}/macbook-deploy-git.XXXXXX")"
+  git -C "$metadata_dir" init --quiet
+  git -C "$metadata_dir" fetch --quiet --no-tags "$publish_dir" "$publish_commit"
+  git -C "$metadata_dir" update-ref "refs/heads/${publication_branch}" "$publish_commit"
+  git -C "$metadata_dir" symbolic-ref HEAD "refs/heads/${publication_branch}"
+  (
+    cd "$metadata_dir"
+    "${workspace_dir}/node_modules/.bin/wrangler" pages deploy "$deployment_dir" \
+      --project-name "$hosting_project" \
+      --branch "$publication_branch" \
+      --commit-hash "$publish_commit" \
+      --commit-dirty=true
+  )
+else
+  print "7/8 Waiting for GitHub Pages to publish the pushed commit"
+fi
 
 print "8/8 Verifying that the permanent URL serves the exact tested artifact"
 live_file="${deployment_dir}/live.html"
 live_matches=false
-for attempt_number in {1..12}; do
+if [[ "$publication_provider" == "github-pages" ]]; then
+  maximum_attempts=36
+else
+  maximum_attempts=12
+fi
+attempt_number=1
+while (( attempt_number <= maximum_attempts )); do
   if curl -fsSL --max-time 15 \
-    "${production_url}/?catalog_hash=${second_hash}" \
+    "${production_url}?catalog_hash=${second_hash}" \
     -o "$live_file"; then
     live_hash="$(shasum -a 256 "$live_file" | awk '{print $1}')"
     if [[ "$live_hash" == "$second_hash" ]]; then
@@ -448,7 +462,10 @@ for attempt_number in {1..12}; do
       break
     fi
   fi
-  sleep 5
+  if (( attempt_number < maximum_attempts )); then
+    sleep 5
+  fi
+  attempt_number=$((attempt_number + 1))
 done
 
 if [[ "$live_matches" != true ]]; then
@@ -458,7 +475,7 @@ fi
 
 promote_staged_outputs
 workflow_succeeded=true
-print "Catalog refresh, tests, private sync, deployment, and live hash verification succeeded."
+print "Catalog refresh, tests, public repository sync, deployment, and live hash verification succeeded."
 print "Artifact SHA-256: $second_hash"
 print "Production: $production_url"
 MACBOOK_NAMESPACE_ROOT="$staging_dir" \

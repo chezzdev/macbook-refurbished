@@ -20,7 +20,6 @@ const retiredPublicationPaths = [
   "drizzle",
   "worker",
   "drizzle.config.ts",
-  "index.html",
   "postcss.config.mjs",
   "tests/rendered-html.test.mjs",
   "tsconfig.json",

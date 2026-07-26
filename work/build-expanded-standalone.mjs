@@ -4,7 +4,12 @@ import { escapeHtml } from "../scripts/html-escape.mjs";
 import {
   readCatalogViewState,
   writeCatalogViewSearch,
+  writeOwnedChoiceSearch,
 } from "../scripts/catalog-view-state.mjs";
+import {
+  calculateTaxLocationAmounts,
+  screenInchesFromLabel,
+} from "../scripts/fixed-location-tax.mjs";
 import { buildMarketDisplayCopy } from "../scripts/market-display-copy.mjs";
 import {
   loadEnabledMarketProfiles,
@@ -31,6 +36,11 @@ const hasReferenceLocationTax =
   ].includes(profile.tax.model);
 const hasVerifiedTaxEstimate =
   profile.tax.model === "verified-fixed-location-estimate";
+const taxLocationSwitcher = profile.tax.locationSwitcher ?? null;
+const hasTaxLocationSwitcher =
+  hasVerifiedTaxEstimate &&
+  Array.isArray(taxLocationSwitcher?.locations) &&
+  taxLocationSwitcher.locations.length > 1;
 const displayedRefurbishedPriceField = hasVerifiedTaxEstimate
   ? taxInclusivePriceField
   : refurbishedPriceField;
@@ -59,6 +69,17 @@ const updateStatus = await readJson(paths.updateStatus, { optional: true });
 const products = Array.isArray(catalogDocument) ? catalogDocument : catalogDocument?.products;
 if (!Array.isArray(products) || products.length === 0) {
   throw new Error(`${paths.catalog} must contain a non-empty products array`);
+}
+if (hasTaxLocationSwitcher) {
+  for (const location of taxLocationSwitcher.locations) {
+    for (const product of products) {
+      calculateTaxLocationAmounts({
+        preTaxAmount: product[refurbishedPriceField],
+        screenInches: screenInchesFromLabel(product.screen),
+        estimate: location.estimate,
+      });
+    }
+  }
 }
 
 const featuredEntries = Array.isArray(featuredDocument) ? featuredDocument : featuredDocument?.items;
@@ -103,6 +124,9 @@ const checkedDate = formatRussianDate(checkedAt);
 const checkedDateLong = formatRussianLongDate(checkedAt);
 const rateDateFormatted = formatRussianDate(rateDate);
 const embeddedProducts = JSON.stringify(products).replaceAll("<", "\\u003c");
+const embeddedTaxLocations = JSON.stringify(
+  taxLocationSwitcher?.locations ?? [],
+).replaceAll("<", "\\u003c");
 const displayFormatter = new Intl.NumberFormat(profile.currency.displayLocale, {
   style: "currency",
   currency: displayCurrency,
@@ -340,12 +364,12 @@ const cardPrice = (product) =>
       ? `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb · налог включён</span>`
       : `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>`;
 const card = ({ product, label, heading, body, score, highlighted = false }) =>
-  `<article class="pick-card${highlighted ? " featured" : ""}" data-score="${escapeHtml(score)}">
+  `<article class="pick-card${highlighted ? " featured" : ""}" data-score="${escapeHtml(score)}"${hasTaxLocationSwitcher ? ` data-product-code="${escapeHtml(product.productCode)}"` : ""}>
     <span class="pick-label">${escapeHtml(label)} · рейтинг ${escapeHtml(formatScore(score))}</span>
     <div class="pick-chip">${escapeHtml(product.chip)}</div>
     <h3>${escapeHtml(heading)}</h3>
     <p>${escapeHtml(body)}</p>
-    <div class="pick-price">${cardPrice(product)}</div>
+    <div class="pick-price"${hasTaxLocationSwitcher ? ' data-role="pick-price"' : ""}>${cardPrice(product)}</div>
     <a class="pick-link" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">Открыть у Apple ↗</a>
   </article>`;
 
@@ -403,6 +427,42 @@ const taxLocation = profile.tax.referenceLocation;
 const taxReferenceLabel = taxLocation
   ? `${taxLocation.name}, ${taxLocation.street}, ${taxLocation.city}, ${taxLocation.region} ${taxLocation.postalCode}`
   : "";
+const defaultTaxLocation = hasTaxLocationSwitcher
+  ? taxLocationSwitcher.locations.find(
+      (location) => location.id === taxLocationSwitcher.defaultLocationId,
+    )
+  : null;
+const taxLocationDetail = (location) => {
+  if (!location) return "";
+  const reference = location.referenceLocation;
+  return location.kind === "apple-store"
+    ? `${reference.name} · ${reference.street} · ${reference.city}, ${reference.region} ${reference.postalCode}`
+    : `Delivery ZIP ${reference.postalCode} · ${reference.city}, ${reference.region}`;
+};
+const taxLocationFeeSummary = (location) => {
+  const labels = location?.estimate?.additionalFees?.map((fee) => fee.label) ?? [];
+  return labels.length > 0 ? labels.join(" + ") : "без отдельного сбора";
+};
+const taxLocationMethodFormula = (location) => {
+  const fees = location?.estimate?.additionalFees ?? [];
+  const tax = `налог ${taxRatePercent(location)}%`;
+  return fees.length > 0
+    ? `${tax} + ${fees.map((fee) => fee.label).join(" + ")}`
+    : `${tax}; без отдельного сбора`;
+};
+const taxRatePercent = (location) =>
+  Number((location.estimate.salesTaxRate * 100).toFixed(4));
+const taxLocationButtonsHtml = hasTaxLocationSwitcher
+  ? taxLocationSwitcher.locations
+      .map(
+        (location) =>
+          `<button type="button" data-tax-location="${escapeHtml(location.id)}" aria-pressed="${location.id === taxLocationSwitcher.defaultLocationId ? "true" : "false"}" title="${escapeHtml(location.label)}">${escapeHtml(location.shortLabel)}</button>`,
+      )
+      .join("")
+  : "";
+const taxLocationHeaderHtml = hasTaxLocationSwitcher
+  ? `<div class="header-tax-switcher"><span>Итого для</span><div class="tax-location-switcher" role="group" aria-label="Штат для расчёта">${taxLocationButtonsHtml}</div></div>`
+  : "";
 const {
   currencyMethodBody,
   currencyMethodHeading,
@@ -411,16 +471,27 @@ const {
 } = buildMarketDisplayCopy(profile, {
   hasVerifiedTaxEstimate,
   hasReferenceLocationTax,
+  hasTaxLocationSwitcher,
   taxLocationName: taxLocation?.name,
   rateDateFormatted,
   rateDateLong: formatRussianLongDate(rateDate),
 });
+const heroAsideHtml = hasTaxLocationSwitcher
+  ? `<div class="tax-location-card">
+      <div class="tax-location-head"><span>Расчётный total для</span><span class="tax-location-code" id="tax-location-short-label">${escapeHtml(defaultTaxLocation.shortLabel)}</span></div>
+      <strong id="tax-location-label">${escapeHtml(defaultTaxLocation.label)}</strong>
+      <small id="tax-location-detail">${escapeHtml(taxLocationDetail(defaultTaxLocation))}</small>
+      <small id="tax-location-formula">${escapeHtml(`${taxRatePercent(defaultTaxLocation)}% tax · ${taxLocationFeeSummary(defaultTaxLocation)}`)}</small>
+    </div>`
+  : `<div class="hero-note"><span>Основная валюта</span><strong>${escapeHtml(displayCurrency)}</strong><small>${escapeHtml(heroCurrencyCopy)}</small></div>`;
 const conversionMethodDisclosure =
   sourceCurrency === displayCurrency
     ? ""
     : ` ${currencyMethodHeading}: ${currencyMethodBody}`;
 const taxMethodCopy = hasVerifiedTaxEstimate
-  ? `<article><span>03</span><h3>Расчётный total</h3><p>Цена + налог ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}% + сбор. Ориентир: ${escapeHtml(taxReferenceLabel)}.${escapeHtml(conversionMethodDisclosure)}</p></article>`
+  ? hasTaxLocationSwitcher
+    ? `<article id="tax-method"><span>03</span><h3>Расчётный total</h3><p id="tax-method-copy">Цена + ${escapeHtml(taxLocationMethodFormula(defaultTaxLocation))}. Ориентир: ${escapeHtml(taxLocationDetail(defaultTaxLocation))}. Проверено в Apple checkout ${escapeHtml(formatRussianDate(defaultTaxLocation.verification.verifiedAt))}.${escapeHtml(conversionMethodDisclosure)}</p></article>`
+    : `<article><span>03</span><h3>Расчётный total</h3><p>Цена + налог ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}% + сбор. Ориентир: ${escapeHtml(taxReferenceLabel)}.${escapeHtml(conversionMethodDisclosure)}</p></article>`
   : hasReferenceLocationTax
     ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.${escapeHtml(conversionMethodDisclosure)}</p></article>`
     : `<article><span>03</span><h3>${escapeHtml(currencyMethodHeading)}</h3><p>${escapeHtml(currencyMethodBody)}</p></article>`;
@@ -446,8 +517,54 @@ const newSourceTaxFormulaCall =
   sourceCurrency !== displayCurrency
     ? "+sourcePriceFormula(p.newTaxInclusivePricing)"
     : "";
-const clientTaxFormatterSource = hasVerifiedTaxEstimate
-  ? `${sourceTaxFormulaSource}const priceFormula=pricing=>'<small class="price-formula">'+
+const clientTaxFormatterSource = hasTaxLocationSwitcher
+  ? `const requestedTaxState=new URLSearchParams(window.location.search).get("state")?.toUpperCase();
+    let activeTaxLocation=taxLocations.find(location=>location.shortLabel===requestedTaxState)||
+      taxLocations.find(location=>location.id===defaultTaxLocationId);
+    const roundTaxAmount=(amount,digits)=>{
+      const factor=10**digits;
+      return Math.floor(amount*factor+0.5+1e-9)/factor;
+    };
+    const screenInches=p=>Number(p.screen.match(/\\d+/)?.[0]||0);
+    const taxPricingFor=(p,priceField)=>{
+      const preTaxAmount=p[priceField];
+      if(!Number.isFinite(preTaxAmount)||preTaxAmount<=0)return null;
+      const estimate=activeTaxLocation.estimate;
+      const inches=screenInches(p);
+      const salesTaxAmount=roundTaxAmount(preTaxAmount*estimate.salesTaxRate,estimate.minorUnitDigits);
+      const feeAmounts=estimate.additionalFees.map(fee=>({
+        id:fee.id,
+        label:fee.label,
+        amount:fee.type==="fixed"?fee.amount:fee.amountByScreenInches[String(inches)]
+      }));
+      const additionalFeeAmount=roundTaxAmount(feeAmounts.reduce((sum,fee)=>sum+fee.amount,0),estimate.minorUnitDigits);
+      return {
+        amount:roundTaxAmount(preTaxAmount+salesTaxAmount+additionalFeeAmount,estimate.minorUnitDigits),
+        preTaxAmount,
+        salesTaxAmount,
+        feeAmounts
+      };
+    };
+    const formulaAmounts=pricing=>[pricing.preTaxAmount,pricing.salesTaxAmount,...pricing.feeAmounts.map(fee=>fee.amount)];
+    const priceFormula=pricing=>'<small class="price-formula">'+
+      formulaAmounts(pricing).map(amount=>taxCurrency.format(amount*rate)).join(' + ')+'</small>';
+    const sourcePriceFormula=pricing=>${sourceCurrency !== displayCurrency}?
+      '<small class="source-tax-formula">('+formulaAmounts(pricing).map(sourceAmount).join(' + ')+')</small>':'';
+    const refurbishedPrice=p=>{
+      const pricing=taxPricingFor(p,refurbishedPriceField);
+      return '<a class="price-link" href="'+escapeHtml(p.sourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть refurbished у Apple"><strong class="primary-currency">'+taxCurrency.format(pricing.amount*rate)+'</strong>'+priceFormula(pricing)+sourcePriceFormula(pricing)+'</a>';
+    };
+    const exactNewPrice=p=>{
+      const pricing=taxPricingFor(p,newPriceField);
+      return pricing?
+        '<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple"><strong class="primary-currency">'+taxCurrency.format(pricing.amount*rate)+'</strong>'+priceFormula(pricing)+sourcePriceFormula(pricing)+'</a>':
+        '<span class="na">—</span>';
+    };
+    const comparableRefurbishedPrice=p=>taxPricingFor(p,refurbishedPriceField).amount;
+    const comparableNewPrice=p=>taxPricingFor(p,newPriceField)?.amount??null;
+    const comparisonPrice=amount=>'<strong class="primary-currency">'+taxCurrency.format(amount*rate)+'</strong>';`
+  : hasVerifiedTaxEstimate
+    ? `${sourceTaxFormulaSource}const priceFormula=pricing=>'<small class="price-formula">'+
       taxCurrency.format(pricing.preTaxAmount*rate)+' + '+
       taxCurrency.format(pricing.salesTaxAmount*rate)+' + '+
       taxCurrency.format(pricing.recyclingFeeAmount*rate)+'</small>';
@@ -458,8 +575,8 @@ const clientTaxFormatterSource = hasVerifiedTaxEstimate
     const comparableRefurbishedPrice=p=>p[taxInclusivePriceField];
     const comparableNewPrice=p=>p[newTaxInclusivePriceField];
     const comparisonPrice=amount=>'<strong class="primary-currency">'+taxCurrency.format(amount*rate)+'</strong>';`
-  : hasReferenceLocationTax
-    ? `const taxPrice=p=>p[taxInclusivePriceField]?
+    : hasReferenceLocationTax
+      ? `const taxPrice=p=>p[taxInclusivePriceField]?
       '<small class="tax-inclusive">Итого Apple: '+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</small>':
       '<small class="tax-unresolved">Итого с налогом: не получено</small>';
     const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField])+taxPrice(p);
@@ -467,7 +584,7 @@ const clientTaxFormatterSource = hasVerifiedTaxEstimate
     const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
     const comparableNewPrice=p=>p[newPriceField];
     const comparisonPrice=tablePrice;`
-  : `const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField]);
+      : `const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField]);
     const exactNewPrice=p=>p[newPriceField]?'<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">'+tablePrice(p[newPriceField])+'</a>':'<span class="na">—</span>';
     const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
     const comparableNewPrice=p=>p[newPriceField];
@@ -482,6 +599,146 @@ const newHeader = hasVerifiedTaxEstimate
   : hasReferenceLocationTax
     ? "Цена нового до налога"
     : "Цена нового";
+const clientTaxLocationUiSource = hasTaxLocationSwitcher
+  ? `const taxRatePercent=location=>Number((location.estimate.salesTaxRate*100).toFixed(4));
+    const taxLocationDetail=location=>{
+      const reference=location.referenceLocation;
+      return location.kind==="apple-store"?
+        reference.name+" · "+reference.street+" · "+reference.city+", "+reference.region+" "+reference.postalCode:
+        "Delivery ZIP "+reference.postalCode+" · "+reference.city+", "+reference.region;
+    };
+    const taxFeeSummary=location=>{
+      const labels=location.estimate.additionalFees.map(fee=>fee.label);
+      return labels.length?labels.join(" + "):"без отдельного сбора";
+    };
+    const taxMethodFormula=location=>{
+      const labels=location.estimate.additionalFees.map(fee=>fee.label);
+      const tax="налог "+taxRatePercent(location)+"%";
+      return labels.length?tax+" + "+labels.join(" + "):tax+"; без отдельного сбора";
+    };
+    const productForFeatured=item=>products.find(p=>
+      item.productCode===p.productCode||
+      (!item.productCode&&item.configurationKey===configurationKeyFor(p))
+    );
+    const featuredPriceComparison=()=>{
+      const leading=productForFeatured(featured[0]);
+      const runnerUp=productForFeatured(featured[1]);
+      const leadingPrice=comparableRefurbishedPrice(leading);
+      const runnerUpPrice=comparableRefurbishedPrice(runnerUp);
+      const priceDelta=Math.abs(leadingPrice-runnerUpPrice);
+      if(priceDelta===0)return "Они стоят одинаково.";
+      return (leadingPrice>runnerUpPrice?"Первый вариант дороже второго":"Первый вариант дешевле второго")+
+        " на "+taxCurrency.format(priceDelta*rate)+".";
+    };
+    const renderTaxLocationUi=()=>{
+      document.querySelectorAll("[data-tax-location]").forEach(button=>
+        button.setAttribute("aria-pressed",String(button.dataset.taxLocation===activeTaxLocation.id))
+      );
+      document.querySelector("#tax-location-label").textContent=activeTaxLocation.label;
+      document.querySelector("#tax-location-short-label").textContent=activeTaxLocation.shortLabel;
+      document.querySelector("#tax-location-detail").textContent=taxLocationDetail(activeTaxLocation);
+      document.querySelector("#tax-location-formula").textContent=
+        taxRatePercent(activeTaxLocation)+"% tax · "+taxFeeSummary(activeTaxLocation);
+      const totals=products.map(comparableRefurbishedPrice);
+      document.querySelector("#price-range-value").textContent=
+        taxCurrency.format(Math.min(...totals)*rate)+" – "+taxCurrency.format(Math.max(...totals)*rate);
+      document.querySelectorAll(".pick-card[data-product-code]").forEach(card=>{
+        const product=products.find(p=>p.productCode===card.dataset.productCode);
+        const pricing=taxPricingFor(product,refurbishedPriceField);
+        card.querySelector('[data-role="pick-price"]').innerHTML=
+          '<strong>'+taxCurrency.format(pricing.amount*rate)+'</strong>'+
+          '<span>total · расчёт</span>'+priceFormula(pricing)+sourcePriceFormula(pricing);
+      });
+      document.querySelector("#decision-price-comparison").textContent=featuredPriceComparison();
+      document.querySelector("#refurbished-price-header").textContent=
+        "Refurb total · "+activeTaxLocation.shortLabel;
+      document.querySelector("#new-price-header").textContent=
+        "Новый total · "+activeTaxLocation.shortLabel;
+      const deliveryNote=activeTaxLocation.methodNote?
+        " "+activeTaxLocation.methodNote:"";
+      document.querySelector("#tax-method-copy").textContent=
+        "Цена + "+taxMethodFormula(activeTaxLocation)+
+        ". Ориентир: "+taxLocationDetail(activeTaxLocation)+
+        ". Проверено в Apple checkout "+activeTaxLocation.verification.verifiedAt+"."+deliveryNote;
+    };
+    const activateTaxLocation=locationId=>{
+      const nextLocation=taxLocations.find(location=>location.id===locationId);
+      if(!nextLocation)return;
+      if(nextLocation.id===activeTaxLocation.id){
+        synchronizeCatalogViewUrl();
+        return;
+      }
+      activeTaxLocation=nextLocation;
+      synchronizeCatalogViewUrl();
+      renderTaxLocationUi();
+      render();
+    };`
+  : "";
+const clientTaxLocationEventsSource = hasTaxLocationSwitcher
+  ? `document.querySelectorAll("[data-tax-location]").forEach(button=>
+      button.addEventListener("click",()=>activateTaxLocation(button.dataset.taxLocation))
+    );
+    renderTaxLocationUi();`
+  : "";
+const taxLocationCss = hasTaxLocationSwitcher
+  ? `
+    .header-tax-switcher{display:flex;align-items:center;gap:10px;border-left:1px solid var(--line);padding-left:18px}
+    .header-tax-switcher>span{font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+    .tax-location-card{min-height:165px;background:var(--white);border:1px solid var(--ink);padding:18px;display:grid;gap:9px;box-shadow:7px 7px 0 var(--ink)}
+    .tax-location-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .tax-location-head>span,.tax-location-card small{font-size:11px;color:var(--muted)}
+    .tax-location-head>span:first-child{font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+    .tax-location-head .tax-location-code{display:grid;place-items:center;min-width:38px;height:28px;padding:0 8px;background:var(--ink);color:var(--paper);font:850 10px ui-monospace,SFMono-Regular,Menlo,monospace}
+    .tax-location-card>strong{font-size:28px;letter-spacing:-.04em}
+    .tax-location-switcher{display:flex}
+    .tax-location-switcher button{width:34px;padding:0;border-right:0;background:transparent;color:var(--ink);cursor:pointer}
+    .tax-location-switcher button:last-child{border-right:1px solid var(--ink)}
+    .tax-location-switcher button:hover,.tax-location-switcher button[aria-pressed="true"]{background:var(--blue);color:white}
+    .stable-tax-columns{min-width:1250px;table-layout:fixed}
+    .stable-tax-columns th{white-space:nowrap}
+    .stable-tax-columns th:nth-child(1),.stable-tax-columns td:nth-child(1){width:172px}
+    .stable-tax-columns th:nth-child(2),.stable-tax-columns td:nth-child(2){width:60px}
+    .stable-tax-columns th:nth-child(3),.stable-tax-columns td:nth-child(3){width:92px}
+    .stable-tax-columns th:nth-child(4),.stable-tax-columns td:nth-child(4),.stable-tax-columns th:nth-child(5),.stable-tax-columns td:nth-child(5){width:68px}
+    .stable-tax-columns th:nth-child(6),.stable-tax-columns td:nth-child(6){width:104px}
+    .stable-tax-columns th:nth-child(7),.stable-tax-columns td:nth-child(7){width:154px}
+    .stable-tax-columns th:nth-child(8),.stable-tax-columns td:nth-child(8),.stable-tax-columns th:nth-child(9),.stable-tax-columns td:nth-child(9){width:185px;min-width:185px;max-width:185px}
+    .stable-tax-columns th:nth-child(10),.stable-tax-columns td:nth-child(10){width:162px;min-width:162px;max-width:162px}
+    #tax-location-formula{font-weight:750;color:var(--ink)}`
+  : "";
+const responsiveHeroAsideCss = hasTaxLocationSwitcher
+  ? ".hero-note,.tax-location-card{max-width:520px}"
+  : ".hero-note{max-width:480px}";
+const clientTaxLocationDataSource = hasTaxLocationSwitcher
+  ? `    const taxLocations=${embeddedTaxLocations};
+    const defaultTaxLocationId=${JSON.stringify(taxLocationSwitcher.defaultLocationId)};
+    const defaultTaxLocation=taxLocations.find(location=>location.id===defaultTaxLocationId);
+    const taxStateOptions={
+      parameter:"state",
+      allowedValues:taxLocations.map(location=>location.shortLabel.toLowerCase()),
+      defaultValue:defaultTaxLocation.shortLabel.toLowerCase(),
+    };
+`
+  : "";
+const clientOwnedChoiceSource = hasTaxLocationSwitcher
+  ? `    const writeOwnedChoiceSearch=${writeOwnedChoiceSearch.toString()};
+`
+  : "";
+const clientViewSearchSource = hasTaxLocationSwitcher
+  ? `let search=writeCatalogViewSearch(location.search,currentViewState(),viewStateOptions);
+      search=writeOwnedChoiceSearch(search,{
+        ...taxStateOptions,
+        value:activeTaxLocation.shortLabel.toLowerCase(),
+      });`
+  : "const search=writeCatalogViewSearch(location.search,currentViewState(),viewStateOptions);";
+const separateAppleHeaderHtml = hasTaxLocationSwitcher ? "" : "<th>Apple</th>";
+const separateAppleCellSource = hasTaxLocationSwitcher
+  ? ""
+  : `
+          <td><a class="open" href="\${escapeHtml(p.sourceUrl)}" target="_blank" rel="noreferrer" aria-label="Открыть \${escapeHtml(p.productCode)} у Apple">↗</a></td>`;
+const clientModelMetadataSource = hasTaxLocationSwitcher
+  ? `<strong>MacBook \${escapeHtml(p.family)}</strong><small>\${escapeHtml(p.releaseYear)} · \${escapeHtml(p.productCode)}</small>\${p.display==="Nano-texture"?'<small class="model-display">Nano-texture</small>':""}`
+  : `<strong>MacBook \${escapeHtml(p.family)}</strong><small>\${escapeHtml(p.releaseYear)} · \${escapeHtml(p.productCode)}\${p.display==="Nano-texture"?" · Nano-texture":""}</small>`;
 
 const html = `<!doctype html>
 <html lang="${escapeHtml(profile.language)}">
@@ -499,13 +756,13 @@ const html = `<!doctype html>
     button,select{font:inherit}
     .topbar{height:64px;padding:0 4vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ink);position:sticky;top:0;background:rgba(245,241,232,.94);backdrop-filter:blur(12px);z-index:10}
     .wordmark{font-weight:900;letter-spacing:.08em;text-decoration:none}
-    .topbar-actions,.section-nav,.market-switcher{display:flex;align-items:center}
+    .topbar-actions,.section-nav,.market-switcher${hasTaxLocationSwitcher ? ",.header-tax-switcher" : ""}{display:flex;align-items:center}
     .topbar-actions{gap:26px}
     .section-nav{gap:26px;font-size:13px}
     .section-nav a{text-decoration:none}
     .market-switcher{gap:4px;border-left:1px solid var(--line);padding-left:18px}
     .market-switcher>span{font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:4px}
-    .market-option{display:grid;place-items:center;min-width:34px;height:30px;border:1px solid var(--ink);font:800 11px ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:none}
+    .market-option${hasTaxLocationSwitcher ? ",.tax-location-switcher button" : ""}{display:grid;place-items:center;min-width:34px;height:30px;border:1px solid var(--ink);font:800 11px ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:none}
     .market-option:hover,.market-option.active{background:var(--ink);color:var(--paper)}
     .hero{padding:72px 4vw 0;border-bottom:1px solid var(--ink)}
     .eyebrow,.section-index{font:700 12px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
@@ -514,7 +771,7 @@ const html = `<!doctype html>
     .hero-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:8vw;align-items:end;margin-bottom:56px}
     .lede{font-size:clamp(22px,2.4vw,36px);line-height:1.15;letter-spacing:-.035em;margin:0;max-width:820px}
     .hero-note{background:var(--lime);border:1px solid var(--ink);padding:20px;display:grid;gap:8px;box-shadow:7px 7px 0 var(--ink)}
-    .hero-note span,.hero-note small{font-size:12px}.hero-note strong{font-size:22px}
+    .hero-note span,.hero-note small{font-size:12px}.hero-note strong{font-size:22px}${taxLocationCss}
     .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--ink)}
     .hero-stats div{padding:24px 0;border-right:1px solid var(--ink);display:grid;gap:5px}
     .hero-stats div:not(:first-child){padding-left:24px}.hero-stats div:last-child{border-right:0}
@@ -577,8 +834,8 @@ const html = `<!doctype html>
     footer{padding:30px 4vw;display:flex;justify-content:space-between;gap:20px;font-size:12px;color:var(--muted)}
     footer div{display:flex;gap:20px;flex-wrap:wrap}
     @media(max-width:1100px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.sort-control{grid-column:span 2}.reset{width:100%}}
-    @media(max-width:850px){.section-nav{display:none}.topbar-actions{gap:10px}.market-switcher{padding-left:10px}.hero{padding-top:48px}h1{margin-bottom:40px}.hero-grid,.picks-grid,.method-grid{grid-template-columns:1fr}.hero-note{max-width:480px}.hero-stats{grid-template-columns:1fr}.hero-stats div{border-right:0;border-bottom:1px solid var(--ink);padding:18px 0!important}.section-shell{padding:70px 4vw}.section-heading{display:block}.section-heading p{margin-top:20px}.reset{width:100%}.pick-card{min-height:340px}.change-latest,.change-entry-head{align-items:flex-start;flex-direction:column}footer{display:block}footer div{margin-top:15px}}
-    @media(max-width:620px){h1{font-size:54px}.lede{font-size:22px}.filters{grid-template-columns:1fr}.sort-control{grid-column:auto}.dropdown-menu{position:static;min-width:0;margin-top:6px;box-shadow:none}.section-heading h2{font-size:44px}.pick-chip{font-size:58px}}
+    @media(max-width:850px){.section-nav{display:none}.topbar-actions{gap:10px}.market-switcher${hasTaxLocationSwitcher ? ",.header-tax-switcher" : ""}{padding-left:10px}.hero{padding-top:48px}h1{margin-bottom:40px}.hero-grid,.picks-grid,.method-grid{grid-template-columns:1fr}${responsiveHeroAsideCss}.hero-stats{grid-template-columns:1fr}.hero-stats div{border-right:0;border-bottom:1px solid var(--ink);padding:18px 0!important}.section-shell{padding:70px 4vw}.section-heading{display:block}.section-heading p{margin-top:20px}.reset{width:100%}.pick-card{min-height:340px}.change-latest,.change-entry-head{align-items:flex-start;flex-direction:column}footer{display:block}footer div{margin-top:15px}}
+    @media(max-width:620px){${hasTaxLocationSwitcher ? ".topbar{height:auto;min-height:64px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}.topbar-actions{display:contents}.market-switcher{grid-column:2;grid-row:1;height:64px}.header-tax-switcher{grid-column:1/-1;grid-row:2;margin:0 -4vw;padding:8px 4vw;border-left:0;border-top:1px solid var(--line);justify-content:space-between}.header-tax-switcher .tax-location-switcher{margin-left:auto}" : ""}h1{font-size:54px}.lede{font-size:22px}.filters{grid-template-columns:1fr}.sort-control{grid-column:auto}.dropdown-menu{position:static;min-width:0;margin-top:6px;box-shadow:none}.section-heading h2{font-size:44px}.pick-chip{font-size:58px}}
     @media print{.topbar,.filters,.open{display:none}.hero{padding-top:30px}.section-shell{padding:40px 3vw}.table-wrap{overflow:visible}table{min-width:0}th,td{padding:8px;font-size:8px}}
   </style>
 </head>
@@ -587,7 +844,7 @@ const html = `<!doctype html>
     <a class="wordmark" href="#top">MAC / FINDER</a>
     <div class="topbar-actions">
       <nav class="section-nav" aria-label="Разделы"><a href="#shortlist">Короткий список</a><a href="#comparison">Все модели</a><a href="#method">О данных</a><a href="#changelog">Изменения</a></nav>
-      <nav class="market-switcher" aria-label="Выбор рынка"><span>Рынок</span>${marketSwitcherHtml}</nav>
+${taxLocationHeaderHtml ? `      ${taxLocationHeaderHtml}\n` : ""}      <nav class="market-switcher" aria-label="Выбор рынка"><span>Рынок</span>${marketSwitcherHtml}</nav>
     </div>
   </header>
 
@@ -597,19 +854,19 @@ const html = `<!doctype html>
       <h1>MacBook Air<br>или Pro?</h1>
       <div class="hero-grid">
         <p class="lede">В одной таблице — все доступные 13″ и 15″ Air плюс все 14″ и 16″ MacBook Pro. ${escapeHtml(heroMarketCopy)}</p>
-        <div class="hero-note"><span>Основная валюта</span><strong>${escapeHtml(displayCurrency)}</strong><small>${escapeHtml(heroCurrencyCopy)}</small></div>
+        ${heroAsideHtml}
       </div>
       <div class="hero-stats">
         <div><strong>${products.length}</strong><span>актуальные позиции</span></div>
         <div><strong>${airCount} Air · ${proCount} Pro</strong><span>весь каталог ноутбуков</span></div>
-        <div class="price-range"><strong>${mainPrice(minimumPrice)} – ${mainPrice(maximumPrice)}</strong><span>${hasVerifiedTaxEstimate ? "диапазон total · расчёт" : hasReferenceLocationTax ? "диапазон до налога" : "диапазон цен"}</span></div>
+        <div class="price-range"><strong${hasTaxLocationSwitcher ? ' id="price-range-value"' : ""}>${mainPrice(minimumPrice)} – ${mainPrice(maximumPrice)}</strong><span>${hasVerifiedTaxEstimate ? "диапазон total · расчёт" : hasReferenceLocationTax ? "диапазон до налога" : "диапазон цен"}</span></div>
       </div>
     </section>
 
     <section class="section-shell" id="shortlist">
       <div class="section-heading"><div><span class="section-index">01</span><h2>Если выбирать быстро</h2></div><p>Три лидера текущего каталога по единой политике оценки.</p></div>
       <div class="picks-grid">${shortlistHtml}</div>
-      <div class="decision-note"><span class="decision-mark">!</span><p><strong>Главный ориентир:</strong> ${escapeHtml(leadingPick.headline)} занимает первое место с оценкой ${escapeHtml(formatScore(leadingPick.score))}. ${escapeHtml(priceComparison)}</p></div>
+      <div class="decision-note"><span class="decision-mark">!</span><p><strong>Главный ориентир:</strong> ${escapeHtml(leadingPick.headline)} занимает первое место с оценкой ${escapeHtml(formatScore(leadingPick.score))}. ${hasTaxLocationSwitcher ? `<span id="decision-price-comparison">${escapeHtml(priceComparison)}</span>` : escapeHtml(priceComparison)}</p></div>
     </section>
 
     <section class="section-shell" id="comparison">
@@ -625,8 +882,8 @@ const html = `<!doctype html>
       </div>
       <div class="result-count" id="count"></div>
       <div class="table-wrap">
-        <table>
-          <thead><tr><th>Модель</th><th>Экран</th><th>Чип</th><th>RAM</th><th>SSD</th><th>CPU / GPU</th><th>Цвет</th><th>${escapeHtml(refurbishedHeader)}</th><th>${escapeHtml(newHeader)}</th><th>Скидка</th><th>Apple</th></tr></thead>
+        <table${hasTaxLocationSwitcher ? ' class="stable-tax-columns"' : ""}>
+          <thead><tr><th>Модель</th><th>Экран</th><th>Чип</th><th>RAM</th><th>SSD</th><th>CPU / GPU</th><th>Цвет</th><th${hasTaxLocationSwitcher ? ' id="refurbished-price-header"' : ""}>${escapeHtml(refurbishedHeader)}</th><th${hasTaxLocationSwitcher ? ' id="new-price-header"' : ""}>${escapeHtml(newHeader)}</th><th>Скидка</th>${separateAppleHeaderHtml}</tr></thead>
           <tbody id="rows"></tbody>
         </table>
         <div class="empty" id="empty" hidden>Такой комбинации сейчас нет. <button id="empty-reset" type="button">Сбросить фильтры</button></div>
@@ -661,7 +918,7 @@ const html = `<!doctype html>
     const newPriceField=${JSON.stringify(newPriceField)};
     const taxInclusivePriceField=${JSON.stringify(taxInclusivePriceField)};
     const newTaxInclusivePriceField=${JSON.stringify(newTaxInclusivePriceField)};
-    const featured=${embeddedFeatured};
+${clientTaxLocationDataSource}    const featured=${embeddedFeatured};
     const recommendedCodes=${JSON.stringify(recommendedCodes)};
     const escapeHtml=${embeddedEscapeHtml};
     const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
@@ -669,10 +926,10 @@ const html = `<!doctype html>
     const primaryCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:${profile.currency.displayFractionDigits},maximumFractionDigits:${profile.currency.displayFractionDigits}});
     const taxCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:${profile.currency.displayFractionDigits},maximumFractionDigits:${profile.currency.displayFractionDigits}});
     ${clientPriceFormatterSource}
-    ${clientTaxFormatterSource}
+    ${clientTaxFormatterSource}${clientTaxLocationUiSource ? `\n    ${clientTaxLocationUiSource}` : ""}
     const readCatalogViewState=${readCatalogViewState.toString()};
     const writeCatalogViewSearch=${writeCatalogViewSearch.toString()};
-    const filterNames=["family","screen","chip","memory","storage"];
+${clientOwnedChoiceSource}    const filterNames=["family","screen","chip","memory","storage"];
     const sorting=document.querySelector("#sorting");
     const viewStateOptions={
       filterNames,
@@ -713,7 +970,7 @@ const html = `<!doctype html>
       sorting.value=state.sorting;
     };
     const synchronizeCatalogViewUrl=()=>{
-      const search=writeCatalogViewSearch(location.search,currentViewState(),viewStateOptions);
+      ${clientViewSearchSource}
       history.replaceState(history.state,"",location.pathname+search+location.hash);
     };
     const reset=()=>{
@@ -747,7 +1004,7 @@ const html = `<!doctype html>
         const colourClass=classes[p.colour]||"";
         const colourName=names[p.colour]||p.colour;
         return \`<tr class="\${rowClass}">
-          <td><div class="model"><span class="model-mark">\${p.family==="Air"?"A":"P"}</span><div><strong>MacBook \${escapeHtml(p.family)}</strong><small>\${escapeHtml(p.releaseYear)} · \${escapeHtml(p.productCode)}\${p.display==="Nano-texture"?" · Nano-texture":""}</small></div></div></td>
+          <td><div class="model"><span class="model-mark">\${p.family==="Air"?"A":"P"}</span><div>${clientModelMetadataSource}</div></div></td>
           <td><strong>\${escapeHtml(p.screen)}</strong></td>
           <td><span class="chip-name \${chipClass}">\${escapeHtml(p.chip)}</span></td>
           <td><strong>\${escapeHtml(p.memory)}</strong></td>
@@ -756,8 +1013,7 @@ const html = `<!doctype html>
           <td><span class="dot \${colourClass}"></span>\${escapeHtml(colourName)}</td>
           <td>\${refurbishedPrice(p)}</td>
           <td>\${exactNewPrice(p)}</td>
-          <td>\${discount}</td>
-          <td><a class="open" href="\${escapeHtml(p.sourceUrl)}" target="_blank" rel="noreferrer" aria-label="Открыть \${escapeHtml(p.productCode)} у Apple">↗</a></td>
+          <td>\${discount}</td>${separateAppleCellSource}
         </tr>\`;
       }).join("");
     };
@@ -768,7 +1024,7 @@ const html = `<!doctype html>
     document.addEventListener("click",event=>document.querySelectorAll(".filter-dropdown[open]").forEach(dropdown=>{if(!dropdown.contains(event.target))dropdown.removeAttribute("open")}));
     sorting.addEventListener("change",()=>{render();synchronizeCatalogViewUrl()});
     document.querySelector("#reset").addEventListener("click",reset);
-    document.querySelector("#empty-reset").addEventListener("click",reset);
+    document.querySelector("#empty-reset").addEventListener("click",reset);${clientTaxLocationEventsSource ? `\n    ${clientTaxLocationEventsSource}` : ""}
     restoreCatalogViewState();
     updateFilterLabels();
     render();

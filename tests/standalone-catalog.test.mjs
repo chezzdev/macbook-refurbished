@@ -203,8 +203,58 @@ test("renders explicit fixed-location tax estimates for the US market", () => {
     ),
   );
   assert.match(html, /Расчётный total/);
-  assert.match(html, /priceFormula\(p\.taxInclusivePricing\)/);
-  assert.match(html, /priceFormula\(p\.newTaxInclusivePricing\)/);
+  assert.match(html, /taxPricingFor\(p,refurbishedPriceField\)/);
+  assert.match(html, /taxPricingFor\(p,newPriceField\)/);
+  assert.match(
+    html,
+    /<header class="topbar">[\s\S]*class="header-tax-switcher"[\s\S]*data-tax-location=/,
+  );
+  assert.match(html, /<table class="stable-tax-columns">/);
+  assert.match(
+    html,
+    /\.stable-tax-columns th:nth-child\(8\)[\s\S]*min-width:185px/,
+  );
+  const tableMinimumWidth = Number(
+    html.match(/\.stable-tax-columns\{min-width:(\d+)px;table-layout:fixed}/)?.[1],
+  );
+  assert.ok(
+    tableMinimumWidth <= 1255,
+    `US comparison table ${tableMinimumWidth}px exceeds its 1366px viewport budget`,
+  );
+  assert.match(html, /\.tax-location-card\{min-height:165px/);
+  assert.match(
+    html,
+    /\.market-option,\.tax-location-switcher button\{[^}]*min-width:34px;height:30px[^}]*font:800 11px/,
+  );
+  assert.match(
+    html,
+    /\.tax-location-switcher button\{width:34px;padding:0;border-right:0/,
+  );
+  assert.match(
+    html,
+    /const refurbishedPrice=p=>\{[\s\S]*href="'\+escapeHtml\(p\.sourceUrl\)\+'"/,
+  );
+  assert.doesNotMatch(html, /<th>Apple<\/th>/);
+  assert.match(
+    html,
+    /p\.display==="Nano-texture"\?'<small class="model-display">Nano-texture<\/small>'/,
+  );
+  assert.match(html, /const writeOwnedChoiceSearch=function writeOwnedChoiceSearch/);
+  assert.match(html, /search=writeOwnedChoiceSearch\(search,\{/);
+  assert.doesNotMatch(
+    html,
+    /activeTaxLocation\.kind==="delivery-zip"\?[\s\S]*South Dakota/,
+  );
+  assert.doesNotMatch(
+    html,
+    /class="tax-location-card"[\s\S]*class="tax-location-switcher"/,
+  );
+  assert.equal((html.match(/data-tax-location="/g) ?? []).length, 3);
+  assert.match(html, /data-tax-location="apple-beverly-center"/);
+  assert.match(html, /data-tax-location="apple-cherry-creek"/);
+  assert.match(html, /data-tax-location="sioux-falls-delivery-57105"/);
+  assert.match(html, /new URLSearchParams\(window\.location\.search\)/);
+  assert.match(html, /history\.replaceState/);
   assert.match(html, /Refurb total · расчёт/);
   assert.match(html, /Новый total · расчёт/);
   assert.doesNotMatch(html, /Итого Apple/);
@@ -217,6 +267,11 @@ test("keeps Singapore on its existing list-price display contract", () => {
   assert.equal(profile.currency.priceFields.newTaxInclusive, null);
   assert.doesNotMatch(html, /Refurb total · расчёт|Новый total · расчёт/);
   assert.doesNotMatch(html, /priceFormula\(p\.(?:tax|newTax)InclusivePricing\)/);
+  assert.doesNotMatch(html, /data-tax-location="/);
+  assert.doesNotMatch(html, /header-tax-switcher/);
+  assert.doesNotMatch(html, /stable-tax-columns/);
+  assert.match(html, /<th>Apple<\/th>/);
+  assert.match(html, /class="open" href="/);
   assert.match(shortlist, /refurb · налог включён/);
   assert.doesNotMatch(shortlist, /refurb до налога/);
 });

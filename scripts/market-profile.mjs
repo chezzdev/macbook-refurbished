@@ -1,12 +1,22 @@
 import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
-import { parseArgs } from "node:util";
+import { isDeepStrictEqual, parseArgs } from "node:util";
 
-import { calculateFixedLocationTaxAmounts } from "./fixed-location-tax.mjs";
+import {
+  calculateFixedLocationTaxAmounts,
+  calculateTaxLocationAmounts,
+} from "./fixed-location-tax.mjs";
 
 export const DEFAULT_MARKET_ID = "sg";
 export const projectRoot = resolve(import.meta.dirname, "..");
+export const UNIFIED_PUBLICATION_REPOSITORY =
+  "git@github.com:chezzdev/macbook-refurbished-sg.git";
+export const UNIFIED_PAGES_PROJECT_SLUG = "macbook-refurbished-sg";
+export const UNIFIED_PAGES_BASE_URL =
+  "https://chezzdev.github.io/macbook-refurbished-sg/";
 export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
+  ".nojekyll",
+  "index.html",
   "README.md",
   "package.json",
   "package-lock.json",
@@ -70,6 +80,247 @@ function requireHttpsUrl(value, label) {
   }
 }
 
+function validateTaxLocationSwitcher(profile) {
+  const switcher = profile.tax.locationSwitcher;
+  if (switcher === undefined) return;
+  if (profile.tax.model !== "verified-fixed-location-estimate") {
+    throw new Error(
+      "tax.locationSwitcher requires verified-fixed-location-estimate",
+    );
+  }
+  requireString(
+    switcher.defaultLocationId,
+    "tax.locationSwitcher.defaultLocationId",
+  );
+  if (!Array.isArray(switcher.locations) || switcher.locations.length < 2) {
+    throw new Error(
+      "tax.locationSwitcher.locations must contain at least two locations",
+    );
+  }
+
+  const locationIds = new Set();
+  const shortLabels = new Set();
+  for (const [index, option] of switcher.locations.entries()) {
+    const label = `tax.locationSwitcher.locations[${index}]`;
+    for (const field of ["id", "label", "shortLabel", "kind"]) {
+      requireString(option?.[field], `${label}.${field}`);
+    }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(option.id)) {
+      throw new Error(`${label}.id must be lowercase kebab-case`);
+    }
+    if (locationIds.has(option.id)) {
+      throw new Error(`duplicate tax location id: ${option.id}`);
+    }
+    locationIds.add(option.id);
+    if (!/^[A-Z]{2}$/.test(option.shortLabel)) {
+      throw new Error(`${label}.shortLabel must be a two-letter state code`);
+    }
+    if (shortLabels.has(option.shortLabel)) {
+      throw new Error(`duplicate tax location state code: ${option.shortLabel}`);
+    }
+    shortLabels.add(option.shortLabel);
+    if (!["apple-store", "delivery-zip"].includes(option.kind)) {
+      throw new Error(`${label}.kind is unsupported`);
+    }
+    if (option.methodNote !== undefined) {
+      requireString(option.methodNote, `${label}.methodNote`);
+    }
+
+    const location = option.referenceLocation;
+    for (const field of [
+      "name",
+      "city",
+      "region",
+      "postalCode",
+      "country",
+    ]) {
+      requireString(location?.[field], `${label}.referenceLocation.${field}`);
+    }
+    if (option.kind === "apple-store") {
+      requireString(location?.street, `${label}.referenceLocation.street`);
+    } else if (
+      location?.street !== undefined &&
+      location.street !== null
+    ) {
+      requireString(location.street, `${label}.referenceLocation.street`);
+    }
+    requireAppleUrl(
+      location?.sourceUrl,
+      `${label}.referenceLocation.sourceUrl`,
+    );
+    if (location.country !== profile.storefront.countryCode) {
+      throw new Error(
+        `${label} reference country must match the market storefront country`,
+      );
+    }
+
+    const estimate = option.estimate;
+    if (
+      estimate?.currency !== profile.currency.source ||
+      estimate.rounding !== "nearest-minor-unit" ||
+      !Number.isFinite(estimate.salesTaxRate) ||
+      estimate.salesTaxRate <= 0 ||
+      estimate.salesTaxRate >= 1 ||
+      !Number.isSafeInteger(estimate.minorUnitDigits) ||
+      estimate.minorUnitDigits < 0 ||
+      estimate.minorUnitDigits > 4
+    ) {
+      throw new Error(
+        `${label}.estimate must declare a source-currency tax calculation policy`,
+      );
+    }
+    if (!Array.isArray(estimate.additionalFees)) {
+      throw new Error(`${label}.estimate.additionalFees must be an array`);
+    }
+    const feeIds = new Set();
+    for (const [feeIndex, fee] of estimate.additionalFees.entries()) {
+      const feeLabel = `${label}.estimate.additionalFees[${feeIndex}]`;
+      requireString(fee?.id, `${feeLabel}.id`);
+      requireString(fee?.label, `${feeLabel}.label`);
+      if (feeIds.has(fee.id)) {
+        throw new Error(`${label} has duplicate additional fee id: ${fee.id}`);
+      }
+      feeIds.add(fee.id);
+      if (fee.type === "fixed") {
+        if (!Number.isFinite(fee.amount) || fee.amount < 0) {
+          throw new Error(`${feeLabel}.amount must be non-negative`);
+        }
+      } else if (fee.type === "screen-size") {
+        const amounts = Object.entries(fee.amountByScreenInches ?? {});
+        if (
+          amounts.length === 0 ||
+          amounts.some(
+            ([screen, amount]) =>
+              !/^\d+$/.test(screen) ||
+              !Number.isFinite(amount) ||
+              amount < 0,
+          )
+        ) {
+          throw new Error(
+            `${feeLabel}.amountByScreenInches must contain non-negative fees`,
+          );
+        }
+      } else {
+        throw new Error(`${feeLabel}.type is unsupported`);
+      }
+    }
+
+    const verification = option.verification;
+    requireString(verification?.verifiedAt, `${label}.verification.verifiedAt`);
+    requireString(
+      verification?.productCode,
+      `${label}.verification.productCode`,
+    );
+    requireAppleUrl(
+      verification?.productUrl,
+      `${label}.verification.productUrl`,
+    );
+    if (
+      verification?.currency !== estimate.currency ||
+      !Number.isSafeInteger(verification.screenInches) ||
+      verification.screenInches <= 0
+    ) {
+      throw new Error(
+        `${label}.verification must match the estimate currency and declare its screen size`,
+      );
+    }
+    for (const field of [
+      "preTaxAmount",
+      "salesTaxAmount",
+      "estimatedTotalAmount",
+    ]) {
+      if (!Number.isFinite(verification[field]) || verification[field] < 0) {
+        throw new Error(`${label}.verification.${field} must be non-negative`);
+      }
+    }
+    if (!Array.isArray(verification.feeAmounts)) {
+      throw new Error(`${label}.verification.feeAmounts must be an array`);
+    }
+    const expected = calculateTaxLocationAmounts({
+      preTaxAmount: verification.preTaxAmount,
+      screenInches: verification.screenInches,
+      estimate,
+    });
+    const expectedFeeAmounts = expected.feeAmounts.map(({ id, amount }) => ({
+      id,
+      amount,
+    }));
+    if (
+      verification.salesTaxAmount !== expected.salesTaxAmount ||
+      verification.estimatedTotalAmount !== expected.estimatedTotalAmount ||
+      !isDeepStrictEqual(verification.feeAmounts, expectedFeeAmounts)
+    ) {
+      throw new Error(
+        `${label} policy does not reproduce its Apple checkout verification`,
+      );
+    }
+  }
+
+  const defaultLocation = switcher.locations.find(
+    (option) => option.id === switcher.defaultLocationId,
+  );
+  if (!defaultLocation) {
+    throw new Error(
+      "tax.locationSwitcher.defaultLocationId must identify one location",
+    );
+  }
+  const profileLocation = profile.tax.referenceLocation;
+  const defaultFees = defaultLocation.estimate.additionalFees;
+  const defaultVerification = defaultLocation.verification;
+  const profileVerification = profile.tax.acquisition.verification;
+  if (
+    defaultLocation.id !== profileLocation.id ||
+    !isDeepStrictEqual(
+      {
+        name: defaultLocation.referenceLocation.name,
+        street: defaultLocation.referenceLocation.street,
+        city: defaultLocation.referenceLocation.city,
+        region: defaultLocation.referenceLocation.region,
+        postalCode: defaultLocation.referenceLocation.postalCode,
+        country: defaultLocation.referenceLocation.country,
+      },
+      {
+        name: profileLocation.name,
+        street: profileLocation.street,
+        city: profileLocation.city,
+        region: profileLocation.region,
+        postalCode: profileLocation.postalCode,
+        country: profileLocation.country,
+      },
+    ) ||
+    defaultLocation.estimate.currency !== profile.tax.estimate.currency ||
+    defaultLocation.estimate.salesTaxRate !==
+      profile.tax.estimate.salesTaxRate ||
+    defaultLocation.estimate.rounding !== profile.tax.estimate.rounding ||
+    defaultLocation.estimate.minorUnitDigits !==
+      profile.tax.estimate.minorUnitDigits ||
+    defaultFees.length !== 1 ||
+    defaultFees[0].type !== "screen-size" ||
+    !isDeepStrictEqual(
+      defaultFees[0].amountByScreenInches,
+      profile.tax.estimate.recyclingFeeByScreenInches,
+    ) ||
+    !isDeepStrictEqual(
+      {
+        productCode: defaultVerification.productCode,
+        productUrl: defaultVerification.productUrl,
+        currency: defaultVerification.currency,
+        screenInches: defaultVerification.screenInches,
+        preTaxAmount: defaultVerification.preTaxAmount,
+        salesTaxAmount: defaultVerification.salesTaxAmount,
+        recyclingFeeAmount:
+          defaultVerification.feeAmounts[0]?.amount ?? null,
+        estimatedTotalAmount: defaultVerification.estimatedTotalAmount,
+      },
+      profileVerification,
+    )
+  ) {
+    throw new Error(
+      "tax.locationSwitcher default must match the catalog reference location",
+    );
+  }
+}
+
 function validateNamespacePath(value, label) {
   requireString(value, label);
   if (isAbsolute(value)) {
@@ -123,22 +374,27 @@ function assertCanonicalProfileLayout(profile) {
     );
   }
   if (
-    profile.publication?.repository !==
-      "git@github.com:chezzdev/macbook-refurbished-sg.git" ||
+    profile.publication?.repository !== UNIFIED_PUBLICATION_REPOSITORY ||
     profile.publication?.checkoutPath !== "work/gh-pages-site" ||
     profile.publication?.branch !== "main" ||
-    profile.publication?.provider !== "cloudflare-pages"
+    profile.publication?.provider !== "github-pages"
   ) {
     throw new Error(
-      `${profile.id}.publication must use the unified Cloudflare publication repository`,
+      `${profile.id}.publication must use the unified GitHub Pages repository`,
     );
   }
   if (
-    profile.publication?.projectSlug !==
-      `macbook-${profile.id}-refurbished`
+    profile.publication?.projectSlug !== UNIFIED_PAGES_PROJECT_SLUG
   ) {
     throw new Error(
-      `${profile.id}.publication.projectSlug must be macbook-${profile.id}-refurbished`,
+      `${profile.id}.publication.projectSlug must be ${UNIFIED_PAGES_PROJECT_SLUG}`,
+    );
+  }
+  const expectedCanonicalUrl =
+    `${UNIFIED_PAGES_BASE_URL}markets/${profile.id}/`;
+  if (profile.publication?.canonicalUrl !== expectedCanonicalUrl) {
+    throw new Error(
+      `${profile.id}.publication.canonicalUrl must be ${expectedCanonicalUrl}`,
     );
   }
 }
@@ -389,6 +645,7 @@ export function validateMarketProfile(profile) {
         );
       }
     }
+    validateTaxLocationSwitcher(profile);
   } else if (profile.tax?.model !== "included-in-list-price") {
     throw new Error(`unsupported tax model: ${profile.tax?.model}`);
   } else if (
@@ -649,13 +906,11 @@ export async function loadEnabledMarketProfiles() {
   const profiles = await Promise.all(
     registry.enabledMarkets.map((marketId) => loadMarketProfile(marketId)),
   );
-  const uniqueProjectSlugs = new Set();
   const uniqueCanonicalUrls = new Set();
   const uniqueArtifactDirectories = new Set();
   assertUniqueProfileOwnedPaths(profiles);
   for (const profile of profiles) {
     const publicationKeys = [
-      ["projectSlug", profile.publication.projectSlug, uniqueProjectSlugs],
       ["canonicalUrl", profile.publication.canonicalUrl, uniqueCanonicalUrls],
       [
         "artifactDirectory",

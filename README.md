@@ -1,17 +1,18 @@
 # MacBook Refurbished Markets
 
-Общий детерминированный движок независимых каталогов восстановленных MacBook
-из региональных Apple Store.
+Общий детерминированный сайт каталогов восстановленных MacBook из региональных
+Apple Store. Рынок является частью URL одного GitHub Pages site:
 
-- **MacBook SG Refurbished** — действующий сайт:
-  <https://macbook-sg-refurbished.pages.dev/>
-- **MacBook US Refurbished** — отдельный сайт на том же Cloudflare Pages:
-  <https://macbook-us-refurbished.pages.dev/>.
+- **MacBook SG Refurbished**:
+  <https://chezzdev.github.io/macbook-refurbished-sg/markets/sg/>
+- **MacBook US Refurbished**:
+  <https://chezzdev.github.io/macbook-refurbished-sg/markets/us/>.
 
 В интерфейсе есть переключатель рынков, построенный из
-`config/markets/registry.json`. Он ведёт на канонический URL отдельного сайта и
-не подмешивает данные другого рынка в текущую страницу. Новый enabled-профиль
-появляется в переключателе без отдельного UI-кода.
+`config/markets/registry.json`. Он меняет market path внутри общего сайта и не
+подмешивает данные другого рынка в текущую страницу. Новый enabled-профиль
+появляется в переключателе без отдельного UI-кода. Корень сайта перенаправляет
+на Singapore как default market.
 
 Выбранные фильтры и сортировка записываются в query parameters текущего URL.
 Скопированная ссылка открывает тот же рынок с тем же состоянием таблицы;
@@ -27,8 +28,8 @@ URL не добавляются.
 - моделью налога и фиксированной reference location;
 - ссылкой на собственную ranking policy и идеальную конфигурацию;
 - путями данных и выходного HTML;
-- именем сайта, page title, hosting slug, общим publication repository,
-  каноническим и production URL.
+- именем сайта, page title, общим GitHub Pages project и market-specific
+  каноническим URL.
 
 Singapore и US проходят через одни и те же parser, exact-new matcher, tax
 adapter, validator, ranker, changelog, builder и publication workflow.
@@ -57,8 +58,8 @@ pipeline fail-closed.
 SGD конвертируется в основную валюту USD по существующему официальному
 кросс-курсу. Для US исходная и основная валюты — USD, поэтому курс равен 1.
 
-US catalog market-wide и не фильтруется по delivery или pickup. Налоговый
-ориентир:
+US catalog market-wide и не фильтруется по delivery или pickup. California
+остаётся default tax location для pipeline:
 
 > Apple Beverly Center, 8500 Beverly Boulevard, Los Angeles, CA 90048
 
@@ -67,6 +68,24 @@ US catalog market-wide и не фильтруется по delivery или picku
 fee — $4 для экранов меньше 15″ и $5 для экранов от 15″. Контрольная модель
 `FDH94LL/A` дала в корзине Apple ровно тот же результат:
 $1,529.00 + $160.55 + $4.00 = $1,693.55.
+
+На US-сайте tax location переключается в runtime, без перехода на другую
+страницу. Профиль содержит три checkout-проверки для одного и того же
+`FDH94LL/A`:
+
+- California, Apple Beverly Center / ZIP 90048:
+  `$1,529.00 + $160.55 tax + $4.00 CA recycling fee = $1,693.55`;
+- Colorado, Apple Cherry Creek / ZIP 80206:
+  `$1,529.00 + $139.90 tax + $0.31 State Delivery Fee = $1,669.21`;
+- South Dakota, delivery ZIP 57105:
+  `$1,529.00 + $94.80 tax = $1,623.80`.
+
+У Apple нет retail store в South Dakota, поэтому этот вариант явно обозначен
+как delivery ZIP. Выбор `CA / CO / SD` меняет total, компактную формулу,
+featured-карточки, диапазон цен, таблицу, скидки и price sorting на месте.
+Состояние отражается в query-параметре `state`, но HTML и catalog остаются
+одними и теми же.
+
 Валюта, точность minor unit и сборы принадлежат tax policy и обязаны совпадать
 с исходной валютой профиля; контрольный checkout указывает размер экрана, а
 валидатор сверяет его сбор с той же таблицей, которую использует runtime.
@@ -77,9 +96,9 @@ $1,529.00 + $160.55 + $4.00 = $1,693.55.
 Pre-tax, налог, сбор и расчётный итог хранятся отдельно вместе с provenance —
 как для refurbished, так и для точной цены нового устройства. На US-сайте
 главным числом показан расчётный total, а под ним только формула
-`цена + налог + сбор`. Для новой модели total появляется только там, где
+`цена + налог + применимые сборы`. Для новой модели total появляется только там, где
 pipeline нашёл точное совпадение конфигурации. Итог остаётся оценкой для Apple
-Beverly Center, а не окончательным счётом Apple.
+checkout в выбранной локации, а не окончательным счётом Apple.
 Если будущий профиль одновременно использует fixed-location tax и конвертацию,
 страница показывает метод и дату курса, а в таблице сохраняет исходную
 налоговую формулу рядом с пересчитанным total.
@@ -118,7 +137,8 @@ node scripts/initialize-market.mjs --market sg --check
 
 Общий workflow выполняет fetch, exact matching, currency/tax adapters,
 validation, ranking, changelog, двойную детерминированную сборку, тесты,
-private-repository sync, Cloudflare Pages deployment и live hash verification.
+синхронизацию публичного репозитория, GitHub Pages deployment и live hash
+verification.
 Новые данные сначала собираются в отдельном staging namespace; canonical JSON
 и HTML продвигаются только после успешных проверок и live verification.
 Прямые per-market запуски и общий ежедневный запуск используют один
@@ -131,21 +151,18 @@ Git HEAD, затем выполняет fetch/tests/build и source sync из в
 pipeline-generated JSON/HTML не блокируют preflight.
 Для провайдера без автоматического deploy `--prepare-only` оставляет canonical
 state неизменным и возвращает путь к проверенному временному артефакту и его
-SHA-256. Cloudflare CLI зафиксирован в `package-lock.json` и запускается только
-из локального `node_modules`.
-Оба рынка используют существующий checkout `work/gh-pages-site` и один remote;
-публикуемые файлы изолированы как `markets/sg/index.html` и
-`markets/us/index.html`. Каждый профиль выбирает собственный артефакт и
-отдельный Cloudflare Pages project, поэтому постоянный SG URL не зависит от
-расположения файла в repository. Полный US workflow использует тот же общий
-путь без отдельного hosting-кода:
+SHA-256. Оба рынка используют checkout `work/gh-pages-site`, один public remote
+и одну ветку GitHub Pages; публикуемые файлы изолированы как
+`markets/sg/index.html` и `markets/us/index.html`. В отдельном outer worktree
+checkout можно передать через абсолютный `MACBOOK_PUBLISH_DIR`. Полный US
+workflow использует тот же общий путь без отдельного hosting-кода:
 
 ```zsh
 ./work/update-market-site.zsh --market us
 ```
 
-Workflow выбирает артефакт и Cloudflare Pages project только из выбранного
-market profile, поэтому данные и deployment targets SG и US не смешиваются.
+Workflow выбирает артефакт и market URL только из выбранного профиля, поэтому
+данные SG и US не смешиваются, хотя публикуются на одном сайте.
 Cross-rate adapter также берёт source/display валюты и имя поля результата из
 профиля; `identity` разрешён только при одинаковых source/display валютах, а
 cross-rate — только при разных. Новый рынок не требует валютного кода в общем
@@ -186,10 +203,9 @@ Production UI существует в одном варианте:
 1. Создать `config/markets/<id>.json` и
    `config/ranking-policy.<id>.json`.
 2. Задать storefront, currency/tax policy, ranking reference, симметричные
-   `data/markets/<id>` и `outputs/markets/<id>` paths, а также отдельный
-   publication target.
-3. До явного одобрения внешнего hosting project оставить публикацию
-   approval-gated; не переиспользовать SG или US project.
+   `data/markets/<id>` и `outputs/markets/<id>` paths, а также
+   `markets/<id>/` внутри общего GitHub Pages site.
+3. До явного одобрения нового market URL оставить публикацию approval-gated.
 4. Добавить market id в `config/markets/registry.json`. После этого общий
    switcher, build и daily batch подхватят рынок без bespoke-кода.
 5. Покрыть специфичную currency/tax policy synthetic profile-тестом и

@@ -61,3 +61,22 @@ export function writeCatalogViewSearch(
   const serialized = parameters.toString();
   return serialized ? `?${serialized}` : "";
 }
+
+export function writeOwnedChoiceSearch(
+  search,
+  {
+    parameter,
+    value,
+    allowedValues,
+    defaultValue,
+  },
+) {
+  const parameters = new URLSearchParams(search);
+  parameters.delete(parameter);
+  if (value !== defaultValue && allowedValues.includes(value)) {
+    parameters.set(parameter, value);
+  }
+
+  const serialized = parameters.toString();
+  return serialized ? `?${serialized}` : "";
+}
