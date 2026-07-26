@@ -110,6 +110,9 @@ private-repository sync, Cloudflare Pages deployment и live hash verification.
 и HTML продвигаются только после успешных проверок и live verification.
 Прямые per-market запуски и общий ежедневный запуск используют один
 publication lock, потому что все рынки синхронизируются через общий checkout.
+Перед live publication workflow требует, чтобы все общие scripts, tests,
+package/config files, market profiles и ranking policies совпадали с outer
+Git HEAD. Незакоммиченные pipeline-generated JSON/HTML не блокируют preflight.
 Для провайдера без автоматического deploy `--prepare-only` оставляет canonical
 state неизменным и возвращает путь к проверенному временному артефакту и его
 SHA-256. Cloudflare CLI зафиксирован в `package-lock.json` и запускается только
@@ -130,6 +133,8 @@ Workflow выбирает артефакт и Cloudflare Pages project толь�
 market profile, поэтому данные и deployment targets SG и US не смешиваются.
 Cross-rate adapter также берёт source/display валюты и имя поля результата из
 профиля; новый рынок не требует валютного кода в общем скрипте.
+Registry fail-closed отклоняет совпадающие data/output namespace paths и
+ranking-policy paths между рынками или внутри одного профиля.
 
 ## Ежедневное обновление всех рынков
 

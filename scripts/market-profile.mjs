@@ -409,6 +409,31 @@ export async function loadMarketRegistry() {
   return registryCache;
 }
 
+export function assertUniqueProfileOwnedPaths(profiles) {
+  const pathOwners = new Map();
+  for (const profile of profiles) {
+    const ownedPaths = [
+      ["ranking.policyPath", profile.ranking.policyPath],
+      ...Object.entries(profile.namespace).map(([key, value]) => [
+        `namespace.${key}`,
+        value,
+      ]),
+    ];
+    for (const [label, value] of ownedPaths) {
+      validateNamespacePath(value, `${profile.id}.${label}`);
+      const owner = `${profile.id}.${label}`;
+      const previousOwner = pathOwners.get(value);
+      if (previousOwner) {
+        throw new Error(
+          `profile-owned path collision: ${value} is used by ` +
+            `${previousOwner} and ${owner}`,
+        );
+      }
+      pathOwners.set(value, owner);
+    }
+  }
+}
+
 export async function loadEnabledMarketProfiles() {
   const registry = await loadMarketRegistry();
   const profiles = await Promise.all(
@@ -417,6 +442,7 @@ export async function loadEnabledMarketProfiles() {
   const uniqueProjectSlugs = new Set();
   const uniqueCanonicalUrls = new Set();
   const uniqueArtifactDirectories = new Set();
+  assertUniqueProfileOwnedPaths(profiles);
   for (const profile of profiles) {
     const publicationKeys = [
       ["projectSlug", profile.publication.projectSlug, uniqueProjectSlugs],

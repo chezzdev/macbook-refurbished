@@ -68,6 +68,7 @@ allowed_https_remote_short="${allowed_https_remote%.git}"
 allowed_ssh_url_remote="${repository_url/git@github.com:/ssh://git@github.com/}"
 
 source_owned_paths=("${(@f)$(node "${workspace_dir}/scripts/publication-manifest.mjs" --source)}")
+immutable_source_paths=("${(@f)$(node "${workspace_dir}/scripts/publication-manifest.mjs" --immutable-source)}")
 publish_owned_paths=("${(@f)$(node "${workspace_dir}/scripts/publication-manifest.mjs" --publish)}")
 
 if [[ -d "${workspace_dir}/.git" && \
@@ -155,6 +156,22 @@ fi
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
+
+if [[ "$prepare_only" != "true" ]]; then
+  if ! git -C "$workspace_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    print -u2 "Live publication requires a reviewed outer Git worktree."
+    exit 1
+  fi
+  outer_source_changes="$(
+    git -C "$workspace_dir" status --porcelain --untracked-files=all -- \
+      "${immutable_source_paths[@]}"
+  )"
+  if [[ -n "$outer_source_changes" ]]; then
+    print -u2 "Live publication refuses uncommitted source/config changes:"
+    print -u2 "$outer_source_changes"
+    exit 1
+  fi
+fi
 
 if [[ "$prepare_only" != "true" ]]; then
   if [[ ! -d "${publish_dir}/.git" ]]; then

@@ -21,6 +21,7 @@ import {
 } from "../scripts/apple-catalog-lib.mjs";
 import { buildInitialSiteDocument } from "../scripts/initialize-market.mjs";
 import {
+  assertUniqueProfileOwnedPaths,
   loadEnabledMarketProfiles,
   loadMarketContext,
   loadMarketProfile,
@@ -304,6 +305,11 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
     /node_modules\/\.bin\/wrangler/,
   );
   assert.doesNotMatch(perMarketWorkflow, /npx --yes/);
+  assert.match(perMarketWorkflow, /--immutable-source/);
+  assert.match(
+    perMarketWorkflow,
+    /Live publication refuses uncommitted source\/config changes/,
+  );
 });
 
 test("publication manifest derives every market path from enabled profiles", () => {
@@ -335,6 +341,44 @@ test("publication manifest derives every market path from enabled profiles", () 
       `missing ${expectedPath}`,
     );
   }
+  assert.ok(
+    manifest.immutableSourcePaths.includes("config/markets/ca.json"),
+  );
+  assert.ok(
+    manifest.immutableSourcePaths.includes("config/ranking-policy.ca.json"),
+  );
+  assert.ok(
+    !manifest.immutableSourcePaths.includes("data/markets/ca/catalog.json"),
+  );
+});
+
+test("enabled market profiles cannot share state or policy paths", () => {
+  const collidingMarket = structuredClone(us);
+  collidingMarket.id = "ca";
+  collidingMarket.ranking.policyPath = "config/ranking-policy.ca.json";
+  assert.throws(
+    () => assertUniqueProfileOwnedPaths([sg, us, collidingMarket]),
+    /profile-owned path collision: data\/markets\/us\/catalog\.json/,
+  );
+
+  const internallyCollidingMarket = structuredClone(us);
+  internallyCollidingMarket.id = "ca";
+  internallyCollidingMarket.ranking.policyPath =
+    "config/ranking-policy.ca.json";
+  internallyCollidingMarket.namespace = {
+    ...internallyCollidingMarket.namespace,
+    catalog: "data/markets/ca/catalog.json",
+    featured: "data/markets/ca/catalog.json",
+    site: "data/markets/ca/site.json",
+    updateStatus: "data/markets/ca/update-status.json",
+    updateDelta: "data/markets/ca/update-delta.json",
+    changelog: "data/markets/ca/changelog.json",
+    artifactDirectory: "outputs/markets/ca",
+  };
+  assert.throws(
+    () => assertUniqueProfileOwnedPaths([internallyCollidingMarket]),
+    /namespace\.catalog and ca\.namespace\.featured/,
+  );
 });
 
 test("both profiles use the same parser, exact-match, catalog, and ranking path", () => {

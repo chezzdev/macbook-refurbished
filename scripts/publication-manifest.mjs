@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
-import { loadEnabledMarketProfiles } from "./market-profile.mjs";
+import {
+  assertUniqueProfileOwnedPaths,
+  loadEnabledMarketProfiles,
+} from "./market-profile.mjs";
 
 const commonSourcePaths = [
   "README.md",
@@ -69,6 +72,7 @@ function uniqueSorted(paths) {
 }
 
 export function buildPublicationManifest(profiles) {
+  assertUniqueProfileOwnedPaths(profiles);
   const marketSourcePaths = profiles.flatMap((profile) => [
     `config/markets/${profile.id}.json`,
     profile.ranking.policyPath,
@@ -86,9 +90,17 @@ export function buildPublicationManifest(profiles) {
     ...commonSourcePaths,
     ...marketSourcePaths,
   ]);
+  const immutableSourcePaths = uniqueSorted([
+    ...commonSourcePaths,
+    ...profiles.flatMap((profile) => [
+      `config/markets/${profile.id}.json`,
+      profile.ranking.policyPath,
+    ]),
+  ]);
   return {
     marketIds: profiles.map((profile) => profile.id),
     sourcePaths,
+    immutableSourcePaths,
     retiredPublicationPaths: uniqueSorted(retiredPublicationPaths),
     publicationPaths: uniqueSorted([
       ".gitignore",
@@ -105,6 +117,8 @@ if (process.argv[1] === import.meta.filename) {
   const values =
     mode === "--source"
       ? manifest.sourcePaths
+      : mode === "--immutable-source"
+        ? manifest.immutableSourcePaths
       : mode === "--publish"
         ? manifest.publicationPaths
         : mode === "--retired"
@@ -114,7 +128,8 @@ if (process.argv[1] === import.meta.filename) {
             : null;
   if (!values) {
     throw new Error(
-      "Usage: publication-manifest.mjs --source|--publish|--retired|--market-ids",
+      "Usage: publication-manifest.mjs " +
+        "--source|--immutable-source|--publish|--retired|--market-ids",
     );
   }
   process.stdout.write(`${values.join("\n")}\n`);
