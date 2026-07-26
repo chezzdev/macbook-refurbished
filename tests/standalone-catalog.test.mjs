@@ -73,6 +73,25 @@ test("renders checkbox dropdown filters and one sorting select", () => {
   );
 });
 
+test("embeds shared URL view-state restoration and synchronization", () => {
+  assert.match(html, /const readCatalogViewState=function readCatalogViewState/);
+  assert.match(html, /const writeCatalogViewSearch=function writeCatalogViewSearch/);
+  assert.match(
+    html,
+    /allowedFilterValues:Object\.fromEntries\(filterNames\.map\(name=>\[/,
+  );
+  assert.match(html, /const restoreCatalogViewState=\(\)=>\{/);
+  assert.match(html, /readCatalogViewState\(location\.search,viewStateOptions\)/);
+  assert.match(html, /const synchronizeCatalogViewUrl=\(\)=>\{/);
+  assert.match(
+    html,
+    /history\.replaceState\(history\.state,"",location\.pathname\+search\+location\.hash\)/,
+  );
+  assert.match(html, /restoreCatalogViewState\(\);/);
+  assert.match(html, /synchronizeCatalogViewUrl\(\);/);
+  assert.match(html, /sorting\.addEventListener\("change",\(\)=>\{render\(\);synchronizeCatalogViewUrl\(\)\}\)/);
+});
+
 test("retains exact Apple new-price links and the permanent canonical URL", () => {
   const pricedProducts = catalog.products.filter(
     (product) => product[newPriceField] !== null && product.newSourceUrl,

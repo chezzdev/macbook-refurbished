@@ -310,6 +310,7 @@ MACBOOK_STAGED_MARKET_ID="$market_id" \
 MACBOOK_STAGED_NAMESPACE_ROOT="$staging_dir" \
 node --test \
   scripts/apple-catalog-lib.test.mjs \
+  tests/catalog-view-state.test.mjs \
   tests/changelog.test.mjs \
   tests/exchange-rate.test.mjs \
   tests/html-escape.test.mjs \

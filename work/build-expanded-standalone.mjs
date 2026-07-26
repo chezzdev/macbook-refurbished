@@ -1,6 +1,10 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { escapeHtml } from "../scripts/html-escape.mjs";
+import {
+  readCatalogViewState,
+  writeCatalogViewSearch,
+} from "../scripts/catalog-view-state.mjs";
 import { buildMarketDisplayCopy } from "../scripts/market-display-copy.mjs";
 import {
   loadEnabledMarketProfiles,
@@ -364,12 +368,14 @@ const priceComparison = priceDelta === 0
   : `${leadingPick.product[displayedRefurbishedPriceField] > runnerUp.product[displayedRefurbishedPriceField] ? "Первый вариант дороже второго" : "Первый вариант дешевле второго"} на ${mainPrice(priceDelta)}.`;
 
 const checkboxes = (name, values, labels = {}) => values
-  .map((value, index) => `<label class="check-option" for="${name}-${index}"><input id="${name}-${index}" type="checkbox" name="${name}" value="${value}"><span>${labels[value] || value}</span></label>`)
+  .map((value, index) => `<label class="check-option" for="${escapeHtml(name)}-${index}"><input id="${escapeHtml(name)}-${index}" type="checkbox" name="${escapeHtml(name)}" value="${escapeHtml(value)}"><span>${escapeHtml(labels[value] || value)}</span></label>`)
   .join("");
-const filterDropdown = (name, title, values, labels = {}) => `<details class="filter-dropdown" data-filter="${name}">
-  <summary><span class="filter-title">${title}</span><span class="filter-value">Все</span></summary>
+const filterDropdown = (name, title, values, labels = {}) => `<details class="filter-dropdown" data-filter="${escapeHtml(name)}">
+  <summary><span class="filter-title">${escapeHtml(title)}</span><span class="filter-value">Все</span></summary>
   <div class="dropdown-menu">${checkboxes(name, values, labels)}</div>
 </details>`;
+const families = [...new Set(products.map((product) => product.family))]
+  .sort((a, b) => a.localeCompare(b));
 const screens = [...new Set(products.map((product) => product.screen))]
   .sort((a, b) => Number(a.replace(/\D/g, "")) - Number(b.replace(/\D/g, "")));
 const memories = [...new Set(products.map((product) => product.memory))]
@@ -609,7 +615,7 @@ const html = `<!doctype html>
     <section class="section-shell" id="comparison">
       <div class="section-heading"><div><span class="section-index">02</span><h2>Полная таблица</h2></div><p>Фильтруйте по линейке, диагонали и железу. Каждая строка — реально доступная сейчас позиция Apple.</p></div>
       <div class="filters">
-        ${filterDropdown("family", "Линейка", ["Air", "Pro"], { Air: "MacBook Air", Pro: "MacBook Pro" })}
+        ${filterDropdown("family", "Линейка", families, { Air: "MacBook Air", Pro: "MacBook Pro" })}
         ${filterDropdown("screen", "Экран", screens)}
         ${filterDropdown("chip", "Чип", chips)}
         ${filterDropdown("memory", "Память", memories)}
@@ -664,8 +670,18 @@ const html = `<!doctype html>
     const taxCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:${profile.currency.displayFractionDigits},maximumFractionDigits:${profile.currency.displayFractionDigits}});
     ${clientPriceFormatterSource}
     ${clientTaxFormatterSource}
+    const readCatalogViewState=${readCatalogViewState.toString()};
+    const writeCatalogViewSearch=${writeCatalogViewSearch.toString()};
     const filterNames=["family","screen","chip","memory","storage"];
     const sorting=document.querySelector("#sorting");
+    const viewStateOptions={
+      filterNames,
+      allowedFilterValues:Object.fromEntries(filterNames.map(name=>[
+        name,[...document.querySelectorAll(\`input[name="\${name}"]\`)].map(input=>input.value),
+      ])),
+      allowedSortingValues:[...sorting.options].map(option=>option.value),
+      defaultSorting:sorting.options[0].value,
+    };
     const memoryNumber=value=>Number(value.replace(/\\D/g,""));
     const storageNumber=value=>Number(value.replace(/\\D/g,""))*(value.endsWith("TB")?1024:1);
     const chipNumber=value=>Number(value.match(/\\d+/)?.[0]||0);
@@ -685,7 +701,28 @@ const html = `<!doctype html>
       const value=dropdown.querySelector(".filter-value");
       value.textContent=checked.length===0?"Все":checked.length===1?checked[0].nextElementSibling.textContent:checked.length+" выбрано";
     });
-    const reset=()=>{document.querySelectorAll(".filter-dropdown input").forEach(input=>input.checked=false);sorting.value="recommended";updateFilterLabels();render()};
+    const currentViewState=()=>({
+      filters:Object.fromEntries(filterNames.map(name=>[name,[...selected(name)]])),
+      sorting:sorting.value,
+    });
+    const restoreCatalogViewState=()=>{
+      const state=readCatalogViewState(location.search,viewStateOptions);
+      filterNames.forEach(name=>document.querySelectorAll(\`input[name="\${name}"]\`).forEach(input=>{
+        input.checked=state.filters[name].includes(input.value);
+      }));
+      sorting.value=state.sorting;
+    };
+    const synchronizeCatalogViewUrl=()=>{
+      const search=writeCatalogViewSearch(location.search,currentViewState(),viewStateOptions);
+      history.replaceState(history.state,"",location.pathname+search+location.hash);
+    };
+    const reset=()=>{
+      document.querySelectorAll(".filter-dropdown input").forEach(input=>input.checked=false);
+      sorting.value=viewStateOptions.defaultSorting;
+      updateFilterLabels();
+      render();
+      synchronizeCatalogViewUrl();
+    };
     const render=()=>{
       const selections=Object.fromEntries(filterNames.map(name=>[name,selected(name)]));
       let result=products.filter(p=>filterNames.every(name=>selections[name].size===0||selections[name].has(p[name])));
@@ -724,15 +761,18 @@ const html = `<!doctype html>
         </tr>\`;
       }).join("");
     };
-    document.querySelectorAll(".filter-dropdown input").forEach(input=>input.addEventListener("change",()=>{updateFilterLabels();render()}));
+    document.querySelectorAll(".filter-dropdown input").forEach(input=>input.addEventListener("change",()=>{updateFilterLabels();render();synchronizeCatalogViewUrl()}));
     document.querySelectorAll(".filter-dropdown").forEach(dropdown=>dropdown.addEventListener("toggle",()=>{
       if(dropdown.open)document.querySelectorAll(".filter-dropdown[open]").forEach(other=>{if(other!==dropdown)other.removeAttribute("open")});
     }));
     document.addEventListener("click",event=>document.querySelectorAll(".filter-dropdown[open]").forEach(dropdown=>{if(!dropdown.contains(event.target))dropdown.removeAttribute("open")}));
-    sorting.addEventListener("change",render);
+    sorting.addEventListener("change",()=>{render();synchronizeCatalogViewUrl()});
     document.querySelector("#reset").addEventListener("click",reset);
     document.querySelector("#empty-reset").addEventListener("click",reset);
+    restoreCatalogViewState();
+    updateFilterLabels();
     render();
+    synchronizeCatalogViewUrl();
   </script>
 </body>
 </html>`;

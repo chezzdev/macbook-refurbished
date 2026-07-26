@@ -241,8 +241,78 @@
     const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
     const comparableNewPrice=p=>p[newPriceField];
     const comparisonPrice=tablePrice;
+    const readCatalogViewState=function readCatalogViewState(
+  search,
+  {
+    filterNames,
+    allowedFilterValues,
+    allowedSortingValues,
+    defaultSorting,
+  },
+) {
+  const parameters = new URLSearchParams(search);
+  const filters = {};
+  for (const name of filterNames) {
+    const allowed = new Set(allowedFilterValues[name] ?? []);
+    filters[name] = [
+      ...new Set(
+        parameters
+          .getAll(name)
+          .filter((value) => allowed.has(value)),
+      ),
+    ];
+  }
+  const requestedSorting = parameters.get("sort");
+  return {
+    filters,
+    sorting: allowedSortingValues.includes(requestedSorting)
+      ? requestedSorting
+      : defaultSorting,
+  };
+};
+    const writeCatalogViewSearch=function writeCatalogViewSearch(
+  search,
+  state,
+  {
+    filterNames,
+    allowedFilterValues,
+    allowedSortingValues,
+    defaultSorting,
+  },
+) {
+  const parameters = new URLSearchParams(search);
+  for (const name of filterNames) parameters.delete(name);
+  parameters.delete("sort");
+
+  for (const name of filterNames) {
+    const allowed = new Set(allowedFilterValues[name] ?? []);
+    const selected = Array.isArray(state.filters?.[name])
+      ? state.filters[name]
+      : [];
+    for (const value of new Set(selected)) {
+      if (allowed.has(value)) parameters.append(name, value);
+    }
+  }
+  if (
+    state.sorting !== defaultSorting &&
+    allowedSortingValues.includes(state.sorting)
+  ) {
+    parameters.set("sort", state.sorting);
+  }
+
+  const serialized = parameters.toString();
+  return serialized ? `?${serialized}` : "";
+};
     const filterNames=["family","screen","chip","memory","storage"];
     const sorting=document.querySelector("#sorting");
+    const viewStateOptions={
+      filterNames,
+      allowedFilterValues:Object.fromEntries(filterNames.map(name=>[
+        name,[...document.querySelectorAll(`input[name="${name}"]`)].map(input=>input.value),
+      ])),
+      allowedSortingValues:[...sorting.options].map(option=>option.value),
+      defaultSorting:sorting.options[0].value,
+    };
     const memoryNumber=value=>Number(value.replace(/\D/g,""));
     const storageNumber=value=>Number(value.replace(/\D/g,""))*(value.endsWith("TB")?1024:1);
     const chipNumber=value=>Number(value.match(/\d+/)?.[0]||0);
@@ -262,7 +332,28 @@
       const value=dropdown.querySelector(".filter-value");
       value.textContent=checked.length===0?"Все":checked.length===1?checked[0].nextElementSibling.textContent:checked.length+" выбрано";
     });
-    const reset=()=>{document.querySelectorAll(".filter-dropdown input").forEach(input=>input.checked=false);sorting.value="recommended";updateFilterLabels();render()};
+    const currentViewState=()=>({
+      filters:Object.fromEntries(filterNames.map(name=>[name,[...selected(name)]])),
+      sorting:sorting.value,
+    });
+    const restoreCatalogViewState=()=>{
+      const state=readCatalogViewState(location.search,viewStateOptions);
+      filterNames.forEach(name=>document.querySelectorAll(`input[name="${name}"]`).forEach(input=>{
+        input.checked=state.filters[name].includes(input.value);
+      }));
+      sorting.value=state.sorting;
+    };
+    const synchronizeCatalogViewUrl=()=>{
+      const search=writeCatalogViewSearch(location.search,currentViewState(),viewStateOptions);
+      history.replaceState(history.state,"",location.pathname+search+location.hash);
+    };
+    const reset=()=>{
+      document.querySelectorAll(".filter-dropdown input").forEach(input=>input.checked=false);
+      sorting.value=viewStateOptions.defaultSorting;
+      updateFilterLabels();
+      render();
+      synchronizeCatalogViewUrl();
+    };
     const render=()=>{
       const selections=Object.fromEntries(filterNames.map(name=>[name,selected(name)]));
       let result=products.filter(p=>filterNames.every(name=>selections[name].size===0||selections[name].has(p[name])));
@@ -301,15 +392,18 @@
         </tr>`;
       }).join("");
     };
-    document.querySelectorAll(".filter-dropdown input").forEach(input=>input.addEventListener("change",()=>{updateFilterLabels();render()}));
+    document.querySelectorAll(".filter-dropdown input").forEach(input=>input.addEventListener("change",()=>{updateFilterLabels();render();synchronizeCatalogViewUrl()}));
     document.querySelectorAll(".filter-dropdown").forEach(dropdown=>dropdown.addEventListener("toggle",()=>{
       if(dropdown.open)document.querySelectorAll(".filter-dropdown[open]").forEach(other=>{if(other!==dropdown)other.removeAttribute("open")});
     }));
     document.addEventListener("click",event=>document.querySelectorAll(".filter-dropdown[open]").forEach(dropdown=>{if(!dropdown.contains(event.target))dropdown.removeAttribute("open")}));
-    sorting.addEventListener("change",render);
+    sorting.addEventListener("change",()=>{render();synchronizeCatalogViewUrl()});
     document.querySelector("#reset").addEventListener("click",reset);
     document.querySelector("#empty-reset").addEventListener("click",reset);
+    restoreCatalogViewState();
+    updateFilterLabels();
     render();
+    synchronizeCatalogViewUrl();
   </script>
 </body>
 </html>
