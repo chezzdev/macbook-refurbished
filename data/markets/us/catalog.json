@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "marketId": "us",
   "source": {
     "refurbishedCatalogUrl": "https://www.apple.com/shop/refurbished/mac",
     "newCatalogBaseUrl": "https://www.apple.com/shop/buy-mac",
@@ -5124,64 +5125,6 @@
       "configurationKey": "pro|14|standard|m5-pro|18|20|64gb|1tb"
     },
     {
-      "productCode": "G1MH9LL/A",
-      "sourceUrl": "https://www.apple.com/shop/product/g1mh9ll/a/Refurbished-14-inch-MacBook-Pro-Apple-M5-Pro-chip-with-18%E2%80%91Core-CPU-and-20%E2%80%91Core-GPU-Nano-texture-display-Silver",
-      "title": "Refurbished 14-inch MacBook Pro Apple M5 Pro chip with 18‑Core CPU and 20‑Core GPU, Nano-texture display - Silver",
-      "family": "Pro",
-      "model": "MacBook Pro",
-      "screen": "14″",
-      "display": "Nano-texture",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "colour": "Silver",
-      "releaseYear": 2026,
-      "memory": "64GB",
-      "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-silver-nano-texture-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-64gb-memory-1tb-storage",
-      "priceUsd": 3269,
-      "newPriceUsd": 3849,
-      "taxInclusivePriceUsd": 3616.25,
-      "taxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3616.25,
-        "currency": "USD",
-        "preTaxAmount": 3269,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 343.25,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
-      "newTaxInclusivePriceUsd": 4257.15,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 4257.15,
-        "currency": "USD",
-        "preTaxAmount": 3849,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 404.15,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
-      "configurationKey": "pro|14|nano-texture|m5-pro|18|20|64gb|1tb"
-    },
-    {
       "productCode": "G1MJ4LL/A",
       "sourceUrl": "https://www.apple.com/shop/product/g1mj4ll/a/Refurbished-14-inch-MacBook-Pro-Apple-M5-Pro-chip-with-18%E2%80%91Core-CPU-and-20%E2%80%91Core-GPU-Silver",
       "title": "Refurbished 14-inch MacBook Pro Apple M5 Pro chip with 18‑Core CPU and 20‑Core GPU - Silver",
@@ -10211,6 +10154,5 @@
       "newTaxInclusivePricing": null,
       "configurationKey": "pro|16|standard|m4-pro|14|20|24gb|512gb"
     }
-  ],
-  "marketId": "us"
+  ]
 }
