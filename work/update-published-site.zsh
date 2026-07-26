@@ -180,11 +180,14 @@ git -C "$deployment_dir" init --quiet
 git -C "$deployment_dir" fetch --quiet --no-tags "$publish_dir" "$publish_commit"
 git -C "$deployment_dir" update-ref refs/heads/main "$publish_commit"
 git -C "$deployment_dir" symbolic-ref HEAD refs/heads/main
-npx --yes wrangler@4.92.0 pages deploy "$deployment_dir" \
-  --project-name "$cloudflare_project" \
-  --branch main \
-  --commit-hash "$publish_commit" \
-  --commit-dirty=true
+(
+  cd "$deployment_dir"
+  npx --yes wrangler@4.92.0 pages deploy . \
+    --project-name "$cloudflare_project" \
+    --branch main \
+    --commit-hash "$publish_commit" \
+    --commit-dirty=true
+)
 
 print "8/8 Verifying that the permanent URL serves the exact tested artifact"
 live_file="${deployment_dir}/live.html"
