@@ -155,8 +155,10 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
   );
   assert.equal(
     us.publication.productionUrl,
-    "https://macbook-us-refurbished.whole-acorn-4078.chatgpt.site/",
+    "https://macbook-us-refurbished.pages.dev/",
   );
+  assert.equal(sg.publication.provider, "cloudflare-pages");
+  assert.equal(us.publication.provider, "cloudflare-pages");
   assert.equal(us.publication.approvalRequired, false);
   assert.equal(us.publication.status, "active");
   assert.deepEqual(enabledMarketState.registry.enabledMarkets, ["sg", "us"]);
@@ -249,7 +251,7 @@ test("workflow config selects one shared checkout and each market artifact", asy
   assert.equal(sgWorkflow[18], "false");
   assert.equal(usWorkflow[18], "false");
   assert.equal(sgWorkflow[12], "cloudflare-pages");
-  assert.equal(usWorkflow[12], "sites");
+  assert.equal(usWorkflow[12], "cloudflare-pages");
 });
 
 test("both profiles use the same parser, exact-match, catalog, and ranking path", () => {

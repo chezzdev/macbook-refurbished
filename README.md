@@ -5,9 +5,8 @@
 
 - **MacBook SG Refurbished** — действующий сайт:
   <https://macbook-sg-refurbished.pages.dev/>
-- **MacBook US Refurbished** — отдельный Sites-проект:
-  <https://macbook-us-refurbished.whole-acorn-4078.chatgpt.site/>. Сейчас
-  доступ owner-only; публичный доступ требует отдельного явного одобрения.
+- **MacBook US Refurbished** — отдельный сайт на том же Cloudflare Pages:
+  <https://macbook-us-refurbished.pages.dev/>.
 
 В интерфейсе есть переключатель рынков, построенный из
 `config/markets/registry.json`. Он ведёт на канонический URL отдельного сайта и
@@ -64,7 +63,7 @@ Apple-котировка недоступна, final price остаётся `nul
 ```zsh
 npm test
 npm run build:catalog -- --market sg
-npm run build
+npm run build:catalog -- --market us
 npm run catalog:rank:check -- --market sg
 node scripts/initialize-market.mjs --market sg --check
 ```
@@ -89,11 +88,16 @@ private-repository sync, Cloudflare Pages deployment и live hash verification.
 публикуемые файлы изолированы как `markets/sg/index.html` и
 `markets/us/index.html`. Старый корневой `index.html` SG удаляется при следующей
 канонической синхронизации. Каждый профиль выбирает собственный артефакт и
-отдельный hosting project, поэтому постоянный SG URL не зависит от расположения
-файла в repository. US использует Sites, поэтому общий workflow запускается для
-него с `--prepare-only`: он обновляет и полностью проверяет профильный
-артефакт, но не отправляет его в SG Cloudflare Pages project. Сохранение версии
-и deployment выполняются через Sites из того же исходного дерева.
+отдельный Cloudflare Pages project, поэтому постоянный SG URL не зависит от
+расположения файла в repository. Полный US workflow использует тот же общий
+путь без отдельного hosting-кода:
+
+```zsh
+./work/update-market-site.zsh --market us
+```
+
+Workflow выбирает артефакт и Cloudflare Pages project только из выбранного
+market profile, поэтому данные и deployment targets SG и US не смешиваются.
 
 ## Ежедневное обновление Singapore
 

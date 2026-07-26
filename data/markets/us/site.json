@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "siteName": "MacBook US Refurbished",
+  "pageTitle": "MacBook US Refurbished — refurbished MacBook comparison",
+  "productionUrl": "https://macbook-us-refurbished.pages.dev/",
+  "canonicalUrl": "https://macbook-us-refurbished.pages.dev/",
+  "plannedProductionUrl": null,
+  "currency": {
+    "sourceCurrency": "USD",
+    "displayCurrency": "USD",
+    "conversionType": "identity",
+    "sourceToDisplayRate": 1
+  },
+  "tax": {
+    "model": "apple-checkout-reference-location",
+    "acquisition": {
+      "adapter": "apple-checkout",
+      "status": "unavailable",
+      "reason": "No stable non-interactive Apple checkout tax quote interface is configured"
+    },
+    "referenceLocation": {
+      "id": "apple-beverly-center",
+      "name": "Apple Beverly Center",
+      "street": "8500 Beverly Boulevard",
+      "city": "Los Angeles",
+      "region": "CA",
+      "postalCode": "90048",
+      "country": "US"
+    },
+    "taxInclusiveSourcePolicy": "apple-flow-only",
+    "availabilityPolicy": "catalog-wide",
+    "filterByDeliveryOrPickup": false
+  }
+}

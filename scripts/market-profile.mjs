@@ -189,7 +189,11 @@ export function validateMarketProfile(profile) {
       profile.publication.checkoutPath !== "work/gh-pages-site" ||
       profile.publication.artifactDirectory !== "markets/us" ||
       profile.publication.projectSlug !== "macbook-us-refurbished" ||
-      profile.publication.provider !== "sites"
+      profile.publication.provider !== "cloudflare-pages" ||
+      profile.publication.productionUrl !==
+        "https://macbook-us-refurbished.pages.dev/" ||
+      profile.publication.canonicalUrl !==
+        "https://macbook-us-refurbished.pages.dev/"
     ) {
       throw new Error("US publication identity does not match its approved plan");
     }
@@ -202,11 +206,11 @@ export function validateMarketProfile(profile) {
       }
     } else if (profile.publication.status === "approved-pending-provision") {
       if (
-        profile.publication.provider !== "sites" ||
+        profile.publication.provider !== "cloudflare-pages" ||
         profile.publication.productionUrl !== null
       ) {
         throw new Error(
-          "US provision-pending publication must use Sites without a production URL",
+          "US provision-pending publication must use Cloudflare Pages without a production URL",
         );
       }
     } else if (

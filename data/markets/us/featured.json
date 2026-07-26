@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "2026-07-26.us.2",
+  "ideal": {
+    "family": "Air",
+    "screen": "13″",
+    "memory": "24GB",
+    "storage": "1TB"
+  },
+  "items": [
+    {
+      "rank": 1,
+      "recommendationKey": "Air|13″|M5|24GB|1TB",
+      "configurationKey": "air|13|standard|m5|10|10|24gb|1tb",
+      "productCode": "FDH94LL/A",
+      "score": 110048,
+      "scoreBreakdown": {
+        "memory": 32000,
+        "storage": 26000,
+        "formFactor": 24000,
+        "chipRecency": 10000,
+        "affordability": 13548,
+        "verifiedDiscount": 4500
+      },
+      "reasonCodes": [
+        "MEMORY_IDEAL_24GB",
+        "STORAGE_IDEAL_1TB",
+        "FORM_IDEAL_AIR_13",
+        "CHIP_GENERATION_M5",
+        "PRICE_HIGH_VALUE",
+        "DISCOUNT_VERIFIED"
+      ],
+      "label": "Лучший выбор",
+      "headline": "MacBook Air 13″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 1 ТБ",
+      "reason": "Точно соответствует целевой конфигурации: MacBook Air 13″, 24 ГБ памяти и SSD на 1 ТБ. Подтверждённая скидка усиливает ценность."
+    },
+    {
+      "rank": 2,
+      "recommendationKey": "Air|13″|M4|24GB|1TB",
+      "configurationKey": "air|13|standard|m4|10|10|24gb|1tb",
+      "productCode": "G1H90LL/A",
+      "score": 104062,
+      "scoreBreakdown": {
+        "memory": 32000,
+        "storage": 26000,
+        "formFactor": 24000,
+        "chipRecency": 8000,
+        "affordability": 14062,
+        "verifiedDiscount": 0
+      },
+      "reasonCodes": [
+        "MEMORY_IDEAL_24GB",
+        "STORAGE_IDEAL_1TB",
+        "FORM_IDEAL_AIR_13",
+        "CHIP_GENERATION_M4",
+        "PRICE_HIGH_VALUE"
+      ],
+      "label": "Сильная альтернатива",
+      "headline": "MacBook Air 13″ · M4 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 1 ТБ",
+      "reason": "Точно соответствует целевой конфигурации: MacBook Air 13″, 24 ГБ памяти и SSD на 1 ТБ. Цена учтена в оценке ценности."
+    },
+    {
+      "rank": 3,
+      "recommendationKey": "Air|13″|M5|24GB|2TB",
+      "configurationKey": "air|13|standard|m5|10|10|24gb|2tb",
+      "productCode": "G1L20LL/A",
+      "score": 102714,
+      "scoreBreakdown": {
+        "memory": 32000,
+        "storage": 21000,
+        "formFactor": 24000,
+        "chipRecency": 10000,
+        "affordability": 11148,
+        "verifiedDiscount": 4566
+      },
+      "reasonCodes": [
+        "MEMORY_IDEAL_24GB",
+        "STORAGE_2TB",
+        "FORM_IDEAL_AIR_13",
+        "CHIP_GENERATION_M5",
+        "PRICE_BALANCED",
+        "DISCOUNT_VERIFIED"
+      ],
+      "label": "Ещё один удачный вариант",
+      "headline": "MacBook Air 13″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 2 ТБ",
+      "reason": "Соответствует целевым параметрам MacBook Air 13″ и 24 ГБ памяти; главный компромисс — SSD на 2 ТБ. Подтверждённая скидка усиливает ценность."
+    }
+  ]
+}

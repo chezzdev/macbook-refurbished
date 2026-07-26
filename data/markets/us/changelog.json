@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "latestRun": {
+    "schemaVersion": 1,
+    "checkedAt": "2026-07-26T15:03:26.951Z",
+    "hasChanges": false,
+    "counts": {
+      "added": 0,
+      "removed": 0,
+      "refurbPriceChanges": 0,
+      "newPriceChanges": 0,
+      "taxInclusivePriceChanges": 0,
+      "featuredChanges": 0
+    },
+    "added": [],
+    "removed": [],
+    "refurbPriceChanges": [],
+    "newPriceChanges": [],
+    "taxInclusivePriceChanges": [],
+    "featured": null
+  },
+  "entries": [
+    {
+      "type": "changes",
+      "checkedAt": "2026-07-26T14:30:25.421Z",
+      "counts": {
+        "added": 0,
+        "removed": 0,
+        "refurbPriceChanges": 0,
+        "newPriceChanges": 0,
+        "taxInclusivePriceChanges": 0,
+        "featuredChanges": 1
+      },
+      "added": [],
+      "removed": [],
+      "refurbPriceChanges": [],
+      "newPriceChanges": [],
+      "taxInclusivePriceChanges": [],
+      "featured": {
+        "before": [],
+        "after": [
+          "FDH94LL/A",
+          "G1H90LL/A",
+          "G1L20LL/A"
+        ]
+      }
+    },
+    {
+      "type": "baseline",
+      "checkedAt": "2026-07-26T14:30:25.421Z",
+      "counts": {
+        "products": 185,
+        "air": 62,
+        "pro": 123,
+        "configurations": 100
+      }
+    }
+  ]
+}
