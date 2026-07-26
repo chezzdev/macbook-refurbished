@@ -3,8 +3,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  loadMarketContext,
+  loadMarketProfile,
+} from "./market-profile.mjs";
 
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
+const defaultMarketProfile = await loadMarketProfile("sg");
 const defaultPaths = {
   catalog: resolve(projectRoot, "data/catalog.json"),
   policy: resolve(projectRoot, "config/ranking-policy.json"),
@@ -72,7 +77,23 @@ function validateScoreTable(table, label) {
   }
 }
 
-export function validatePolicy(policy) {
+function priceContext(marketProfile = defaultMarketProfile) {
+  const { source, priceFields } = marketProfile.currency;
+  const currencySuffix =
+    source.slice(0, 1) + source.slice(1).toLowerCase();
+  return {
+    refurbishedField: priceFields.refurbished,
+    newField: priceFields.new,
+    fullScoreField: `fullScoreAtOrBelow${currencySuffix}`,
+    zeroScoreField: `zeroScoreAtOrAbove${currencySuffix}`,
+    savingField: `saving${currencySuffix}`,
+  };
+}
+
+export function validatePolicy(
+  policy,
+  marketProfile = defaultMarketProfile,
+) {
   requireObject(policy, "ranking policy");
   if (policy.schemaVersion !== 1) {
     fail(`unsupported ranking policy schemaVersion: ${policy.schemaVersion}`);
@@ -86,14 +107,21 @@ export function validatePolicy(policy) {
   requireObject(policy.ideal, "ideal");
   for (const field of ["family", "screen", "memory", "storage"]) {
     requireNonEmptyString(policy.ideal[field], `ideal.${field}`);
+    if (policy.ideal[field] !== marketProfile.ranking.reference[field]) {
+      fail(
+        `ideal.${field} must match ${marketProfile.id} market profile reference`,
+      );
+    }
   }
 
   requireObject(policy.deduplication, "deduplication");
   if (policy.deduplication.key !== "configurationKey") {
     fail('deduplication.key must be "configurationKey"');
   }
+  const { refurbishedField, fullScoreField, zeroScoreField } =
+    priceContext(marketProfile);
   const expectedRepresentativeOrdering = [
-    "priceSgd:asc",
+    `${refurbishedField}:asc`,
     "productCode:asc",
   ];
   if (
@@ -109,7 +137,7 @@ export function validatePolicy(policy) {
 
   const expectedTotalOrdering = [
     "score:desc",
-    "priceSgd:asc",
+    `${refurbishedField}:asc`,
     "gpuCores:desc",
     "cpuCores:desc",
     "configurationKey:asc",
@@ -174,20 +202,20 @@ export function validatePolicy(policy) {
   const affordability = policy.components.affordability;
   requireObject(affordability, "components.affordability");
   requirePositiveInteger(
-    affordability.fullScoreAtOrBelowSgd,
-    "components.affordability.fullScoreAtOrBelowSgd",
+    affordability[fullScoreField],
+    `components.affordability.${fullScoreField}`,
   );
   requirePositiveInteger(
-    affordability.zeroScoreAtOrAboveSgd,
-    "components.affordability.zeroScoreAtOrAboveSgd",
+    affordability[zeroScoreField],
+    `components.affordability.${zeroScoreField}`,
   );
   requirePositiveInteger(
     affordability.maxMilliPoints,
     "components.affordability.maxMilliPoints",
   );
   if (
-    affordability.fullScoreAtOrBelowSgd >=
-    affordability.zeroScoreAtOrAboveSgd
+    affordability[fullScoreField] >=
+    affordability[zeroScoreField]
   ) {
     fail(
       "affordability full-score price must be below its zero-score price",
@@ -211,7 +239,11 @@ export function validatePolicy(policy) {
   );
 }
 
-function validateCatalog(catalog, policy) {
+function validateCatalog(
+  catalog,
+  policy,
+  marketProfile = defaultMarketProfile,
+) {
   requireObject(catalog, "catalog");
   if (catalog.schemaVersion !== 1) {
     fail(`unsupported catalog schemaVersion: ${catalog.schemaVersion}`);
@@ -244,9 +276,13 @@ function validateCatalog(catalog, policy) {
     }
     requirePositiveInteger(product.cpuCores, `${label}.cpuCores`);
     requirePositiveInteger(product.gpuCores, `${label}.gpuCores`);
-    requirePositiveInteger(product.priceSgd, `${label}.priceSgd`);
-    if (product.newPriceSgd !== null && product.newPriceSgd !== undefined) {
-      requirePositiveInteger(product.newPriceSgd, `${label}.newPriceSgd`);
+    const { refurbishedField, newField } = priceContext(marketProfile);
+    requirePositiveInteger(
+      product[refurbishedField],
+      `${label}.${refurbishedField}`,
+    );
+    if (product[newField] !== null && product[newField] !== undefined) {
+      requirePositiveInteger(product[newField], `${label}.${newField}`);
     }
 
     if (productCodes.has(product.productCode)) {
@@ -295,7 +331,11 @@ function assertConfigurationIdentity(configurationKey, products) {
   }
 }
 
-function selectRepresentatives(products) {
+function selectRepresentatives(
+  products,
+  marketProfile = defaultMarketProfile,
+) {
+  const { refurbishedField } = priceContext(marketProfile);
   const groups = new Map();
   for (const product of products) {
     const group = groups.get(product.configurationKey);
@@ -310,7 +350,7 @@ function selectRepresentatives(products) {
     assertConfigurationIdentity(configurationKey, productsForConfiguration);
     productsForConfiguration.sort(
       (left, right) =>
-        left.priceSgd - right.priceSgd ||
+        left[refurbishedField] - right[refurbishedField] ||
         compareText(left.productCode, right.productCode),
     );
     representatives.push(productsForConfiguration[0]);
@@ -318,31 +358,34 @@ function selectRepresentatives(products) {
   return representatives;
 }
 
-function scoreAffordability(priceSgd, policy) {
+function scoreAffordability(price, policy, marketProfile) {
   const component = policy.components.affordability;
-  if (priceSgd <= component.fullScoreAtOrBelowSgd) {
+  const { fullScoreField, zeroScoreField } = priceContext(marketProfile);
+  if (price <= component[fullScoreField]) {
     return component.maxMilliPoints;
   }
-  if (priceSgd >= component.zeroScoreAtOrAboveSgd) return 0;
+  if (price >= component[zeroScoreField]) return 0;
   const priceSpan =
-    component.zeroScoreAtOrAboveSgd - component.fullScoreAtOrBelowSgd;
-  const priceRoom = component.zeroScoreAtOrAboveSgd - priceSgd;
+    component[zeroScoreField] - component[fullScoreField];
+  const priceRoom = component[zeroScoreField] - price;
   return Math.trunc((priceRoom * component.maxMilliPoints) / priceSpan);
 }
 
-function discountMetrics(product, policy) {
+function discountMetrics(product, policy, marketProfile) {
+  const { refurbishedField, newField, savingField } =
+    priceContext(marketProfile);
   if (
-    product.newPriceSgd === null ||
-    product.newPriceSgd === undefined ||
-    product.newPriceSgd <= product.priceSgd
+    product[newField] === null ||
+    product[newField] === undefined ||
+    product[newField] <= product[refurbishedField]
   ) {
-    return { savingSgd: 0, basisPoints: 0, score: 0 };
+    return { [savingField]: 0, basisPoints: 0, score: 0 };
   }
 
   const component = policy.components.verifiedDiscount;
-  const savingSgd = product.newPriceSgd - product.priceSgd;
+  const saving = product[newField] - product[refurbishedField];
   const basisPoints = Math.trunc(
-    (savingSgd * 10000) / product.newPriceSgd,
+    (saving * 10000) / product[newField],
   );
   const cappedBasisPoints = Math.min(
     basisPoints,
@@ -352,13 +395,14 @@ function discountMetrics(product, policy) {
     (cappedBasisPoints * component.maxMilliPoints) /
       component.fullScoreAtBasisPoints,
   );
-  return { savingSgd, basisPoints, score };
+  return { [savingField]: saving, basisPoints, score };
 }
 
-function scoreProduct(product, policy) {
+function scoreProduct(product, policy, marketProfile) {
   const { generation, tier } = parseChip(product.chip, policy);
   const components = policy.components;
-  const discount = discountMetrics(product, policy);
+  const { refurbishedField } = priceContext(marketProfile);
+  const discount = discountMetrics(product, policy, marketProfile);
   const scoreBreakdown = {
     memory: components.memory.scoresMilliPoints[product.memory],
     storage: components.storage.scoresMilliPoints[product.storage],
@@ -369,7 +413,11 @@ function scoreProduct(product, policy) {
     chipRecency:
       components.chipRecency.generationMilliPoints[generation] +
       components.chipRecency.tierBonusMilliPoints[tier],
-    affordability: scoreAffordability(product.priceSgd, policy),
+    affordability: scoreAffordability(
+      product[refurbishedField],
+      policy,
+      marketProfile,
+    ),
     verifiedDiscount: discount.score,
   };
   const score = Object.values(scoreBreakdown).reduce(
@@ -382,10 +430,13 @@ function scoreProduct(product, policy) {
 function reasonCodesFor(scored, policy) {
   const { product, discount, generation, tier } = scored;
   const codes = [];
-  if (product.memory === policy.ideal.memory) codes.push("MEMORY_IDEAL_24GB");
-  else codes.push(`MEMORY_${product.memory.replace("GB", "GB")}`);
+  if (product.memory === policy.ideal.memory) {
+    codes.push(`MEMORY_IDEAL_${product.memory}`);
+  } else {
+    codes.push(`MEMORY_${product.memory.replace("GB", "GB")}`);
+  }
   if (product.storage === policy.ideal.storage) {
-    codes.push("STORAGE_IDEAL_1TB");
+    codes.push(`STORAGE_IDEAL_${product.storage}`);
   } else {
     codes.push(`STORAGE_${product.storage}`);
   }
@@ -393,7 +444,9 @@ function reasonCodesFor(scored, policy) {
     product.family === policy.ideal.family &&
     product.screen === policy.ideal.screen
   ) {
-    codes.push("FORM_IDEAL_AIR_13");
+    codes.push(
+      `FORM_IDEAL_${product.family.toUpperCase()}_${product.screen.replace(/\D/g, "")}`,
+    );
   } else {
     codes.push(
       `FORM_${product.family.toUpperCase()}_${product.screen.replace(/\D/g, "")}`,
@@ -485,10 +538,18 @@ function recommendationKeyFor(product, policy) {
     .join("|");
 }
 
-export function rankCatalog(catalog, policy) {
-  validatePolicy(policy);
-  validateCatalog(catalog, policy);
-  const representatives = selectRepresentatives(catalog.products);
+export function rankCatalog(
+  catalog,
+  policy,
+  marketProfile = defaultMarketProfile,
+) {
+  const { refurbishedField } = priceContext(marketProfile);
+  validatePolicy(policy, marketProfile);
+  validateCatalog(catalog, policy, marketProfile);
+  const representatives = selectRepresentatives(
+    catalog.products,
+    marketProfile,
+  );
   if (representatives.length < policy.shortlistSize) {
     fail(
       `catalog has only ${representatives.length} unique configurations; ${policy.shortlistSize} required`,
@@ -496,12 +557,12 @@ export function rankCatalog(catalog, policy) {
   }
 
   const ranked = representatives.map((product) =>
-    scoreProduct(product, policy),
+    scoreProduct(product, policy, marketProfile),
   );
   ranked.sort(
     (left, right) =>
       right.score - left.score ||
-      left.product.priceSgd - right.product.priceSgd ||
+      left.product[refurbishedField] - right.product[refurbishedField] ||
       right.product.gpuCores - left.product.gpuCores ||
       right.product.cpuCores - left.product.cpuCores ||
       compareText(
@@ -555,18 +616,30 @@ export function renderFeaturedJson(featured) {
 }
 
 export async function runRanking({
-  catalogPath = defaultPaths.catalog,
-  policyPath = defaultPaths.policy,
-  outputPath = defaultPaths.output,
+  catalogPath,
+  policyPath,
+  outputPath,
   check = false,
+  marketId = "sg",
+  marketProfile,
 } = {}) {
+  const context = marketProfile
+    ? null
+    : await loadMarketContext(marketId);
+  const activeProfile = marketProfile ?? context.profile;
+  catalogPath ??=
+    context?.paths.catalog ?? defaultPaths.catalog;
+  policyPath ??=
+    context?.policyPath ?? defaultPaths.policy;
+  outputPath ??=
+    context?.paths.featured ?? defaultPaths.output;
   const [catalogText, policyText] = await Promise.all([
     readFile(catalogPath, "utf8"),
     readFile(policyPath, "utf8"),
   ]);
   const catalog = JSON.parse(catalogText);
   const policy = JSON.parse(policyText);
-  const featured = rankCatalog(catalog, policy);
+  const featured = rankCatalog(catalog, policy, activeProfile);
   const output = renderFeaturedJson(featured);
 
   if (check) {
@@ -594,12 +667,14 @@ function parseArguments(argumentsList) {
       "--catalog": "catalogPath",
       "--policy": "policyPath",
       "--output": "outputPath",
+      "--market": "marketId",
     };
     const optionName = optionNames[argument];
     if (!optionName) fail(`unknown argument: ${argument}`);
     const value = argumentsList[index + 1];
     if (!value) fail(`${argument} requires a path`);
-    options[optionName] = resolve(process.cwd(), value);
+    options[optionName] =
+      optionName === "marketId" ? value : resolve(process.cwd(), value);
     index += 1;
   }
   return options;

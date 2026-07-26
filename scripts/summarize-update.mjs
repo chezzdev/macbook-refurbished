@@ -1,14 +1,23 @@
 #!/usr/bin/env node
 
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import {
+  loadMarketContext,
+  marketIdFromArgv,
+} from "./market-profile.mjs";
 
-const workspaceRoot = resolve(import.meta.dirname, "..");
+const { profile, paths } = await loadMarketContext(marketIdFromArgv());
+const sourceCurrency = profile.currency.source;
+const currencySuffix =
+  sourceCurrency.slice(0, 1) + sourceCurrency.slice(1).toLowerCase();
+const refurbishedPriceField = profile.currency.priceFields.refurbished;
+const changeFromField = `from${currencySuffix}`;
+const changeToField = `to${currencySuffix}`;
 const [delta, status, featured, site] = await Promise.all([
-  readJson("data/update-delta.json"),
-  readJson("data/update-status.json"),
-  readJson("data/featured.json"),
-  readJson("data/site.json"),
+  readJson(paths.updateDelta),
+  readJson(paths.updateStatus),
+  readJson(paths.featured),
+  readJson(paths.site),
 ]);
 const compact = process.argv.includes("--compact");
 const totalChanges = Object.values(delta.counts).reduce(
@@ -24,12 +33,16 @@ const topCodes = featured.items
 if (compact) {
   console.log(
     delta.hasChanges
-      ? `Изменений: ${totalChanges}; +${delta.counts.added}, −${delta.counts.removed}, цены ${delta.counts.refurbPriceChanges + delta.counts.newPriceChanges}.`
+      ? `Изменений: ${totalChanges}; +${delta.counts.added}, −${delta.counts.removed}, цены ${
+          delta.counts.refurbPriceChanges +
+          delta.counts.newPriceChanges +
+          (delta.counts.taxInclusivePriceChanges ?? 0)
+        }.`
       : `Без изменений: ${status.counts.products} позиций, топ ${topCodes}.`,
   );
 } else {
   const lines = [
-    `MacBook Refurbished SG · ${formatDate(delta.checkedAt)}`,
+    `${profile.siteName} · ${formatDate(delta.checkedAt)}`,
     `Каталог: ${status.counts.products} позиций — ${status.counts.air} Air и ${status.counts.pro} Pro.`,
   ];
   if (!delta.hasChanges) {
@@ -44,34 +57,62 @@ if (compact) {
     lines.push(...detailLines(delta).slice(0, 12));
   }
   lines.push(`Топ-3: ${topCodes}.`);
-  lines.push(`Сайт: ${site.productionUrl}`);
+  lines.push(
+    profile.publication.approvalRequired
+      ? `Публикация: требуется одобрение проекта ${profile.publication.projectSlug}.`
+      : `Сайт: ${profile.publication.productionUrl || site.productionUrl}`,
+  );
   console.log(lines.join("\n"));
 }
 
 function detailLines(latestDelta) {
-  const rate = site.currency.sgdToUsd;
-  const usd = new Intl.NumberFormat("en-US", {
+  const rate =
+    profile.currency.conversion.type === "identity"
+      ? 1
+      : site.currency[profile.currency.conversion.siteField];
+  const displayPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: profile.currency.display,
     maximumFractionDigits: 0,
   });
   const price = (amount) =>
-    amount === null ? "нет точной цены" : usd.format(amount * rate);
+    amount === null ? "нет точной цены" : displayPrice.format(amount * rate);
   const lines = [];
   for (const item of latestDelta.added) {
-    lines.push(`• Добавлено: ${productLabel(item)} — ${price(item.priceSgd)}.`);
+    lines.push(
+      `• Добавлено: ${productLabel(item)} — ${
+        price(item[refurbishedPriceField])
+      }.`,
+    );
   }
   for (const item of latestDelta.removed) {
     lines.push(`• Исчезло: ${productLabel(item)}.`);
   }
   for (const item of latestDelta.refurbPriceChanges) {
     lines.push(
-      `• Refurb ${item.product.productCode}: ${price(item.fromSgd)} → ${price(item.toSgd)}.`,
+      `• Refurb ${item.product.productCode}: ${
+        price(item[changeFromField])
+      } → ${price(item[changeToField])}.`,
     );
   }
   for (const item of latestDelta.newPriceChanges) {
     lines.push(
-      `• Новый ${item.product.productCode}: ${price(item.fromSgd)} → ${price(item.toSgd)}.`,
+      `• Новый ${item.product.productCode}: ${
+        price(item[changeFromField])
+      } → ${price(item[changeToField])}.`,
+    );
+  }
+  for (const item of latestDelta.taxInclusivePriceChanges ?? []) {
+    const before =
+      item.before?.status === "resolved"
+        ? price(item.before.amount)
+        : "не получено";
+    const after =
+      item.after?.status === "resolved"
+        ? price(item.after.amount)
+        : "не получено";
+    lines.push(
+      `• Итого с налогом ${item.product.productCode}: ${before} → ${after}.`,
     );
   }
   if (latestDelta.featured) {
@@ -101,8 +142,6 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-async function readJson(relativePath) {
-  return JSON.parse(
-    await readFile(resolve(workspaceRoot, relativePath), "utf8"),
-  );
+async function readJson(filePath) {
+  return JSON.parse(await readFile(filePath, "utf8"));
 }

@@ -1,18 +1,23 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import {
+  loadEnabledMarketProfiles,
+  loadMarketContext,
+} from "../scripts/market-profile.mjs";
 
-const projectRoot = new URL("../", import.meta.url);
-const [html, catalog, featured, changelog, site] = await Promise.all([
-  readFile(
-    new URL("outputs/macbook-air-refurbished-comparison.html", projectRoot),
-    "utf8",
-  ),
-  readFile(new URL("data/catalog.json", projectRoot), "utf8").then(JSON.parse),
-  readFile(new URL("data/featured.json", projectRoot), "utf8").then(JSON.parse),
-  readFile(new URL("data/changelog.json", projectRoot), "utf8").then(JSON.parse),
-  readFile(new URL("data/site.json", projectRoot), "utf8").then(JSON.parse),
+const { profile, paths } = await loadMarketContext(
+  process.env.MACBOOK_MARKET_ID ?? "sg",
+);
+const { profiles: enabledMarketProfiles } =
+  await loadEnabledMarketProfiles();
+const [html, catalog, featured, changelog] = await Promise.all([
+  readFile(paths.artifact, "utf8"),
+  readFile(paths.catalog, "utf8").then(JSON.parse),
+  readFile(paths.featured, "utf8").then(JSON.parse),
+  readFile(paths.changelog, "utf8").then(JSON.parse),
 ]);
+const newPriceField = profile.currency.priceFields.new;
 
 const shortlist = html.match(
   /<section class="section-shell" id="shortlist">([\s\S]*?)<section class="section-shell" id="comparison">/,
@@ -35,15 +40,23 @@ test("embeds the complete catalog and exactly three ranked cards", () => {
   }
 });
 
-test("keeps SGD secondary inside the table and USD-only everywhere above it", () => {
+test("keeps secondary source currency inside the table only", () => {
   assert.ok(shortlist);
-  assert.doesNotMatch(shortlist, /S\$|\bSGD\b/);
-  assert.match(html, /class="sgd-secondary"/);
-  assert.ok(
-    html.includes(
-      `<span class="sgd-secondary">(S$'+sgd.format(amountSgd)+')</span>`,
-    ),
-  );
+  if (profile.currency.source !== profile.currency.display) {
+    assert.doesNotMatch(
+      shortlist,
+      new RegExp(
+        `${escapeRegex(profile.currency.secondarySymbol)}|\\b${profile.currency.source}\\b`,
+      ),
+    );
+    assert.match(html, /class="source-secondary"/);
+    assert.match(
+      html,
+      new RegExp(escapeRegex(profile.currency.secondarySymbol)),
+    );
+  } else {
+    assert.doesNotMatch(html, /class="source-secondary"/);
+  }
 });
 
 test("renders checkbox dropdown filters and one sorting select", () => {
@@ -58,7 +71,7 @@ test("renders checkbox dropdown filters and one sorting select", () => {
 
 test("retains exact Apple new-price links and the permanent canonical URL", () => {
   const pricedProducts = catalog.products.filter(
-    (product) => product.newPriceSgd !== null && product.newSourceUrl,
+    (product) => product[newPriceField] !== null && product.newSourceUrl,
   );
   assert.ok(pricedProducts.length > 0);
   for (const product of pricedProducts) {
@@ -67,7 +80,9 @@ test("retains exact Apple new-price links and the permanent canonical URL", () =
   assert.match(
     html,
     new RegExp(
-      escapeRegex(`<link rel="canonical" href="${site.productionUrl}">`),
+      escapeRegex(
+        `<link rel="canonical" href="${profile.publication.canonicalUrl}">`,
+      ),
     ),
   );
   for (const product of pricedProducts.filter(
@@ -82,6 +97,27 @@ test("retains exact Apple new-price links and the permanent canonical URL", () =
   }
 });
 
+test("renders every enabled market as an independent canonical-site link", () => {
+  assert.equal(
+    (html.match(/<nav class="market-switcher"/g) ?? []).length,
+    1,
+  );
+  for (const marketProfile of enabledMarketProfiles) {
+    assert.match(
+      html,
+      new RegExp(
+        `href="${escapeRegex(
+          marketProfile.publication.canonicalUrl,
+        )}"[^>]*aria-label="${escapeRegex(marketProfile.siteName)}"`,
+      ),
+    );
+  }
+  assert.equal(
+    (html.match(/class="market-option active"/g) ?? []).length,
+    1,
+  );
+});
+
 test("contains syntactically valid inline JavaScript", () => {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
   assert.ok(scripts.length > 0);
@@ -94,7 +130,14 @@ test("renders a USD-only changelog and latest-run result at the page bottom", ()
   assert.ok(changelogSection);
   assert.match(changelogSection, /Что изменилось/);
   assert.match(changelogSection, /Старт отслеживания|изменений/);
-  assert.doesNotMatch(changelogSection, /S\$|\bSGD\b/);
+  if (profile.currency.source !== profile.currency.display) {
+    assert.doesNotMatch(
+      changelogSection,
+      new RegExp(
+        `${escapeRegex(profile.currency.secondarySymbol)}|\\b${profile.currency.source}\\b`,
+      ),
+    );
+  }
   const latestDate = changelog.latestRun.checkedAt
     .slice(0, 10)
     .split("-")

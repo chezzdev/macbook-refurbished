@@ -1,5 +1,27 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { escapeHtml } from "../scripts/html-escape.mjs";
+import {
+  loadEnabledMarketProfiles,
+  loadMarketContext,
+  marketIdFromArgv,
+} from "../scripts/market-profile.mjs";
+
+const { profile, paths } = await loadMarketContext(marketIdFromArgv());
+const { profiles: enabledMarketProfiles } =
+  await loadEnabledMarketProfiles();
+if (!enabledMarketProfiles.some((marketProfile) => marketProfile.id === profile.id)) {
+  throw new Error(`Market ${profile.id} is not enabled`);
+}
+const refurbishedPriceField = profile.currency.priceFields.refurbished;
+const newPriceField = profile.currency.priceFields.new;
+const taxInclusivePriceField = profile.currency.priceFields.taxInclusive;
+const sourceCurrency = profile.currency.source;
+const displayCurrency = profile.currency.display;
+const currencySuffix =
+  sourceCurrency.slice(0, 1) + sourceCurrency.slice(1).toLowerCase();
+const changeFromField = `from${currencySuffix}`;
+const changeToField = `to${currencySuffix}`;
 
 const readJson = async (fileName, { optional = false } = {}) => {
   try {
@@ -10,38 +32,43 @@ const readJson = async (fileName, { optional = false } = {}) => {
   }
 };
 
-const catalogDocument = await readJson("data/catalog.json");
-const featuredDocument = await readJson("data/featured.json");
-const changelogDocument = await readJson("data/changelog.json");
-const site = await readJson("data/site.json");
-const updateStatus = await readJson("data/update-status.json", { optional: true });
+const catalogDocument = await readJson(paths.catalog);
+const featuredDocument = await readJson(paths.featured);
+const changelogDocument = await readJson(paths.changelog);
+const site = await readJson(paths.site);
+const updateStatus = await readJson(paths.updateStatus, { optional: true });
 
 const products = Array.isArray(catalogDocument) ? catalogDocument : catalogDocument?.products;
 if (!Array.isArray(products) || products.length === 0) {
-  throw new Error("data/catalog.json must be a non-empty array or contain a non-empty products array");
+  throw new Error(`${paths.catalog} must contain a non-empty products array`);
 }
 
 const featuredEntries = Array.isArray(featuredDocument) ? featuredDocument : featuredDocument?.items;
 if (!Array.isArray(featuredEntries)) {
-  throw new Error("data/featured.json must be an array or contain an items array");
+  throw new Error(`${paths.featured} must contain an items array`);
 }
 if (
   changelogDocument?.schemaVersion !== 1 ||
   !Array.isArray(changelogDocument.entries) ||
   !changelogDocument.latestRun
 ) {
-  throw new Error("data/changelog.json must contain latestRun and entries");
+  throw new Error(`${paths.changelog} must contain latestRun and entries`);
 }
 
-const rate = Number(site?.currency?.sgdToUsd);
+const rate =
+  profile.currency.conversion.type === "identity"
+    ? 1
+    : Number(site?.currency?.[profile.currency.conversion.siteField]);
 if (!Number.isFinite(rate) || rate <= 0) {
-  throw new Error("data/site.json currency.sgdToUsd must be a positive number");
+  throw new Error(`${paths.site} must contain a positive currency rate`);
 }
 
 const rateDate = site?.currency?.rateDate;
 const rateSourceUrl = site?.currency?.sourceUrl;
-const pageTitle = site?.pageTitle || "MacBook Air и Pro — сравнение refurbished-моделей";
-const productionUrl = site?.productionUrl || "";
+const pageTitle =
+  site?.pageTitle ||
+  `${profile.siteName} — сравнение refurbished-моделей`;
+const canonicalUrl = profile.publication.canonicalUrl;
 const checkedAt = updateStatus?.checkedAt || site?.checkedDateFallback || rateDate;
 const isoDate = (value) => String(value || "").match(/\d{4}-\d{2}-\d{2}/)?.[0] || "";
 const formatRussianDate = (value) => {
@@ -64,8 +91,12 @@ const checkedDate = formatRussianDate(checkedAt);
 const checkedDateLong = formatRussianLongDate(checkedAt);
 const rateDateFormatted = formatRussianDate(rateDate);
 const embeddedProducts = JSON.stringify(products).replaceAll("<", "\\u003c");
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-const usdPrice = (amountSgd) => usd.format(amountSgd * rate);
+const displayFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: displayCurrency,
+  maximumFractionDigits: 0,
+});
+const usdPrice = (amount) => displayFormatter.format(amount * rate);
 const capacityNumber = (value) => Number(value.replace(/\D/g, "")) * (value.endsWith("TB") ? 1024 : 1);
 const chipNumber = (value) => Number(value.match(/\d+/)?.[0] || 0);
 const chipTier = (value) => (value.includes("Max") ? 2 : value.includes("Pro") ? 1 : 0);
@@ -82,8 +113,12 @@ const configurationKeyFor = (product) => product.configurationKey || [
 
 const airCount = products.filter((product) => product.family === "Air").length;
 const proCount = products.filter((product) => product.family === "Pro").length;
-const minimumPrice = Math.min(...products.map((product) => product.priceSgd));
-const maximumPrice = Math.max(...products.map((product) => product.priceSgd));
+const minimumPrice = Math.min(
+  ...products.map((product) => product[refurbishedPriceField]),
+);
+const maximumPrice = Math.max(
+  ...products.map((product) => product[refurbishedPriceField]),
+);
 const chips = [...new Set(products.map((product) => product.chip))].sort((a, b) =>
   chipNumber(a) - chipNumber(b) || chipTier(a) - chipTier(b),
 );
@@ -143,9 +178,13 @@ const featured = featuredEntries
       throw new Error(`Featured item rank ${entry.rank ?? index + 1} has an invalid score`);
     }
     for (const fieldName of ["label", "headline", "reason"]) {
-      if (entry[fieldName] && /S\$|\bSGD\b/i.test(entry[fieldName])) {
+      if (
+        sourceCurrency !== displayCurrency &&
+        entry[fieldName] &&
+        new RegExp(`\\b${sourceCurrency}\\b`).test(entry[fieldName])
+      ) {
         throw new Error(
-          `Featured item rank ${entry.rank ?? index + 1} ${fieldName} must not contain SGD copy`,
+          `Featured item rank ${entry.rank ?? index + 1} ${fieldName} must not contain secondary-currency copy`,
         );
       }
     }
@@ -160,7 +199,9 @@ const featured = featuredEntries
     };
   });
 if (featured.length !== 3) {
-  throw new Error(`data/featured.json must resolve exactly three featured items; found ${featured.length}`);
+  throw new Error(
+    `${paths.featured} must resolve exactly three featured items; found ${featured.length}`,
+  );
 }
 
 const embeddedFeatured = JSON.stringify(featured.map((item) => ({
@@ -181,9 +222,9 @@ const productChangeLabel = (product) => {
 };
 const changeCount = (counts = {}) =>
   Object.values(counts).reduce((sum, count) => sum + Number(count || 0), 0);
-const priceTransition = (fromSgd, toSgd) =>
-  `${fromSgd === null ? "нет точной цены" : usdPrice(fromSgd)} → ${
-    toSgd === null ? "нет точной цены" : usdPrice(toSgd)
+const priceTransition = (fromPrice, toPrice) =>
+  `${fromPrice === null ? "нет точной цены" : usdPrice(fromPrice)} → ${
+    toPrice === null ? "нет точной цены" : usdPrice(toPrice)
   }`;
 const changeItems = (entry) => {
   const items = [];
@@ -197,19 +238,34 @@ const changeItems = (entry) => {
   for (const item of entry.refurbPriceChanges || []) {
     items.push(
       `Refurb-цена ${item.product.productCode}: ${
-        priceTransition(item.fromSgd, item.toSgd)
+        priceTransition(item[changeFromField], item[changeToField])
       }`,
     );
   }
   for (const item of entry.newPriceChanges || []) {
     items.push(
       `Цена нового ${item.product.productCode}: ${
-        priceTransition(item.fromSgd, item.toSgd)
+        priceTransition(item[changeFromField], item[changeToField])
       }`,
     );
   }
+  for (const item of entry.taxInclusivePriceChanges || []) {
+    const before = item.before?.status === "resolved"
+      ? usdPrice(item.before.amount)
+      : "не получено";
+    const after = item.after?.status === "resolved"
+      ? usdPrice(item.after.amount)
+      : "не получено";
+    items.push(
+      `Итого с налогом ${item.product.productCode}: ${before} → ${after}`,
+    );
+  }
   for (const item of entry.added || []) {
-    items.push(`Добавлено: ${productChangeLabel(item)} · ${usdPrice(item.priceSgd)}`);
+    items.push(
+      `Добавлено: ${productChangeLabel(item)} · ${
+        usdPrice(item[refurbishedPriceField])
+      }`,
+    );
   }
   for (const item of entry.removed || []) {
     items.push(`Исчезло: ${productChangeLabel(item)}`);
@@ -244,7 +300,7 @@ const card = ({ product, label, heading, body, score, highlighted = false }) =>
     <div class="pick-chip">${escapeHtml(product.chip)}</div>
     <h3>${escapeHtml(heading)}</h3>
     <p>${escapeHtml(body)}</p>
-    <div class="pick-price"><strong>${usdPrice(product.priceSgd)}</strong><span>refurb</span></div>
+    <div class="pick-price"><strong>${usdPrice(product[refurbishedPriceField])}</strong><span>refurb</span></div>
     <a class="pick-link" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">Открыть у Apple ↗</a>
   </article>`;
 
@@ -258,10 +314,13 @@ const shortlistHtml = featured.map((item, index) => card({
 })).join("");
 const leadingPick = featured[0];
 const runnerUp = featured[1];
-const priceDelta = Math.abs(leadingPick.product.priceSgd - runnerUp.product.priceSgd);
+const priceDelta = Math.abs(
+  leadingPick.product[refurbishedPriceField] -
+    runnerUp.product[refurbishedPriceField],
+);
 const priceComparison = priceDelta === 0
   ? "Они стоят одинаково."
-  : `${leadingPick.product.priceSgd > runnerUp.product.priceSgd ? "Первый вариант дороже второго" : "Первый вариант дешевле второго"} на ${usdPrice(priceDelta)}.`;
+  : `${leadingPick.product[refurbishedPriceField] > runnerUp.product[refurbishedPriceField] ? "Первый вариант дороже второго" : "Первый вариант дешевле второго"} на ${usdPrice(priceDelta)}.`;
 
 const checkboxes = (name, values, labels = {}) => values
   .map((value, index) => `<label class="check-option" for="${name}-${index}"><input id="${name}-${index}" type="checkbox" name="${name}" value="${value}"><span>${labels[value] || value}</span></label>`)
@@ -277,23 +336,62 @@ const memories = [...new Set(products.map((product) => product.memory))]
 const storages = [...new Set(products.map((product) => product.storage))]
   .sort((a, b) => capacityNumber(a) - capacityNumber(b));
 const exactNewPriceCount = products.filter((product) =>
-  Number.isFinite(product.newPriceSgd) && product.newSourceUrl,
+  Number.isFinite(product[newPriceField]) && product.newSourceUrl,
 ).length;
 const catalogUrl = catalogDocument?.source?.refurbishedCatalogUrl ||
-  "https://www.apple.com/sg/shop/refurbished/mac";
-const canonicalLink = productionUrl
-  ? `\n  <link rel="canonical" href="${escapeHtml(productionUrl)}">`
+  profile.storefront.refurbishedCatalogUrl;
+const canonicalLink = canonicalUrl
+  ? `\n  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">`
   : "";
+const marketSwitcherHtml = enabledMarketProfiles
+  .map((marketProfile) => {
+    const isCurrent = marketProfile.id === profile.id;
+    return `<a class="market-option${isCurrent ? " active" : ""}" href="${escapeHtml(marketProfile.publication.canonicalUrl)}"${isCurrent ? ' aria-current="page"' : ""} aria-label="${escapeHtml(marketProfile.siteName)}">${escapeHtml(marketProfile.storefront.countryCode)}</a>`;
+  })
+  .join("");
 const rateLink = rateSourceUrl
   ? `<a href="${escapeHtml(rateSourceUrl)}" target="_blank" rel="noreferrer">Курс валют ↗</a>`
   : "";
+const hasReferenceLocationTax =
+  profile.tax.model === "apple-checkout-reference-location";
+const taxLocation = profile.tax.referenceLocation;
+const taxReferenceLabel = taxLocation
+  ? `${taxLocation.name}, ${taxLocation.street}, ${taxLocation.city}, ${taxLocation.region} ${taxLocation.postalCode}`
+  : "";
+const heroCurrencyCopy =
+  sourceCurrency === displayCurrency
+    ? `Цены Apple уже указаны в ${displayCurrency}; конвертация не применяется`
+    : `Пересчёт по официальному кросс-курсу на ${rateDateFormatted}, округление до $1`;
+const heroMarketCopy =
+  hasReferenceLocationTax
+    ? `Цены Apple указаны в ${sourceCurrency}. Каталог ${profile.storefront.countryName} остаётся общенациональным; налоговый ориентир привязан к одной точке.`
+    : `Цены в ${displayCurrency} крупно, исходные ${sourceCurrency} — рядом.`;
+const taxMethodCopy = hasReferenceLocationTax
+  ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.</p></article>`
+  : `<article><span>03</span><h3>USD — ориентир</h3><p>Конвертация сделана по официальному кросс-курсу на ${formatRussianLongDate(rateDate)}. Банк или карта могут посчитать иначе.</p></article>`;
+const clientPriceFormatterSource =
+  sourceCurrency !== displayCurrency
+    ? `const sourcePrice=new Intl.NumberFormat(${JSON.stringify(profile.currency.secondaryLocale)},{maximumFractionDigits:0});
+    const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong> <span class="source-secondary">(${escapeHtml(profile.currency.secondarySymbol || sourceCurrency)}'+sourcePrice.format(amount)+')</span>';`
+    : `const tablePrice=amount=>'<strong class="primary-currency">'+primaryCurrency.format(amount*rate)+'</strong>';`;
+const clientTaxFormatterSource = hasReferenceLocationTax
+  ? `const taxPrice=p=>p[taxInclusivePriceField]?
+      '<small class="tax-inclusive">Итого Apple: '+tablePrice(p[taxInclusivePriceField])+'</small>':
+      '<small class="tax-unresolved">Итого с налогом: не получено</small>';`
+  : `const taxPrice=()=>"";`;
+const refurbishedHeader = hasReferenceLocationTax
+  ? "Цена refurb до налога"
+  : "Цена refurb";
+const newHeader = hasReferenceLocationTax
+  ? "Цена нового до налога"
+  : "Цена нового";
 
 const html = `<!doctype html>
-<html lang="ru">
+<html lang="${escapeHtml(profile.language)}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Сравнение ${products.length} восстановленных MacBook Air и MacBook Pro из Apple Singapore: цены в USD, память, SSD, экран и чип.">
+  <meta name="description" content="Сравнение ${products.length} восстановленных MacBook Air и MacBook Pro из Apple ${escapeHtml(profile.storefront.countryName)}: цены в ${escapeHtml(displayCurrency)}, память, SSD, экран и чип.">
   <title>${escapeHtml(pageTitle)}</title>${canonicalLink}
   <style>
     :root{--paper:#f5f1e8;--ink:#11110f;--muted:#68675f;--line:#c9c5ba;--lime:#d9ff43;--blue:#254bff;--white:#fffef9}
@@ -304,8 +402,14 @@ const html = `<!doctype html>
     button,select{font:inherit}
     .topbar{height:64px;padding:0 4vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ink);position:sticky;top:0;background:rgba(245,241,232,.94);backdrop-filter:blur(12px);z-index:10}
     .wordmark{font-weight:900;letter-spacing:.08em;text-decoration:none}
-    .topbar nav{display:flex;gap:26px;font-size:13px}
-    .topbar nav a{text-decoration:none}
+    .topbar-actions,.section-nav,.market-switcher{display:flex;align-items:center}
+    .topbar-actions{gap:26px}
+    .section-nav{gap:26px;font-size:13px}
+    .section-nav a{text-decoration:none}
+    .market-switcher{gap:4px;border-left:1px solid var(--line);padding-left:18px}
+    .market-switcher>span{font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+    .market-option{display:grid;place-items:center;min-width:34px;height:30px;border:1px solid var(--ink);font:800 11px ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:none}
+    .market-option:hover,.market-option.active{background:var(--ink);color:var(--paper)}
     .hero{padding:72px 4vw 0;border-bottom:1px solid var(--ink)}
     .eyebrow,.section-index{font:700 12px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
     .live-dot{display:inline-block;width:8px;height:8px;background:#67cc45;border-radius:50%;margin-right:8px}
@@ -363,7 +467,7 @@ const html = `<!doctype html>
     .chip-name{display:inline-block;background:#e8e5dc;padding:7px 9px;font-weight:850}.chip-m5{background:var(--blue);color:white}
     .dot{display:inline-block;width:12px;height:12px;border:1px solid #777;border-radius:50%;margin-right:7px;vertical-align:-1px}
     .silver{background:#e7e8e8}.midnight{background:#252a32}.space-grey{background:#838487}.space-black{background:#222}.starlight{background:#f1e5c9}.sky-blue{background:#b9d5e7}
-    .usd{font-size:18px}.sgd-secondary{font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+    .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-unresolved{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
     .price-link{color:inherit;text-decoration-color:#aaa;text-underline-offset:3px}
     .saving{font-weight:800;color:#187235}.overpay{font-weight:800;color:#c12b22}.na{color:var(--muted)}
     .open{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--ink);text-decoration:none}.open:hover{background:var(--blue);color:white}
@@ -376,7 +480,7 @@ const html = `<!doctype html>
     footer{padding:30px 4vw;display:flex;justify-content:space-between;gap:20px;font-size:12px;color:var(--muted)}
     footer div{display:flex;gap:20px;flex-wrap:wrap}
     @media(max-width:1100px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.sort-control{grid-column:span 2}.reset{width:100%}}
-    @media(max-width:850px){.topbar nav{display:none}.hero{padding-top:48px}h1{margin-bottom:40px}.hero-grid,.picks-grid,.method-grid{grid-template-columns:1fr}.hero-note{max-width:480px}.hero-stats{grid-template-columns:1fr}.hero-stats div{border-right:0;border-bottom:1px solid var(--ink);padding:18px 0!important}.section-shell{padding:70px 4vw}.section-heading{display:block}.section-heading p{margin-top:20px}.reset{width:100%}.pick-card{min-height:340px}.change-latest,.change-entry-head{align-items:flex-start;flex-direction:column}footer{display:block}footer div{margin-top:15px}}
+    @media(max-width:850px){.section-nav{display:none}.topbar-actions{gap:10px}.market-switcher{padding-left:10px}.hero{padding-top:48px}h1{margin-bottom:40px}.hero-grid,.picks-grid,.method-grid{grid-template-columns:1fr}.hero-note{max-width:480px}.hero-stats{grid-template-columns:1fr}.hero-stats div{border-right:0;border-bottom:1px solid var(--ink);padding:18px 0!important}.section-shell{padding:70px 4vw}.section-heading{display:block}.section-heading p{margin-top:20px}.reset{width:100%}.pick-card{min-height:340px}.change-latest,.change-entry-head{align-items:flex-start;flex-direction:column}footer{display:block}footer div{margin-top:15px}}
     @media(max-width:620px){h1{font-size:54px}.lede{font-size:22px}.filters{grid-template-columns:1fr}.sort-control{grid-column:auto}.dropdown-menu{position:static;min-width:0;margin-top:6px;box-shadow:none}.section-heading h2{font-size:44px}.pick-chip{font-size:58px}}
     @media print{.topbar,.filters,.open{display:none}.hero{padding-top:30px}.section-shell{padding:40px 3vw}.table-wrap{overflow:visible}table{min-width:0}th,td{padding:8px;font-size:8px}}
   </style>
@@ -384,16 +488,19 @@ const html = `<!doctype html>
 <body>
   <header class="topbar">
     <a class="wordmark" href="#top">MAC / FINDER</a>
-    <nav><a href="#shortlist">Короткий список</a><a href="#comparison">Все модели</a><a href="#method">О данных</a><a href="#changelog">Изменения</a></nav>
+    <div class="topbar-actions">
+      <nav class="section-nav" aria-label="Разделы"><a href="#shortlist">Короткий список</a><a href="#comparison">Все модели</a><a href="#method">О данных</a><a href="#changelog">Изменения</a></nav>
+      <nav class="market-switcher" aria-label="Выбор рынка"><span>Рынок</span>${marketSwitcherHtml}</nav>
+    </div>
   </header>
 
   <main>
     <section class="hero" id="top">
-      <div class="eyebrow"><span class="live-dot"></span>Apple Refurbished · Singapore · ${checkedDate}</div>
+      <div class="eyebrow"><span class="live-dot"></span>${escapeHtml(profile.siteName)} · Apple ${escapeHtml(profile.storefront.countryName)} · ${checkedDate}</div>
       <h1>MacBook Air<br>или Pro?</h1>
       <div class="hero-grid">
-        <p class="lede">В одной таблице — все доступные 13″ и 15″ Air плюс все 14″ и 16″ MacBook Pro. Цены в долларах США крупно, сингапурские — рядом.</p>
-        <div class="hero-note"><span>Основная валюта</span><strong>USD</strong><small>Пересчёт по официальному кросс-курсу на ${rateDateFormatted}, округление до $1</small></div>
+        <p class="lede">В одной таблице — все доступные 13″ и 15″ Air плюс все 14″ и 16″ MacBook Pro. ${escapeHtml(heroMarketCopy)}</p>
+        <div class="hero-note"><span>Основная валюта</span><strong>${escapeHtml(displayCurrency)}</strong><small>${escapeHtml(heroCurrencyCopy)}</small></div>
       </div>
       <div class="hero-stats">
         <div><strong>${products.length}</strong><span>актуальные позиции</span></div>
@@ -422,7 +529,7 @@ const html = `<!doctype html>
       <div class="result-count" id="count"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Модель</th><th>Экран</th><th>Чип</th><th>RAM</th><th>SSD</th><th>CPU / GPU</th><th>Цвет</th><th>Цена refurb</th><th>Цена нового</th><th>Скидка</th><th>Apple</th></tr></thead>
+          <thead><tr><th>Модель</th><th>Экран</th><th>Чип</th><th>RAM</th><th>SSD</th><th>CPU / GPU</th><th>Цвет</th><th>${escapeHtml(refurbishedHeader)}</th><th>${escapeHtml(newHeader)}</th><th>Скидка</th><th>Apple</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
         <div class="empty" id="empty" hidden>Такой комбинации сейчас нет. <button id="empty-reset" type="button">Сбросить фильтры</button></div>
@@ -434,7 +541,7 @@ const html = `<!doctype html>
       <div class="method-grid">
         <article><span>01</span><h3>Остатки меняются</h3><p>Снимок каталога проверен ${checkedDateLong}. Apple не публикует расписание пополнений, а отдельные модели могут исчезнуть в любой момент.</p></article>
         <article><span>02</span><h3>Новая цена — только точная</h3><p>Для ${exactNewPriceCount} актуальных позиций проверены те же экран, чип, ядра, RAM и SSD. Если точного совпадения нет, новая цена не приписывается.</p></article>
-        <article><span>03</span><h3>USD — ориентир</h3><p>Конвертация сделана по официальному кросс-курсу на ${formatRussianLongDate(rateDate)}. Банк или карта могут посчитать иначе.</p></article>
+        ${taxMethodCopy}
       </div>
     </section>
 
@@ -448,19 +555,22 @@ const html = `<!doctype html>
     </section>
   </main>
 
-  <footer><p>Независимый справочник. Не связан с Apple Inc.</p><div><a href="${escapeHtml(catalogUrl)}" target="_blank" rel="noreferrer">Весь каталог Apple ↗</a><a href="https://www.apple.com/sg/shop/refurbished/mac/15-inch-macbook-air" target="_blank" rel="noreferrer">15″ Air ↗</a><a href="https://www.apple.com/sg/shop/refurbished/mac/macbook-pro" target="_blank" rel="noreferrer">MacBook Pro ↗</a>${rateLink}</div></footer>
+  <footer><p>Независимый справочник. Не связан с Apple Inc.</p><div><a href="${escapeHtml(catalogUrl)}" target="_blank" rel="noreferrer">Весь каталог Apple ↗</a>${rateLink}</div></footer>
 
   <script>
     const products=${embeddedProducts};
     const rate=${rate};
+    const refurbishedPriceField=${JSON.stringify(refurbishedPriceField)};
+    const newPriceField=${JSON.stringify(newPriceField)};
+    const taxInclusivePriceField=${JSON.stringify(taxInclusivePriceField)};
     const featured=${embeddedFeatured};
     const recommendedCodes=${JSON.stringify(recommendedCodes)};
     const escapeHtml=${embeddedEscapeHtml};
     const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
     const classes={Silver:"silver",Midnight:"midnight","Space Grey":"space-grey","Space Black":"space-black",Starlight:"starlight","Sky Blue":"sky-blue"};
-    const usd=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
-    const sgd=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
-    const tablePrice=amountSgd=>'<strong class="usd">'+usd.format(amountSgd*rate)+'</strong> <span class="sgd-secondary">(S$'+sgd.format(amountSgd)+')</span>';
+    const primaryCurrency=new Intl.NumberFormat(${JSON.stringify(profile.locale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},maximumFractionDigits:0});
+    ${clientPriceFormatterSource}
+    ${clientTaxFormatterSource}
     const filterNames=["family","screen","chip","memory","storage"];
     const sorting=document.querySelector("#sorting");
     const memoryNumber=value=>Number(value.replace(/\\D/g,""));
@@ -474,7 +584,7 @@ const html = `<!doctype html>
     );
     const score=p=>{
       const item=featuredFor(p);
-      return item?1000000-item.rank*1000+item.score:(p.chip.startsWith("M5")?100:50)+memoryNumber(p.memory)/10-p.priceSgd/10000;
+      return item?1000000-item.rank*1000+item.score:(p.chip.startsWith("M5")?100:50)+memoryNumber(p.memory)/10-p[refurbishedPriceField]/10000;
     };
     const selected=name=>new Set([...document.querySelectorAll(\`input[name="\${name}"]:checked\`)].map(input=>input.value));
     const updateFilterLabels=()=>document.querySelectorAll(".filter-dropdown").forEach(dropdown=>{
@@ -487,19 +597,19 @@ const html = `<!doctype html>
       const selections=Object.fromEntries(filterNames.map(name=>[name,selected(name)]));
       let result=products.filter(p=>filterNames.every(name=>selections[name].size===0||selections[name].has(p[name])));
       result.sort((a,b)=>
-        sorting.value==="price-asc"?a.priceSgd-b.priceSgd:
-        sorting.value==="price-desc"?b.priceSgd-a.priceSgd:
-        sorting.value==="memory"?memoryNumber(b.memory)-memoryNumber(a.memory)||storageNumber(b.storage)-storageNumber(a.storage)||a.priceSgd-b.priceSgd:
-        sorting.value==="newest"?chipNumber(b.chip)-chipNumber(a.chip)||chipTier(b.chip)-chipTier(a.chip)||a.priceSgd-b.priceSgd:
-        score(b)-score(a)||a.priceSgd-b.priceSgd
+        sorting.value==="price-asc"?a[refurbishedPriceField]-b[refurbishedPriceField]:
+        sorting.value==="price-desc"?b[refurbishedPriceField]-a[refurbishedPriceField]:
+        sorting.value==="memory"?memoryNumber(b.memory)-memoryNumber(a.memory)||storageNumber(b.storage)-storageNumber(a.storage)||a[refurbishedPriceField]-b[refurbishedPriceField]:
+        sorting.value==="newest"?chipNumber(b.chip)-chipNumber(a.chip)||chipTier(b.chip)-chipTier(a.chip)||a[refurbishedPriceField]-b[refurbishedPriceField]:
+        score(b)-score(a)||a[refurbishedPriceField]-b[refurbishedPriceField]
       );
       document.querySelector("#count").textContent=result.length+" из "+products.length+" позиций";
       document.querySelector("#empty").hidden=result.length!==0;
       document.querySelector("#rows").innerHTML=result.map(p=>{
-        const difference=p.newPriceSgd?p.newPriceSgd-p.priceSgd:null;
+        const difference=p[newPriceField]?p[newPriceField]-p[refurbishedPriceField]:null;
         const discount=difference===null?'<span class="na">нет цены</span>':difference>=0?
-          \`<span class="saving">−\${tablePrice(difference)} · \${Math.round(difference/p.newPriceSgd*100)}%</span>\`:
-          \`<span class="overpay">+\${tablePrice(-difference)} · \${Math.round(-difference/p.newPriceSgd*100)}%</span>\`;
+          \`<span class="saving">−\${tablePrice(difference)} · \${Math.round(difference/p[newPriceField]*100)}%</span>\`:
+          \`<span class="overpay">+\${tablePrice(-difference)} · \${Math.round(-difference/p[newPriceField]*100)}%</span>\`;
         const rowClass=recommendedCodes.includes(p.productCode)?"recommended":"";
         const chipClass=p.chip.startsWith("M5")?"chip-m5":"";
         const colourClass=classes[p.colour]||"";
@@ -512,8 +622,8 @@ const html = `<!doctype html>
           <td><strong>\${escapeHtml(p.storage)}</strong></td>
           <td>\${escapeHtml(p.cpuCores)} / \${escapeHtml(p.gpuCores)} ядер</td>
           <td><span class="dot \${colourClass}"></span>\${escapeHtml(colourName)}</td>
-          <td>\${tablePrice(p.priceSgd)}</td>
-          <td>\${p.newPriceSgd?\`<a class="price-link" href="\${escapeHtml(p.newSourceUrl)}" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">\${tablePrice(p.newPriceSgd)}</a>\`:'<span class="na">—</span>'}</td>
+          <td>\${tablePrice(p[refurbishedPriceField])}\${taxPrice(p)}</td>
+          <td>\${p[newPriceField]?\`<a class="price-link" href="\${escapeHtml(p.newSourceUrl)}" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">\${tablePrice(p[newPriceField])}</a>\`:'<span class="na">—</span>'}</td>
           <td>\${discount}</td>
           <td><a class="open" href="\${escapeHtml(p.sourceUrl)}" target="_blank" rel="noreferrer" aria-label="Открыть \${escapeHtml(p.productCode)} у Apple">↗</a></td>
         </tr>\`;
@@ -532,8 +642,8 @@ const html = `<!doctype html>
 </body>
 </html>`;
 
-await mkdir("outputs", { recursive: true });
-const outputPath = "outputs/macbook-air-refurbished-comparison.html";
+await mkdir(dirname(paths.artifact), { recursive: true });
+const outputPath = paths.artifact;
 const temporaryOutputPath = `${outputPath}.tmp`;
 await writeFile(temporaryOutputPath, html);
 await rename(temporaryOutputPath, outputPath);

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "id": "sg",
+  "siteName": "MacBook SG Refurbished",
+  "language": "ru",
+  "locale": "ru-RU",
+  "storefront": {
+    "countryCode": "SG",
+    "countryName": "Singapore",
+    "baseUrl": "https://www.apple.com/sg",
+    "refurbishedCatalogUrl": "https://www.apple.com/sg/shop/refurbished/mac/macbook-pro",
+    "newCatalogBaseUrl": "https://www.apple.com/sg/shop/buy-mac"
+  },
+  "currency": {
+    "source": "SGD",
+    "display": "USD",
+    "secondarySymbol": "S$",
+    "secondaryLocale": "en-US",
+    "priceFields": {
+      "refurbished": "priceSgd",
+      "new": "newPriceSgd",
+      "taxInclusive": null
+    },
+    "conversion": {
+      "type": "cbr-cross-rate",
+      "siteField": "sgdToUsd"
+    }
+  },
+  "tax": {
+    "model": "included-in-list-price",
+    "acquisition": null,
+    "referenceLocation": null,
+    "availabilityPolicy": "catalog-wide",
+    "filterByDeliveryOrPickup": false
+  },
+  "ranking": {
+    "policyPath": "config/ranking-policy.json",
+    "reference": {
+      "family": "Air",
+      "screen": "13″",
+      "memory": "24GB",
+      "storage": "1TB"
+    }
+  },
+  "namespace": {
+    "catalog": "data/catalog.json",
+    "featured": "data/featured.json",
+    "site": "data/site.json",
+    "updateStatus": "data/update-status.json",
+    "updateDelta": "data/update-delta.json",
+    "changelog": "data/changelog.json",
+    "artifactDirectory": "outputs/markets/sg"
+  },
+  "publication": {
+    "status": "active",
+    "provider": "cloudflare-pages",
+    "projectSlug": "macbook-sg-refurbished",
+    "repository": "git@github.com:chezzdev/macbook-refurbished-sg.git",
+    "checkoutPath": "work/gh-pages-site",
+    "artifactDirectory": "markets/sg",
+    "branch": "main",
+    "productionUrl": "https://macbook-sg-refurbished.pages.dev/",
+    "canonicalUrl": "https://macbook-sg-refurbished.pages.dev/",
+    "plannedUrl": null,
+    "approvalRequired": false
+  }
+}

@@ -3,6 +3,13 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fetchText, writeJsonAtomic } from "./apple-catalog-lib.mjs";
+import {
+  loadMarketContext,
+  loadMarketProfile,
+  marketIdFromArgv,
+} from "./market-profile.mjs";
+
+const defaultMarketProfile = await loadMarketProfile("sg");
 
 export const CBR_DAILY_XML_URL =
   "https://www.cbr.ru/scripts/XML_daily.asp";
@@ -61,10 +68,24 @@ export function parseCbrCrossRate(xml) {
 export async function updateExchangeRate({
   fetchTextImpl = fetchText,
   sitePath = resolve(import.meta.dirname, "../data/site.json"),
+  marketProfile = defaultMarketProfile,
 } = {}) {
   const currentSite = JSON.parse(await readFile(sitePath, "utf8"));
   if (currentSite?.schemaVersion !== 1) {
     throw new Error("data/site.json schemaVersion must be 1");
+  }
+  if (marketProfile.currency.conversion.type === "identity") {
+    const updatedSite = {
+      ...currentSite,
+      currency: {
+        sourceCurrency: marketProfile.currency.source,
+        displayCurrency: marketProfile.currency.display,
+        conversionType: "identity",
+        sourceToDisplayRate: 1,
+      },
+    };
+    await writeJsonAtomic(sitePath, updatedSite);
+    return updatedSite;
   }
   const { html } = await fetchTextImpl(CBR_DAILY_XML_URL);
   const currency = parseCbrCrossRate(html);
@@ -81,9 +102,17 @@ function parseLocalizedNumber(value) {
 }
 
 if (process.argv[1] === import.meta.filename) {
-  const site = await updateExchangeRate();
-  console.log(
-    `Updated SGD to USD rate: ${site.currency.sgdToUsd} ` +
-      `for ${site.currency.rateDate}.`,
-  );
+  const { profile, paths } = await loadMarketContext(marketIdFromArgv());
+  const site = await updateExchangeRate({
+    sitePath: paths.site,
+    marketProfile: profile,
+  });
+  if (profile.currency.conversion.type === "identity") {
+    console.log(`Confirmed identity USD display conversion for ${profile.siteName}.`);
+  } else {
+    console.log(
+      `Updated SGD to USD rate: ${site.currency.sgdToUsd} ` +
+        `for ${site.currency.rateDate}.`,
+    );
+  }
 }

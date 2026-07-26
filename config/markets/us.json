@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "id": "us",
+  "siteName": "MacBook US Refurbished",
+  "language": "ru",
+  "locale": "en-US",
+  "storefront": {
+    "countryCode": "US",
+    "countryName": "United States",
+    "baseUrl": "https://www.apple.com",
+    "refurbishedCatalogUrl": "https://www.apple.com/shop/refurbished/mac",
+    "newCatalogBaseUrl": "https://www.apple.com/shop/buy-mac"
+  },
+  "currency": {
+    "source": "USD",
+    "display": "USD",
+    "secondarySymbol": null,
+    "secondaryLocale": "en-US",
+    "priceFields": {
+      "refurbished": "priceUsd",
+      "new": "newPriceUsd",
+      "taxInclusive": "taxInclusivePriceUsd"
+    },
+    "conversion": {
+      "type": "identity",
+      "siteField": null
+    }
+  },
+  "tax": {
+    "model": "apple-checkout-reference-location",
+    "acquisition": {
+      "adapter": "apple-checkout",
+      "status": "unavailable",
+      "reason": "No stable non-interactive Apple checkout tax quote interface is configured"
+    },
+    "referenceLocation": {
+      "id": "apple-beverly-center",
+      "name": "Apple Beverly Center",
+      "street": "8500 Beverly Boulevard",
+      "city": "Los Angeles",
+      "region": "CA",
+      "postalCode": "90048",
+      "country": "US"
+    },
+    "priceBasis": "pre-tax",
+    "taxInclusiveSourcePolicy": "apple-flow-only",
+    "availabilityPolicy": "catalog-wide",
+    "filterByDeliveryOrPickup": false
+  },
+  "ranking": {
+    "policyPath": "config/ranking-policy.us.json",
+    "reference": {
+      "family": "Air",
+      "screen": "13″",
+      "memory": "24GB",
+      "storage": "1TB"
+    }
+  },
+  "namespace": {
+    "catalog": "data/markets/us/catalog.json",
+    "featured": "data/markets/us/featured.json",
+    "site": "data/markets/us/site.json",
+    "updateStatus": "data/markets/us/update-status.json",
+    "updateDelta": "data/markets/us/update-delta.json",
+    "changelog": "data/markets/us/changelog.json",
+    "artifactDirectory": "outputs/markets/us"
+  },
+  "publication": {
+    "status": "approved-pending-provision",
+    "provider": "sites",
+    "projectSlug": "macbook-us-refurbished",
+    "repository": "git@github.com:chezzdev/macbook-refurbished-sg.git",
+    "checkoutPath": "work/gh-pages-site",
+    "artifactDirectory": "markets/us",
+    "branch": "main",
+    "productionUrl": null,
+    "canonicalUrl": "https://macbook-us-refurbished.pages.dev/",
+    "plannedUrl": "https://macbook-us-refurbished.pages.dev/",
+    "approvalRequired": false
+  }
+}

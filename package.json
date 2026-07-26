@@ -1,5 +1,5 @@
 {
-  "name": "macbook-refurbished-sg",
+  "name": "macbook-refurbished-markets",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -7,16 +7,18 @@
   },
   "scripts": {
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
-    "build": "node work/build-expanded-standalone.mjs",
+    "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "build:catalog": "node work/build-expanded-standalone.mjs",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
-    "test": "node --test scripts/apple-catalog-lib.test.mjs tests/changelog.test.mjs tests/exchange-rate.test.mjs tests/html-escape.test.mjs tests/rank-models.test.mjs tests/standalone-catalog.test.mjs",
+    "test": "node --test scripts/apple-catalog-lib.test.mjs tests/changelog.test.mjs tests/exchange-rate.test.mjs tests/html-escape.test.mjs tests/market-engine.test.mjs tests/rank-models.test.mjs tests/standalone-catalog.test.mjs",
     "catalog:update": "node scripts/update-apple-catalog.mjs",
     "currency:update": "node scripts/update-exchange-rate.mjs",
     "catalog:validate": "node scripts/validate-apple-catalog.mjs",
     "catalog:rank": "node scripts/rank-models.mjs",
     "catalog:rank:check": "node scripts/rank-models.mjs --check",
     "catalog:summary": "node scripts/summarize-update.mjs",
-    "test:catalog": "node --test scripts/apple-catalog-lib.test.mjs tests/exchange-rate.test.mjs",
+    "market:initialize": "node scripts/initialize-market.mjs",
+    "test:catalog": "node --test scripts/apple-catalog-lib.test.mjs tests/exchange-rate.test.mjs tests/market-engine.test.mjs",
     "refresh:publish": "./work/update-published-site.zsh",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"

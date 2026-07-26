@@ -1,62 +1,104 @@
-# MacBook Refurbished Singapore
+# MacBook Refurbished Markets
 
-Детерминированный каталог восстановленных MacBook Air и MacBook Pro из Apple
-Singapore. Страница собирается из отдельных источников данных и публикуется на
-неизменный адрес:
+Общий детерминированный движок независимых каталогов восстановленных MacBook
+из региональных Apple Store.
 
-https://macbook-sg-refurbished.pages.dev
+- **MacBook SG Refurbished** — действующий сайт:
+  <https://macbook-sg-refurbished.pages.dev/>
+- **MacBook US Refurbished** — отдельный профиль и отдельный будущий сайт.
+  Планируемый slug `macbook-us-refurbished` остаётся заблокированным до
+  одобрения hosting project и финального production URL. Этот проект ничего
+  внешнего для US не создаёт и не публикует.
 
-## Один полный запуск
+В интерфейсе есть переключатель рынков, построенный из
+`config/markets/registry.json`. Он ведёт на канонический URL отдельного сайта и
+не подмешивает данные другого рынка в текущую страницу. Новый enabled-профиль
+появляется в переключателе без отдельного UI-кода.
+
+## Архитектура рынков
+
+Профили находятся в `config/markets/`. Каждый профиль владеет:
+
+- Apple storefront и URL источников;
+- исходной и основной валютами и конвертацией;
+- моделью налога и фиксированной reference location;
+- ссылкой на собственную ranking policy и идеальную конфигурацию;
+- путями данных и выходного HTML;
+- именем сайта, hosting slug, общим publication repository, каноническим и
+  production URL.
+
+Singapore и US проходят через одни и те же parser, exact-new matcher, tax
+adapter, validator, ranker, changelog, builder и publication workflow.
+Singapore сохраняет исторические `data/*` как собственный namespace профиля —
+это совместимость данных, а не отдельный кодовый путь.
+Выходные артефакты при этом полностью симметричны:
+`outputs/markets/sg/index.html` и `outputs/markets/us/index.html`.
+
+Эталон обоих первых профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
+Политики изолированы: `config/ranking-policy.json` для SG и
+`config/ranking-policy.us.json` для US. Цветовые дубли не занимают несколько
+featured-мест; порядок полностью детерминирован.
+
+## Цены и налоги
+
+Точная цена нового устройства принимается только при полном совпадении экрана,
+типа дисплея, чипа/tier, CPU/GPU, памяти и SSD. Standard и Nano-texture —
+разные конфигурации.
+
+SGD конвертируется в основную валюту USD по существующему официальному
+кросс-курсу. Для US исходная и основная валюты — USD, поэтому курс равен 1.
+
+US catalog market-wide и не фильтруется по delivery или pickup. Налоговый
+ориентир:
+
+> Apple Beverly Center, 8500 Beverly Boulevard, Los Angeles, CA 90048
+
+Итоговая цена с налогом допускается только с provenance собственного checkout
+flow Apple. Адаптер хранит pre-tax и final price отдельно. Если надёжная
+Apple-котировка недоступна, final price остаётся `null` со статусом
+`unresolved`; локально рассчитанная ставка не выдаётся за цену Apple.
+
+## Команды
+
+Локальные проверки, не выполняющие live refresh:
+
+```zsh
+npm test
+npm run build:catalog -- --market sg
+npm run build
+npm run catalog:rank:check -- --market sg
+node scripts/initialize-market.mjs --market sg --check
+```
+
+Полный действующий Singapore workflow по-прежнему запускается неизменной
+командой:
 
 ```zsh
 ./work/update-published-site.zsh
 ```
 
-Команда последовательно:
-
-1. получает текущий refurbished-каталог Apple Singapore;
-2. ищет цену нового устройства только для точного совпадения конфигурации,
-   включая тип дисплея у MacBook Pro;
-3. обновляет официальный кросс-курс SGD → USD;
-4. валидирует и стабильно сортирует каталог;
-5. применяет зафиксированную политику рейтинга;
-6. дважды собирает HTML и сравнивает SHA-256;
-7. запускает тесты и синхронизирует приватный GitHub-репозиторий;
-8. публикует тот же артефакт в существующий Cloudflare Pages project и сверяет
-   его хеш по постоянному URL.
-
-Любая ошибка останавливает процесс до публикации.
-
-## Источники и правила
-
-- `data/catalog.json` — нормализованный каталог и точные новые цены.
-- `data/changelog.json` — история реальных изменений каталога.
-- `data/featured.json` — три результата рейтинга для верхней секции.
-- `data/site.json` — постоянный URL и курс SGD → USD.
-- `data/update-status.json` — время и итоговые счётчики обновления.
-- `data/update-delta.json` — изменения относительно предыдущего запуска.
-- `config/ranking-policy.json` — фиксированные веса, идеальная конфигурация и
-  tie-breakers.
-
-Эталон рейтинга: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ. Цена, поколение чипа,
-скидка и близость к этому эталону учитываются явно. Цветовые дубли не занимают
-несколько мест в верхней тройке.
-
-## Полезные команды
+Она является тонким compatibility wrapper над общим workflow:
 
 ```zsh
-npm run catalog:update
-npm run currency:update
-npm run catalog:validate
-npm run catalog:rank
-npm run catalog:summary
-npm run build
-npm test
+./work/update-market-site.zsh --market sg
 ```
 
-## Ежедневное обновление
+Общий workflow выполняет fetch, exact matching, currency/tax adapters,
+validation, ranking, changelog, двойную детерминированную сборку, тесты,
+private-repository sync, Cloudflare Pages deployment и live hash verification.
+Оба рынка используют существующий checkout `work/gh-pages-site` и один remote;
+публикуемые файлы изолированы как `markets/sg/index.html` и
+`markets/us/index.html`. Старый корневой `index.html` SG удаляется при следующей
+канонической синхронизации. Каждый профиль выбирает собственный артефакт и
+отдельный Cloudflare Pages project, поэтому постоянный SG URL не зависит от
+расположения файла в repository. US профиль fail-closed до одобрения hosting
+project и финального URL, поэтому
+`--market us` не начинает live refresh и не создаёт hosting project.
 
-`work/daily-update.zsh` запускает полный процесс, сохраняет текстовый отчёт в
-`outputs/latest-update-summary.txt` и показывает системное уведомление macOS.
-LaunchAgent `dev.chezz.macbook-refurbished-sg.daily-update` запускает его каждый
-день в 08:00 по локальному времени Mac.
+## Ежедневное обновление Singapore
+
+`work/daily-update.zsh` продолжает вызывать
+`work/update-published-site.zsh`, сохраняет отчёт в
+`outputs/latest-update-summary.txt` и показывает macOS notification.
+LaunchAgent `dev.chezz.macbook-refurbished-sg.daily-update` остаётся
+Singapore-only и не изменяется.

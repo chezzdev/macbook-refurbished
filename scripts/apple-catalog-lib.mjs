@@ -1,12 +1,14 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { loadMarketProfile } from "./market-profile.mjs";
 
 export const SCHEMA_VERSION = 1;
+export const DEFAULT_MARKET_PROFILE = await loadMarketProfile("sg");
 export const REFURBISHED_CATALOG_URL =
-  "https://www.apple.com/sg/shop/refurbished/mac/macbook-pro";
-export const NEW_CATALOG_BASE_URL = "https://www.apple.com/sg/shop/buy-mac";
+  DEFAULT_MARKET_PROFILE.storefront.refurbishedCatalogUrl;
+export const NEW_CATALOG_BASE_URL =
+  DEFAULT_MARKET_PROFILE.storefront.newCatalogBaseUrl;
 
-const APPLE_ORIGIN = "https://www.apple.com";
 const REQUIRED_STRING_FIELDS = [
   "productCode",
   "sourceUrl",
@@ -25,8 +27,11 @@ const REQUIRED_NUMBER_FIELDS = [
   "cpuCores",
   "gpuCores",
   "releaseYear",
-  "priceSgd",
 ];
+
+function priceFields(marketProfile = DEFAULT_MARKET_PROFILE) {
+  return marketProfile.currency.priceFields;
+}
 
 export const sleep = (milliseconds) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -99,7 +104,12 @@ function lexicalCompare(left, right) {
   return left < right ? -1 : 1;
 }
 
-export function compareProducts(left, right) {
+export function compareProducts(
+  left,
+  right,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
+  const refurbishedPriceField = priceFields(marketProfile).refurbished;
   return (
     (left.family === right.family ? 0 : left.family === "Air" ? -1 : 1) ||
     Number(left.screen.replace(/\D/g, "")) -
@@ -110,7 +120,7 @@ export function compareProducts(left, right) {
     right.gpuCores - left.gpuCores ||
     capacityInGb(right.memory) - capacityInGb(left.memory) ||
     capacityInGb(right.storage) - capacityInGb(left.storage) ||
-    left.priceSgd - right.priceSgd ||
+    left[refurbishedPriceField] - right[refurbishedPriceField] ||
     lexicalCompare(left.colour, right.colour) ||
     lexicalCompare(left.productCode, right.productCode)
   );
@@ -137,7 +147,31 @@ function formatCapacity(value = "") {
   return normalizeSpaces(value).toUpperCase();
 }
 
-export function parseRefurbishedTile(tile) {
+export function unresolvedTaxInclusivePricing(
+  product,
+  marketProfile,
+  reason = "apple-tax-quote-unavailable",
+) {
+  const refurbishedPriceField = priceFields(marketProfile).refurbished;
+  return {
+    status: "unresolved",
+    amount: null,
+    currency: marketProfile.currency.source,
+    preTaxAmount: product[refurbishedPriceField],
+    locationId: marketProfile.tax.referenceLocation.id,
+    provenance: {
+      provider: "Apple",
+      method: "apple-checkout",
+      sourceUrl: null,
+    },
+    reason,
+  };
+}
+
+export function parseRefurbishedTile(
+  tile,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
   const dimensions = tile?.filters?.dimensions || {};
   const modelDimension = dimensions.refurbClearModel;
   if (!["macbookair", "macbookpro"].includes(modelDimension)) return null;
@@ -147,7 +181,7 @@ export function parseRefurbishedTile(tile) {
   const productDetailsPath = String(tile.productDetailsUrl || "").split("?")[0];
   const product = {
     productCode: normalizeSpaces(tile.partNumber),
-    sourceUrl: new URL(productDetailsPath, APPLE_ORIGIN).href,
+    sourceUrl: new URL(productDetailsPath, marketProfile.storefront.baseUrl).href,
     title,
     family,
     model: `MacBook ${family}`,
@@ -167,17 +201,31 @@ export function parseRefurbishedTile(tile) {
     releaseYear: Number(dimensions.dimensionRelYear || 0),
     memory: formatCapacity(dimensions.tsMemorySize),
     storage: formatCapacity(dimensions.dimensionCapacity),
-    priceSgd: parsePrice(tile?.price?.currentPrice?.amount),
-    newPriceSgd: null,
     newSourceUrl: null,
   };
+  const fields = priceFields(marketProfile);
+  product[fields.refurbished] = parsePrice(tile?.price?.currentPrice?.amount);
+  product[fields.new] = null;
+  if (marketProfile.tax.model === "apple-checkout-reference-location") {
+    product[fields.taxInclusive] = null;
+    product.taxInclusivePricing = unresolvedTaxInclusivePricing(
+      product,
+      marketProfile,
+      "apple-tax-quote-not-attempted",
+    );
+  }
   product.configurationKey = buildConfigurationKey(product);
   return product;
 }
 
-export function parseRefurbishedCatalog(html) {
+export function parseRefurbishedCatalog(
+  html,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
   const tiles = extractJsonArray(html, "tiles");
-  const products = tiles.map(parseRefurbishedTile).filter(Boolean);
+  const products = tiles
+    .map((tile) => parseRefurbishedTile(tile, marketProfile))
+    .filter(Boolean);
   if (products.length === 0) {
     throw new Error("Apple refurbished catalog contained no MacBook Air or Pro products");
   }
@@ -189,24 +237,31 @@ export function parseMemoryFromProductHtml(html) {
   return amount ? `${amount}GB` : "";
 }
 
-export function buildNewProductUrl(product) {
+export function buildNewProductUrl(
+  product,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
   const screen = product.screen.replace(/\D/g, "");
   const chip = normalizeForMatch(product.chip).replaceAll(" ", "-");
   const memory = product.memory.toLowerCase();
   const storage = product.storage.toLowerCase();
 
   if (product.family === "Air") {
-    return `${NEW_CATALOG_BASE_URL}/macbook-air/${screen}-inch-midnight-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
+    return `${marketProfile.storefront.newCatalogBaseUrl}/macbook-air/${screen}-inch-midnight-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
   }
 
   const display =
     product.display === "Nano-texture"
       ? "nano-texture-display"
       : "standard-display";
-  return `${NEW_CATALOG_BASE_URL}/macbook-pro/${screen}-inch-silver-${display}-apple-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
+  return `${marketProfile.storefront.newCatalogBaseUrl}/macbook-pro/${screen}-inch-silver-${display}-apple-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
 }
 
-export function parseExactNewPriceHtml(html, product) {
+export function parseExactNewPriceHtml(
+  html,
+  product,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
   const title = normalizeForMatch(
     html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "",
   );
@@ -235,12 +290,16 @@ export function parseExactNewPriceHtml(html, product) {
     );
   }
 
-  const offerMatch = html.match(
-    /"priceCurrency"\s*:\s*"SGD"\s*,\s*"price"\s*:\s*"?([\d.]+)"?/,
+  const currency = marketProfile.currency.source;
+  const offerPattern = new RegExp(
+    `"priceCurrency"\\s*:\\s*"${currency}"\\s*,\\s*"price"\\s*:\\s*"?([\\d.]+)"?`,
   );
+  const offerMatch = html.match(offerPattern);
   const exactPrice = Number(offerMatch?.[1] || 0);
   if (!Number.isFinite(exactPrice) || exactPrice <= 0) {
-    throw new Error("Exact SGD price not found in Apple product offer");
+    throw new Error(
+      `Exact ${currency} price not found in Apple product offer`,
+    );
   }
   return exactPrice;
 }
@@ -256,7 +315,7 @@ export async function fetchText(
         redirect: "follow",
         headers: {
           "user-agent":
-            "Mozilla/5.0 (compatible; AppleCatalogUpdater/1.0; +https://www.apple.com/sg/)",
+            "Mozilla/5.0 (compatible; AppleCatalogUpdater/2.0; +https://www.apple.com/)",
         },
       });
       if (!response.ok) {
@@ -319,8 +378,13 @@ export function newestChipGeneration(products) {
 
 export async function hydrateCurrentNewPrices(
   products,
-  { fetchTextImpl = fetchText, batchSize = 4 } = {},
+  {
+    fetchTextImpl = fetchText,
+    batchSize = 4,
+    marketProfile = DEFAULT_MARKET_PROFILE,
+  } = {},
 ) {
+  const fields = priceFields(marketProfile);
   const currentChipGeneration = newestChipGeneration(products);
   const currentProducts = products.filter(
     (product) => chipGeneration(product.chip) === currentChipGeneration,
@@ -335,10 +399,10 @@ export async function hydrateCurrentNewPrices(
     uniqueConfigurations,
     batchSize,
     async (product) => {
-      const newSourceUrl = buildNewProductUrl(product);
+      const newSourceUrl = buildNewProductUrl(product, marketProfile);
       const { html } = await fetchTextImpl(newSourceUrl);
-      const newPriceSgd = parseExactNewPriceHtml(html, product);
-      return [product.configurationKey, { newPriceSgd, newSourceUrl }];
+      const newPrice = parseExactNewPriceHtml(html, product, marketProfile);
+      return [product.configurationKey, { newPrice, newSourceUrl }];
     },
   );
   const pricesByConfiguration = new Map(priceEntries);
@@ -348,12 +412,109 @@ export async function hydrateCurrentNewPrices(
     pricedConfigurationCount: pricesByConfiguration.size,
     products: products.map((product) => {
       const exactPrice = pricesByConfiguration.get(product.configurationKey);
-      return {
+      const pricedProduct = {
         ...product,
-        newPriceSgd: exactPrice?.newPriceSgd ?? null,
         newSourceUrl: exactPrice?.newSourceUrl ?? null,
       };
+      pricedProduct[fields.new] = exactPrice?.newPrice ?? null;
+      return pricedProduct;
     }),
+  };
+}
+
+function validateAppleTaxQuote(quote, product, marketProfile) {
+  const fields = priceFields(marketProfile);
+  if (
+    !quote ||
+    !Number.isFinite(quote.amount) ||
+    quote.amount <= product[fields.refurbished]
+  ) {
+    throw new Error("Apple tax quote must exceed the pre-tax price");
+  }
+  if (
+    quote.currency !== marketProfile.currency.source ||
+    quote.provider !== "Apple" ||
+    quote.method !== "apple-checkout"
+  ) {
+    throw new Error("Tax-inclusive price must have Apple checkout provenance");
+  }
+  assertAppleUrl(quote.sourceUrl, "Apple tax quote sourceUrl");
+}
+
+export async function hydrateTaxInclusivePrices(
+  products,
+  {
+    marketProfile = DEFAULT_MARKET_PROFILE,
+    quoteTaxInclusivePrice,
+    batchSize = 2,
+  } = {},
+) {
+  if (marketProfile.tax.model !== "apple-checkout-reference-location") {
+    return {
+      resolvedCount: 0,
+      unresolvedCount: 0,
+      products,
+    };
+  }
+  const fields = priceFields(marketProfile);
+  const hydratedProducts = await mapInBatches(
+    products,
+    batchSize,
+    async (product) => {
+      if (typeof quoteTaxInclusivePrice !== "function") {
+        return {
+          ...product,
+          [fields.taxInclusive]: null,
+          taxInclusivePricing: unresolvedTaxInclusivePricing(
+            product,
+            marketProfile,
+            "apple-tax-quote-adapter-unavailable",
+          ),
+        };
+      }
+      try {
+        const quote = await quoteTaxInclusivePrice({
+          product,
+          location: marketProfile.tax.referenceLocation,
+          marketProfile,
+        });
+        validateAppleTaxQuote(quote, product, marketProfile);
+        return {
+          ...product,
+          [fields.taxInclusive]: quote.amount,
+          taxInclusivePricing: {
+            status: "resolved",
+            amount: quote.amount,
+            currency: quote.currency,
+            preTaxAmount: product[fields.refurbished],
+            locationId: marketProfile.tax.referenceLocation.id,
+            provenance: {
+              provider: quote.provider,
+              method: quote.method,
+              sourceUrl: quote.sourceUrl,
+            },
+            reason: null,
+          },
+        };
+      } catch {
+        return {
+          ...product,
+          [fields.taxInclusive]: null,
+          taxInclusivePricing: unresolvedTaxInclusivePricing(
+            product,
+            marketProfile,
+          ),
+        };
+      }
+    },
+  );
+  const resolvedCount = hydratedProducts.filter(
+    (product) => product.taxInclusivePricing.status === "resolved",
+  ).length;
+  return {
+    resolvedCount,
+    unresolvedCount: hydratedProducts.length - resolvedCount,
+    products: hydratedProducts,
   };
 }
 
@@ -369,11 +530,15 @@ function assertAppleUrl(value, label) {
   }
 }
 
-export function validateProducts(products) {
+export function validateProducts(
+  products,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
   if (!Array.isArray(products) || products.length === 0) {
     throw new Error("Catalog products must be a non-empty array");
   }
 
+  const fields = priceFields(marketProfile);
   const seenProductCodes = new Set();
   const pricesByConfiguration = new Map();
   for (const [index, product] of products.entries()) {
@@ -386,6 +551,14 @@ export function validateProducts(products) {
       if (!Number.isFinite(product[field]) || product[field] <= 0) {
         throw new Error(`products[${index}].${field} must be a positive number`);
       }
+    }
+    if (
+      !Number.isFinite(product[fields.refurbished]) ||
+      product[fields.refurbished] <= 0
+    ) {
+      throw new Error(
+        `products[${index}].${fields.refurbished} must be a positive number`,
+      );
     }
     if (!["Air", "Pro"].includes(product.family)) {
       throw new Error(`products[${index}].family must be Air or Pro`);
@@ -423,16 +596,16 @@ export function validateProducts(products) {
     }
 
     const hasNewPrice =
-      Number.isFinite(product.newPriceSgd) && product.newPriceSgd > 0;
+      Number.isFinite(product[fields.new]) && product[fields.new] > 0;
     const hasNewUrl =
       typeof product.newSourceUrl === "string" && product.newSourceUrl.length > 0;
     if (hasNewPrice !== hasNewUrl) {
       throw new Error(
-        `products[${index}] must have both newPriceSgd and newSourceUrl, or neither`,
+        `products[${index}] must have both ${fields.new} and newSourceUrl, or neither`,
       );
     }
     if (!hasNewPrice) {
-      if (product.newPriceSgd !== null || product.newSourceUrl !== null) {
+      if (product[fields.new] !== null || product.newSourceUrl !== null) {
         throw new Error(
           `products[${index}] unpriced fields must both be explicit null`,
         );
@@ -440,32 +613,90 @@ export function validateProducts(products) {
     } else {
       assertAppleUrl(product.newSourceUrl, `products[${index}].newSourceUrl`);
       const previousPrice = pricesByConfiguration.get(product.configurationKey);
-      if (previousPrice !== undefined && previousPrice !== product.newPriceSgd) {
+      if (previousPrice !== undefined && previousPrice !== product[fields.new]) {
         throw new Error(
           `Configuration ${product.configurationKey} has inconsistent new prices`,
         );
       }
-      pricesByConfiguration.set(product.configurationKey, product.newPriceSgd);
+      pricesByConfiguration.set(product.configurationKey, product[fields.new]);
+    }
+
+    if (marketProfile.tax.model === "apple-checkout-reference-location") {
+      const pricing = product.taxInclusivePricing;
+      if (!pricing || !["resolved", "unresolved"].includes(pricing.status)) {
+        throw new Error(
+          `products[${index}].taxInclusivePricing must be explicit`,
+        );
+      }
+      if (
+        pricing.preTaxAmount !== product[fields.refurbished] ||
+        pricing.currency !== marketProfile.currency.source ||
+        pricing.locationId !== marketProfile.tax.referenceLocation.id
+      ) {
+        throw new Error(
+          `products[${index}].taxInclusivePricing does not match its market`,
+        );
+      }
+      if (pricing.status === "unresolved") {
+        if (
+          product[fields.taxInclusive] !== null ||
+          pricing.amount !== null ||
+          typeof pricing.reason !== "string" ||
+          pricing.reason.length === 0
+        ) {
+          throw new Error(
+            `products[${index}] unresolved tax-inclusive price must remain null`,
+          );
+        }
+      } else {
+        validateAppleTaxQuote(
+          {
+            amount: pricing.amount,
+            currency: pricing.currency,
+            ...pricing.provenance,
+          },
+          product,
+          marketProfile,
+        );
+        if (product[fields.taxInclusive] !== pricing.amount) {
+          throw new Error(
+            `products[${index}].${fields.taxInclusive} must match Apple quote`,
+          );
+        }
+      }
     }
   }
 
   for (let index = 1; index < products.length; index += 1) {
-    if (compareProducts(products[index - 1], products[index]) > 0) {
+    if (
+      compareProducts(
+        products[index - 1],
+        products[index],
+        marketProfile,
+      ) > 0
+    ) {
       throw new Error(`Catalog is not stably sorted at products[${index}]`);
     }
   }
   return true;
 }
 
-export function validateCatalog(catalog) {
+export function validateCatalog(
+  catalog,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
   if (catalog?.schemaVersion !== SCHEMA_VERSION) {
     throw new Error(`Catalog schemaVersion must be ${SCHEMA_VERSION}`);
   }
   if (
-    catalog?.source?.refurbishedCatalogUrl !== REFURBISHED_CATALOG_URL ||
-    catalog?.source?.newCatalogBaseUrl !== NEW_CATALOG_BASE_URL
+    catalog?.source?.refurbishedCatalogUrl !==
+      marketProfile.storefront.refurbishedCatalogUrl ||
+    catalog?.source?.newCatalogBaseUrl !==
+      marketProfile.storefront.newCatalogBaseUrl
   ) {
-    throw new Error("Catalog source metadata does not match Apple Singapore");
+    throw new Error(
+      `Catalog source metadata does not match Apple ${marketProfile.storefront.countryName}`,
+    );
   }
   const serialized = JSON.stringify(catalog);
   if (
@@ -473,29 +704,51 @@ export function validateCatalog(catalog) {
   ) {
     throw new Error("Catalog must not contain timestamps");
   }
-  return validateProducts(catalog.products);
+  return validateProducts(catalog.products, marketProfile);
 }
 
-export function buildCatalog(products) {
-  const sortedProducts = [...products].sort(compareProducts);
+export function buildCatalog(
+  products,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
+  const sortedProducts = [...products].sort((left, right) =>
+    compareProducts(left, right, marketProfile),
+  );
   const catalog = {
     schemaVersion: SCHEMA_VERSION,
     source: {
-      refurbishedCatalogUrl: REFURBISHED_CATALOG_URL,
-      newCatalogBaseUrl: NEW_CATALOG_BASE_URL,
+      refurbishedCatalogUrl: marketProfile.storefront.refurbishedCatalogUrl,
+      newCatalogBaseUrl: marketProfile.storefront.newCatalogBaseUrl,
     },
     products: sortedProducts,
   };
-  validateCatalog(catalog);
+  if (marketProfile.id !== "sg") {
+    catalog.marketId = marketProfile.id;
+    catalog.source.tax = {
+      model: marketProfile.tax.model,
+      referenceLocation: marketProfile.tax.referenceLocation,
+      availabilityPolicy: marketProfile.tax.availabilityPolicy,
+      filterByDeliveryOrPickup: marketProfile.tax.filterByDeliveryOrPickup,
+    };
+  }
+  validateCatalog(catalog, marketProfile);
   return catalog;
 }
 
 export function buildSuccessStatus(
   products,
-  { checkedAt, currentChipGeneration, pricedConfigurationCount },
+  {
+    checkedAt,
+    currentChipGeneration,
+    pricedConfigurationCount,
+    marketProfile = DEFAULT_MARKET_PROFILE,
+    taxResolvedCount = 0,
+    taxUnresolvedCount = 0,
+  },
 ) {
+  const fields = priceFields(marketProfile);
   const pricedProducts = products.filter(
-    (product) => product.newPriceSgd !== null,
+    (product) => product[fields.new] !== null,
   );
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -511,7 +764,15 @@ export function buildSuccessStatus(
       ).size,
       pricedProducts: pricedProducts.length,
       pricedConfigurations: pricedConfigurationCount,
-      unpricedLegacyProducts: products.length - pricedProducts.length,
+      ...(marketProfile.id === "sg"
+        ? { unpricedLegacyProducts: products.length - pricedProducts.length }
+        : { unpricedCurrentProducts: products.length - pricedProducts.length }),
+      ...(marketProfile.tax.model === "apple-checkout-reference-location"
+        ? {
+            taxInclusiveResolvedProducts: taxResolvedCount,
+            taxInclusiveUnresolvedProducts: taxUnresolvedCount,
+          }
+        : {}),
     },
   };
 }
@@ -523,8 +784,11 @@ export async function writeJsonAtomic(filePath, value) {
   await rename(temporaryPath, filePath);
 }
 
-export async function readAndValidateCatalog(filePath) {
+export async function readAndValidateCatalog(
+  filePath,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
   const catalog = JSON.parse(await readFile(filePath, "utf8"));
-  validateCatalog(catalog);
+  validateCatalog(catalog, marketProfile);
   return catalog;
 }

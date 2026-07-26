@@ -20,9 +20,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
       "priceSgd": 1999,
       "newPriceSgd": 2199,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
       "configurationKey": "air|13|standard|m5|10|10|24gb|512gb"
     },
     {
@@ -40,9 +40,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
       "priceSgd": 1999,
       "newPriceSgd": 2199,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
       "configurationKey": "air|13|standard|m5|10|10|24gb|512gb"
     },
     {
@@ -60,9 +60,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 2779,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|24gb|2tb"
     },
     {
@@ -80,9 +80,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 2779,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|24gb|2tb"
     },
     {
@@ -100,9 +100,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 2779,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|24gb|2tb"
     },
     {
@@ -120,9 +120,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2149,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|24gb|1tb"
     },
     {
@@ -140,9 +140,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2149,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|24gb|1tb"
     },
     {
@@ -160,9 +160,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2149,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|24gb|1tb"
     },
     {
@@ -180,9 +180,9 @@
       "releaseYear": 2022,
       "memory": "16GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 2529,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|16gb|2tb"
     },
     {
@@ -200,9 +200,9 @@
       "releaseYear": 2022,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 1889,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|16gb|1tb"
     },
     {
@@ -220,9 +220,9 @@
       "releaseYear": 2022,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 1889,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|16gb|1tb"
     },
     {
@@ -240,9 +240,9 @@
       "releaseYear": 2022,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 1889,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|16gb|1tb"
     },
     {
@@ -260,9 +260,9 @@
       "releaseYear": 2022,
       "memory": "8GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 2269,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|8gb|2tb"
     },
     {
@@ -280,9 +280,9 @@
       "releaseYear": 2022,
       "memory": "8GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 2269,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|8gb|2tb"
     },
     {
@@ -300,9 +300,9 @@
       "releaseYear": 2022,
       "memory": "8GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 1639,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|10|8gb|1tb"
     },
     {
@@ -320,9 +320,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 2779,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|8|24gb|2tb"
     },
     {
@@ -340,9 +340,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2149,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|8|24gb|1tb"
     },
     {
@@ -360,9 +360,9 @@
       "releaseYear": 2022,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2149,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|8|24gb|1tb"
     },
     {
@@ -380,9 +380,9 @@
       "releaseYear": 2022,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 1889,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|8|16gb|1tb"
     },
     {
@@ -400,9 +400,9 @@
       "releaseYear": 2022,
       "memory": "8GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 2269,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m2|8|8|8gb|2tb"
     },
     {
@@ -420,9 +420,9 @@
       "releaseYear": 2020,
       "memory": "8GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 1569,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|13|standard|m1|8|8|8gb|1tb"
     },
     {
@@ -440,9 +440,9 @@
       "releaseYear": 2026,
       "memory": "32GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-2tb-storage",
       "priceSgd": 3399,
       "newPriceSgd": 3999,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-2tb-storage",
       "configurationKey": "air|15|standard|m5|10|10|32gb|2tb"
     },
     {
@@ -460,9 +460,9 @@
       "releaseYear": 2026,
       "memory": "32GB",
       "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-512gb-storage",
       "priceSgd": 2369,
       "newPriceSgd": 2799,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-512gb-storage",
       "configurationKey": "air|15|standard|m5|10|10|32gb|512gb"
     },
     {
@@ -480,9 +480,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 2509,
       "newPriceSgd": 2949,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
       "configurationKey": "air|15|standard|m5|10|10|24gb|1tb"
     },
     {
@@ -500,9 +500,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 2509,
       "newPriceSgd": 2949,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
       "configurationKey": "air|15|standard|m5|10|10|24gb|1tb"
     },
     {
@@ -520,9 +520,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
       "priceSgd": 2109,
       "newPriceSgd": 2499,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
       "configurationKey": "air|15|standard|m5|10|10|24gb|512gb"
     },
     {
@@ -540,9 +540,9 @@
       "releaseYear": 2026,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
       "priceSgd": 2249,
       "newPriceSgd": 2649,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
       "configurationKey": "air|15|standard|m5|10|10|16gb|1tb"
     },
     {
@@ -560,9 +560,9 @@
       "releaseYear": 2026,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
       "priceSgd": 2249,
       "newPriceSgd": 2649,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
       "configurationKey": "air|15|standard|m5|10|10|16gb|1tb"
     },
     {
@@ -580,9 +580,9 @@
       "releaseYear": 2026,
       "memory": "16GB",
       "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
       "priceSgd": 1859,
       "newPriceSgd": 2199,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
       "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
     },
     {
@@ -600,9 +600,9 @@
       "releaseYear": 2026,
       "memory": "16GB",
       "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
       "priceSgd": 1859,
       "newPriceSgd": 2199,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
       "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
     },
     {
@@ -620,9 +620,9 @@
       "releaseYear": 2026,
       "memory": "16GB",
       "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
       "priceSgd": 1859,
       "newPriceSgd": 2199,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
       "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
     },
     {
@@ -640,9 +640,9 @@
       "releaseYear": 2025,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1999,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m4|10|10|24gb|512gb"
     },
     {
@@ -660,9 +660,9 @@
       "releaseYear": 2025,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1999,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m4|10|10|24gb|512gb"
     },
     {
@@ -680,9 +680,9 @@
       "releaseYear": 2025,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2129,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m4|10|10|16gb|1tb"
     },
     {
@@ -700,9 +700,9 @@
       "releaseYear": 2025,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2129,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m4|10|10|16gb|1tb"
     },
     {
@@ -720,9 +720,9 @@
       "releaseYear": 2025,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2129,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m4|10|10|16gb|1tb"
     },
     {
@@ -740,9 +740,9 @@
       "releaseYear": 2025,
       "memory": "16GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1749,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m4|10|10|16gb|512gb"
     },
     {
@@ -760,9 +760,9 @@
       "releaseYear": 2025,
       "memory": "16GB",
       "storage": "256GB",
+      "newSourceUrl": null,
       "priceSgd": 1489,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m4|10|10|16gb|256gb"
     },
     {
@@ -780,9 +780,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2449,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|24gb|1tb"
     },
     {
@@ -800,9 +800,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2449,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|24gb|1tb"
     },
     {
@@ -820,9 +820,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 2069,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|24gb|512gb"
     },
     {
@@ -840,9 +840,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 2069,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|24gb|512gb"
     },
     {
@@ -860,9 +860,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 2069,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|24gb|512gb"
     },
     {
@@ -880,9 +880,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 2069,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|24gb|512gb"
     },
     {
@@ -900,9 +900,9 @@
       "releaseYear": 2024,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2199,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|16gb|1tb"
     },
     {
@@ -920,9 +920,9 @@
       "releaseYear": 2024,
       "memory": "16GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 2199,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|16gb|1tb"
     },
     {
@@ -940,9 +940,9 @@
       "releaseYear": 2024,
       "memory": "16GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1809,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|16gb|512gb"
     },
     {
@@ -960,9 +960,9 @@
       "releaseYear": 2024,
       "memory": "16GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1809,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|16gb|512gb"
     },
     {
@@ -980,9 +980,9 @@
       "releaseYear": 2024,
       "memory": "16GB",
       "storage": "256GB",
+      "newSourceUrl": null,
       "priceSgd": 1559,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|16gb|256gb"
     },
     {
@@ -1000,9 +1000,9 @@
       "releaseYear": 2024,
       "memory": "16GB",
       "storage": "256GB",
+      "newSourceUrl": null,
       "priceSgd": 1559,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|16gb|256gb"
     },
     {
@@ -1020,9 +1020,9 @@
       "releaseYear": 2024,
       "memory": "16GB",
       "storage": "256GB",
+      "newSourceUrl": null,
       "priceSgd": 1559,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|16gb|256gb"
     },
     {
@@ -1040,9 +1040,9 @@
       "releaseYear": 2024,
       "memory": "8GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 1939,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|8gb|1tb"
     },
     {
@@ -1060,9 +1060,9 @@
       "releaseYear": 2024,
       "memory": "8GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1559,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|8gb|512gb"
     },
     {
@@ -1080,9 +1080,9 @@
       "releaseYear": 2024,
       "memory": "8GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1559,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|8gb|512gb"
     },
     {
@@ -1100,9 +1100,9 @@
       "releaseYear": 2024,
       "memory": "8GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1559,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|8gb|512gb"
     },
     {
@@ -1120,9 +1120,9 @@
       "releaseYear": 2024,
       "memory": "8GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 1559,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "air|15|standard|m3|8|10|8gb|512gb"
     },
     {
@@ -1140,9 +1140,9 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "priceSgd": 4919,
       "newPriceSgd": 5799,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "configurationKey": "pro|14|standard|m5-max|18|32|36gb|2tb"
     },
     {
@@ -1160,9 +1160,9 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "priceSgd": 4919,
       "newPriceSgd": 5799,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "configurationKey": "pro|14|standard|m5-max|18|32|36gb|2tb"
     },
     {
@@ -1180,9 +1180,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "4TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-4tb-storage",
       "priceSgd": 5089,
       "newPriceSgd": 5999,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-4tb-storage",
       "configurationKey": "pro|14|standard|m5-pro|18|20|24gb|4tb"
     },
     {
@@ -1200,9 +1200,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-2tb-storage",
       "priceSgd": 3819,
       "newPriceSgd": 4499,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-2tb-storage",
       "configurationKey": "pro|14|standard|m5-pro|18|20|24gb|2tb"
     },
     {
@@ -1220,9 +1220,9 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-nano-texture-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-48gb-memory-2tb-storage",
       "priceSgd": 4559,
       "newPriceSgd": 5374,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-nano-texture-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-48gb-memory-2tb-storage",
       "configurationKey": "pro|14|nano-texture|m5-pro|15|16|48gb|2tb"
     },
     {
@@ -1240,9 +1240,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 2969,
       "newPriceSgd": 3499,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
       "configurationKey": "pro|14|standard|m5-pro|15|16|24gb|1tb"
     },
     {
@@ -1260,9 +1260,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 2969,
       "newPriceSgd": 3499,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
       "configurationKey": "pro|14|standard|m5-pro|15|16|24gb|1tb"
     },
     {
@@ -1280,9 +1280,9 @@
       "releaseYear": 2025,
       "memory": "32GB",
       "storage": "4TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-4tb-storage",
       "priceSgd": 4719,
       "newPriceSgd": 5549,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-4tb-storage",
       "configurationKey": "pro|14|standard|m5|10|10|32gb|4tb"
     },
     {
@@ -1300,9 +1300,9 @@
       "releaseYear": 2024,
       "memory": "36GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 4199,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m4-max|14|32|36gb|1tb"
     },
     {
@@ -1320,9 +1320,9 @@
       "releaseYear": 2024,
       "memory": "36GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 4199,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m4-max|14|32|36gb|1tb"
     },
     {
@@ -1340,9 +1340,9 @@
       "releaseYear": 2024,
       "memory": "48GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 4699,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|nano-texture|m4-pro|14|20|48gb|2tb"
     },
     {
@@ -1360,9 +1360,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 3749,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m4-pro|14|20|24gb|2tb"
     },
     {
@@ -1380,9 +1380,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 3109,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m4-pro|14|20|24gb|1tb"
     },
     {
@@ -1400,9 +1400,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 3109,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m4-pro|14|20|24gb|1tb"
     },
     {
@@ -1420,9 +1420,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 2489,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m4-pro|12|16|24gb|512gb"
     },
     {
@@ -1440,9 +1440,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 2489,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m4-pro|12|16|24gb|512gb"
     },
     {
@@ -1460,9 +1460,9 @@
       "releaseYear": 2023,
       "memory": "18GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 3449,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m3-pro|12|18|18gb|2tb"
     },
     {
@@ -1480,9 +1480,9 @@
       "releaseYear": 2023,
       "memory": "64GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 5049,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|14|standard|m2-max|12|38|64gb|2tb"
     },
     {
@@ -1500,9 +1500,9 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
       "priceSgd": 5949,
       "newPriceSgd": 6999,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
       "configurationKey": "pro|16|standard|m5-max|18|40|48gb|2tb"
     },
     {
@@ -1520,9 +1520,9 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
       "priceSgd": 5949,
       "newPriceSgd": 6999,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
       "configurationKey": "pro|16|standard|m5-max|18|40|48gb|2tb"
     },
     {
@@ -1540,9 +1540,9 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "priceSgd": 5099,
       "newPriceSgd": 5999,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "configurationKey": "pro|16|standard|m5-max|18|32|36gb|2tb"
     },
     {
@@ -1560,9 +1560,9 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "priceSgd": 5099,
       "newPriceSgd": 5999,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "configurationKey": "pro|16|standard|m5-max|18|32|36gb|2tb"
     },
     {
@@ -1580,9 +1580,9 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-1tb-storage",
       "priceSgd": 4159,
       "newPriceSgd": 4899,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-1tb-storage",
       "configurationKey": "pro|16|standard|m5-pro|18|20|48gb|1tb"
     },
     {
@@ -1600,9 +1600,9 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-1tb-storage",
       "priceSgd": 4159,
       "newPriceSgd": 4899,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-1tb-storage",
       "configurationKey": "pro|16|standard|m5-pro|18|20|48gb|1tb"
     },
     {
@@ -1620,9 +1620,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 3399,
       "newPriceSgd": 3999,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
       "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb"
     },
     {
@@ -1640,9 +1640,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 3399,
       "newPriceSgd": 3999,
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
       "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb"
     },
     {
@@ -1660,9 +1660,9 @@
       "releaseYear": 2024,
       "memory": "48GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 5229,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-max|16|40|48gb|1tb"
     },
     {
@@ -1680,9 +1680,9 @@
       "releaseYear": 2024,
       "memory": "48GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 5229,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-max|16|40|48gb|1tb"
     },
     {
@@ -1700,9 +1700,9 @@
       "releaseYear": 2024,
       "memory": "36GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 4399,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-max|14|32|36gb|1tb"
     },
     {
@@ -1720,9 +1720,9 @@
       "releaseYear": 2024,
       "memory": "36GB",
       "storage": "1TB",
+      "newSourceUrl": null,
       "priceSgd": 4399,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-max|14|32|36gb|1tb"
     },
     {
@@ -1740,9 +1740,9 @@
       "releaseYear": 2024,
       "memory": "48GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 3699,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-pro|14|20|48gb|512gb"
     },
     {
@@ -1760,9 +1760,9 @@
       "releaseYear": 2024,
       "memory": "48GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 3699,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-pro|14|20|48gb|512gb"
     },
     {
@@ -1780,9 +1780,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 3969,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-pro|14|20|24gb|2tb"
     },
     {
@@ -1800,9 +1800,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 2949,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-pro|14|20|24gb|512gb"
     },
     {
@@ -1820,9 +1820,9 @@
       "releaseYear": 2024,
       "memory": "24GB",
       "storage": "512GB",
+      "newSourceUrl": null,
       "priceSgd": 2949,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m4-pro|14|20|24gb|512gb"
     },
     {
@@ -1840,9 +1840,9 @@
       "releaseYear": 2023,
       "memory": "36GB",
       "storage": "2TB",
+      "newSourceUrl": null,
       "priceSgd": 4309,
       "newPriceSgd": null,
-      "newSourceUrl": null,
       "configurationKey": "pro|16|standard|m3-pro|12|18|36gb|2tb"
     }
   ]

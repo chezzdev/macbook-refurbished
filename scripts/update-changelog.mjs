@@ -4,8 +4,25 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { writeJsonAtomic } from "./apple-catalog-lib.mjs";
+import {
+  loadMarketContext,
+  loadMarketProfile,
+} from "./market-profile.mjs";
 
 const workspaceRoot = resolve(import.meta.dirname, "..");
+const defaultMarketProfile = await loadMarketProfile("sg");
+
+function priceContext(marketProfile) {
+  const source = marketProfile.currency.source;
+  const suffix = source.slice(0, 1) + source.slice(1).toLowerCase();
+  return {
+    refurbishedField: marketProfile.currency.priceFields.refurbished,
+    newField: marketProfile.currency.priceFields.new,
+    taxInclusiveField: marketProfile.currency.priceFields.taxInclusive,
+    fromField: `from${suffix}`,
+    toField: `to${suffix}`,
+  };
+}
 
 export function buildCatalogDelta({
   previousCatalog,
@@ -13,7 +30,16 @@ export function buildCatalogDelta({
   previousFeatured,
   currentFeatured,
   checkedAt,
+  marketProfile = defaultMarketProfile,
 }) {
+  const {
+    refurbishedField,
+    newField,
+    taxInclusiveField,
+    fromField,
+    toField,
+  } =
+    priceContext(marketProfile);
   const previousProducts = new Map(
     (previousCatalog?.products ?? []).map((product) => [
       product.productCode,
@@ -31,30 +57,42 @@ export function buildCatalogDelta({
   const removed = [];
   const refurbPriceChanges = [];
   const newPriceChanges = [];
+  const taxInclusivePriceChanges = [];
 
   for (const productCode of sortedUnion(previousProducts, currentProducts)) {
     const before = previousProducts.get(productCode);
     const after = currentProducts.get(productCode);
     if (!before) {
-      added.push(productSnapshot(after));
+      added.push(productSnapshot(after, marketProfile));
       continue;
     }
     if (!after) {
-      removed.push(productSnapshot(before));
+      removed.push(productSnapshot(before, marketProfile));
       continue;
     }
-    if (before.priceSgd !== after.priceSgd) {
+    if (before[refurbishedField] !== after[refurbishedField]) {
       refurbPriceChanges.push({
-        product: productSnapshot(after),
-        fromSgd: before.priceSgd,
-        toSgd: after.priceSgd,
+        product: productSnapshot(after, marketProfile),
+        [fromField]: before[refurbishedField],
+        [toField]: after[refurbishedField],
       });
     }
-    if ((before.newPriceSgd ?? null) !== (after.newPriceSgd ?? null)) {
+    if ((before[newField] ?? null) !== (after[newField] ?? null)) {
       newPriceChanges.push({
-        product: productSnapshot(after),
-        fromSgd: before.newPriceSgd ?? null,
-        toSgd: after.newPriceSgd ?? null,
+        product: productSnapshot(after, marketProfile),
+        [fromField]: before[newField] ?? null,
+        [toField]: after[newField] ?? null,
+      });
+    }
+    if (
+      taxInclusiveField &&
+      JSON.stringify(before.taxInclusivePricing ?? null) !==
+        JSON.stringify(after.taxInclusivePricing ?? null)
+    ) {
+      taxInclusivePriceChanges.push({
+        product: productSnapshot(after, marketProfile),
+        before: before.taxInclusivePricing ?? null,
+        after: after.taxInclusivePricing ?? null,
       });
     }
   }
@@ -68,6 +106,9 @@ export function buildCatalogDelta({
     removed: removed.length,
     refurbPriceChanges: refurbPriceChanges.length,
     newPriceChanges: newPriceChanges.length,
+    ...(taxInclusiveField
+      ? { taxInclusivePriceChanges: taxInclusivePriceChanges.length }
+      : {}),
     featuredChanges: featuredChanged ? 1 : 0,
   };
 
@@ -80,6 +121,7 @@ export function buildCatalogDelta({
     removed,
     refurbPriceChanges,
     newPriceChanges,
+    ...(taxInclusiveField ? { taxInclusivePriceChanges } : {}),
     featured: featuredChanged
       ? { before: featuredBefore, after: featuredAfter }
       : null,
@@ -113,6 +155,9 @@ export function buildChangelog({
       removed: delta.removed,
       refurbPriceChanges: delta.refurbPriceChanges,
       newPriceChanges: delta.newPriceChanges,
+      ...("taxInclusivePriceChanges" in delta
+        ? { taxInclusivePriceChanges: delta.taxInclusivePriceChanges }
+        : {}),
       featured: delta.featured,
     });
   }
@@ -127,12 +172,30 @@ export function buildChangelog({
 export async function updateChangelog({
   previousCatalogPath,
   previousFeaturedPath,
-  currentCatalogPath = resolve(workspaceRoot, "data/catalog.json"),
-  currentFeaturedPath = resolve(workspaceRoot, "data/featured.json"),
-  updateStatusPath = resolve(workspaceRoot, "data/update-status.json"),
-  changelogPath = resolve(workspaceRoot, "data/changelog.json"),
-  deltaPath = resolve(workspaceRoot, "data/update-delta.json"),
+  currentCatalogPath,
+  currentFeaturedPath,
+  updateStatusPath,
+  changelogPath,
+  deltaPath,
+  marketId = "sg",
+  marketProfile,
 } = {}) {
+  const context = marketProfile
+    ? null
+    : await loadMarketContext(marketId);
+  const activeProfile = marketProfile ?? context.profile;
+  currentCatalogPath ??=
+    context?.paths.catalog ?? resolve(workspaceRoot, "data/catalog.json");
+  currentFeaturedPath ??=
+    context?.paths.featured ?? resolve(workspaceRoot, "data/featured.json");
+  updateStatusPath ??=
+    context?.paths.updateStatus ??
+    resolve(workspaceRoot, "data/update-status.json");
+  changelogPath ??=
+    context?.paths.changelog ?? resolve(workspaceRoot, "data/changelog.json");
+  deltaPath ??=
+    context?.paths.updateDelta ??
+    resolve(workspaceRoot, "data/update-delta.json");
   const [
     previousCatalog,
     previousFeatured,
@@ -165,6 +228,7 @@ export async function updateChangelog({
     previousFeatured,
     currentFeatured,
     checkedAt: updateStatus.checkedAt,
+    marketProfile: activeProfile,
   });
   const changelog = buildChangelog({
     existingChangelog,
@@ -177,7 +241,9 @@ export async function updateChangelog({
   return { delta, changelog };
 }
 
-function productSnapshot(product) {
+function productSnapshot(product, marketProfile) {
+  const { refurbishedField, newField, taxInclusiveField } =
+    priceContext(marketProfile);
   return {
     productCode: product.productCode,
     family: product.family,
@@ -188,8 +254,14 @@ function productSnapshot(product) {
     gpuCores: product.gpuCores,
     memory: product.memory,
     storage: product.storage,
-    priceSgd: product.priceSgd,
-    newPriceSgd: product.newPriceSgd ?? null,
+    [refurbishedField]: product[refurbishedField],
+    [newField]: product[newField] ?? null,
+    ...(taxInclusiveField
+      ? {
+          [taxInclusiveField]: product[taxInclusiveField] ?? null,
+          taxInclusivePricing: product.taxInclusivePricing,
+        }
+      : {}),
   };
 }
 
@@ -241,11 +313,13 @@ if (process.argv[1] === import.meta.filename) {
     options: {
       "previous-catalog": { type: "string" },
       "previous-featured": { type: "string" },
+      market: { type: "string", default: "sg" },
     },
   });
   const { delta } = await updateChangelog({
     previousCatalogPath: values["previous-catalog"],
     previousFeaturedPath: values["previous-featured"],
+    marketId: values.market,
   });
   console.log(
     delta.hasChanges
