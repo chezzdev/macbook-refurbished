@@ -8,7 +8,7 @@
   "scripts": {
     "build": "node scripts/build-enabled-markets.mjs",
     "build:catalog": "node work/build-expanded-standalone.mjs",
-    "test": "node --test scripts/apple-catalog-lib.test.mjs tests/catalog-view-state.test.mjs tests/changelog.test.mjs tests/exchange-rate.test.mjs tests/html-escape.test.mjs tests/market-engine.test.mjs tests/rank-models.test.mjs tests/standalone-catalog.test.mjs",
+    "test": "node --test scripts/apple-catalog-lib.test.mjs tests/catalog-view-state.test.mjs tests/changelog.test.mjs tests/configuration-picker.test.mjs tests/exchange-rate.test.mjs tests/html-escape.test.mjs tests/market-engine.test.mjs tests/rank-models.test.mjs tests/standalone-catalog.test.mjs",
     "catalog:update": "node scripts/update-apple-catalog.mjs",
     "currency:update": "node scripts/update-exchange-rate.mjs",
     "catalog:validate": "node scripts/validate-apple-catalog.mjs",

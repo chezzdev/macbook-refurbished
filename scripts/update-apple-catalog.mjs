@@ -32,7 +32,9 @@ export async function updateCatalog({
   const {
     currentChipGeneration,
     pricedConfigurationCount,
+    pricedColourVariantCount,
     unavailableConfigurationCount,
+    unavailableColourVariantCount,
     products: pricedProducts,
   } = await hydrateCurrentNewPrices(productsWithMemory, {
     fetchTextImpl,
@@ -52,7 +54,9 @@ export async function updateCatalog({
     checkedAt,
     currentChipGeneration,
     pricedConfigurationCount,
+    pricedColourVariantCount,
     unavailableConfigurationCount,
+    unavailableColourVariantCount,
     marketProfile: profile,
     taxResolvedCount,
     taxEstimatedCount,

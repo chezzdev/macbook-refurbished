@@ -113,6 +113,14 @@ export function normalizeForMatch(value = "") {
     .toLowerCase();
 }
 
+export function normalizeColourForMatch(value = "") {
+  return normalizeForMatch(value).replace(/\bgrey\b/g, "gray");
+}
+
+export function buildColourVariantKey(product) {
+  return `${product.configurationKey}|${normalizeColourForMatch(product.colour)}`;
+}
+
 export function extractJsonArray(html, propertyName = "tiles") {
   const propertyPattern = new RegExp(`"${propertyName}"\\s*:\\s*\\[`, "g");
   const propertyMatch = propertyPattern.exec(html);
@@ -313,18 +321,39 @@ export function buildNewProductUrl(
 ) {
   const screen = product.screen.replace(/\D/g, "");
   const chip = normalizeForMatch(product.chip).replaceAll(" ", "-");
+  const colour = normalizeColourForMatch(product.colour).replaceAll(" ", "-");
   const memory = product.memory.toLowerCase();
   const storage = product.storage.toLowerCase();
 
   if (product.family === "Air") {
-    return `${marketProfile.storefront.newCatalogBaseUrl}/macbook-air/${screen}-inch-midnight-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
+    return `${marketProfile.storefront.newCatalogBaseUrl}/macbook-air/${screen}-inch-${colour}-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
   }
 
   const display =
     product.display === "Nano-texture"
       ? "nano-texture-display"
       : "standard-display";
-  return `${marketProfile.storefront.newCatalogBaseUrl}/macbook-pro/${screen}-inch-silver-${display}-apple-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
+  return `${marketProfile.storefront.newCatalogBaseUrl}/macbook-pro/${screen}-inch-${colour}-${display}-apple-${chip}-chip-${product.cpuCores}-core-cpu-${product.gpuCores}-core-gpu-${memory}-memory-${storage}-storage`;
+}
+
+export function hasExactNewProductSource(
+  product,
+  marketProfile = DEFAULT_MARKET_PROFILE,
+) {
+  if (
+    typeof product?.newSourceUrl !== "string" ||
+    product.newSourceUrl.length === 0
+  ) {
+    return false;
+  }
+  try {
+    return (
+      new URL(product.newSourceUrl).href ===
+      new URL(buildNewProductUrl(product, marketProfile)).href
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function parseExactNewPriceHtml(
@@ -332,7 +361,7 @@ export function parseExactNewPriceHtml(
   product,
   marketProfile = DEFAULT_MARKET_PROFILE,
 ) {
-  const title = normalizeForMatch(
+  const title = normalizeColourForMatch(
     html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "",
   );
   const expectedFragments = [
@@ -343,6 +372,7 @@ export function parseExactNewPriceHtml(
     `${product.gpuCores}-core gpu`,
     `${product.memory.toLowerCase()} memory`,
     `${product.storage.toLowerCase()} storage`,
+    normalizeColourForMatch(product.colour),
   ];
   if (product.family === "Pro") {
     expectedFragments.push(
@@ -464,12 +494,18 @@ export async function hydrateCurrentNewPrices(
       currentProducts.map((product) => [product.configurationKey, product]),
     ).values(),
   ];
+  const uniqueColourVariants = [
+    ...new Map(
+      currentProducts.map((product) => [buildColourVariantKey(product), product]),
+    ).values(),
+  ];
 
   const attemptedEntries = await mapInBatches(
-    uniqueConfigurations,
+    uniqueColourVariants,
     batchSize,
     async (product) => {
       const newSourceUrl = buildNewProductUrl(product, marketProfile);
+      const colourVariantKey = buildColourVariantKey(product);
       try {
         const { html } = await fetchTextImpl(newSourceUrl);
         const newPrice = parseExactNewPriceHtml(
@@ -478,13 +514,19 @@ export async function hydrateCurrentNewPrices(
           marketProfile,
         );
         return [
-          product.configurationKey,
-          { newPrice, newSourceUrl, unavailableReason: null },
+          colourVariantKey,
+          {
+            configurationKey: product.configurationKey,
+            newPrice,
+            newSourceUrl,
+            unavailableReason: null,
+          },
         ];
       } catch (error) {
         return [
-          product.configurationKey,
+          colourVariantKey,
           {
+            configurationKey: product.configurationKey,
             newPrice: null,
             newSourceUrl: null,
             unavailableReason:
@@ -494,40 +536,71 @@ export async function hydrateCurrentNewPrices(
       }
     },
   );
-  const pricesByConfiguration = new Map(
+  const pricesByColourVariant = new Map(
     attemptedEntries.filter(([, entry]) => entry.newPrice !== null),
   );
-  const unavailableConfigurations = attemptedEntries
-    .filter(([, entry]) => entry.newPrice === null)
-    .map(([configurationKey, entry]) => ({
-      configurationKey,
-      reason: entry.unavailableReason,
-    }));
+  const pricedConfigurationKeys = new Set(
+    [...pricesByColourVariant.values()].map((entry) => entry.configurationKey),
+  );
+  const unavailableConfigurations = uniqueConfigurations
+    .filter(
+      (product) => !pricedConfigurationKeys.has(product.configurationKey),
+    )
+    .map((product) => {
+      const reasons = attemptedEntries
+        .filter(
+          ([, entry]) =>
+            entry.configurationKey === product.configurationKey &&
+            entry.unavailableReason,
+        )
+        .map(([, entry]) => entry.unavailableReason);
+      return {
+        configurationKey: product.configurationKey,
+        reason: [...new Set(reasons)].join("; "),
+      };
+    });
   const minimumMatchCount =
     marketProfile.currentNewPricing.minimumExactMatchCount;
   const minimumMatchRatio =
     marketProfile.currentNewPricing.minimumExactMatchRatio;
+  const minimumVariantMatchCount =
+    marketProfile.currentNewPricing.minimumExactVariantMatchCount;
+  const minimumVariantMatchRatio =
+    marketProfile.currentNewPricing.minimumExactVariantMatchRatio;
   const exactMatchRatio =
     uniqueConfigurations.length === 0
       ? 0
-      : pricesByConfiguration.size / uniqueConfigurations.length;
+      : pricedConfigurationKeys.size / uniqueConfigurations.length;
+  const exactVariantMatchRatio =
+    uniqueColourVariants.length === 0
+      ? 0
+      : pricesByColourVariant.size / uniqueColourVariants.length;
   if (
-    pricesByConfiguration.size < minimumMatchCount ||
-    exactMatchRatio < minimumMatchRatio
+    pricedConfigurationKeys.size < minimumMatchCount ||
+    exactMatchRatio < minimumMatchRatio ||
+    pricesByColourVariant.size < minimumVariantMatchCount ||
+    exactVariantMatchRatio < minimumVariantMatchRatio
   ) {
     throw new Error(
-      `Exact current-new matching failed closed: ${pricesByConfiguration.size}/${uniqueConfigurations.length} configurations matched; ` +
-        `market policy requires at least ${minimumMatchCount} and ${minimumMatchRatio * 100}%`,
+      `Exact current-new matching failed closed: ${pricedConfigurationKeys.size}/${uniqueConfigurations.length} configurations matched; ` +
+        `${pricesByColourVariant.size}/${uniqueColourVariants.length} colour variants matched; ` +
+        `market policy requires at least ${minimumMatchCount} configurations and ${minimumMatchRatio * 100}%, ` +
+        `plus ${minimumVariantMatchCount} variants and ${minimumVariantMatchRatio * 100}%`,
     );
   }
 
   return {
     currentChipGeneration,
-    pricedConfigurationCount: pricesByConfiguration.size,
+    pricedConfigurationCount: pricedConfigurationKeys.size,
+    pricedColourVariantCount: pricesByColourVariant.size,
     unavailableConfigurationCount: unavailableConfigurations.length,
+    unavailableColourVariantCount:
+      uniqueColourVariants.length - pricesByColourVariant.size,
     unavailableConfigurations,
     products: products.map((product) => {
-      const exactPrice = pricesByConfiguration.get(product.configurationKey);
+      const exactPrice = pricesByColourVariant.get(
+        buildColourVariantKey(product),
+      );
       const pricedProduct = {
         ...product,
         newSourceUrl: exactPrice?.newSourceUrl ?? null,
@@ -680,6 +753,7 @@ function assertAppleUrl(value, label) {
 export function validateProducts(
   products,
   marketProfile = DEFAULT_MARKET_PROFILE,
+  { allowStaleNewPriceProvenance = false } = {},
 ) {
   if (!Array.isArray(products) || products.length === 0) {
     throw new Error("Catalog products must be a non-empty array");
@@ -759,6 +833,14 @@ export function validateProducts(
       }
     } else {
       assertAppleUrl(product.newSourceUrl, `products[${index}].newSourceUrl`);
+      if (
+        !allowStaleNewPriceProvenance &&
+        !hasExactNewProductSource(product, marketProfile)
+      ) {
+        throw new Error(
+          `products[${index}].newSourceUrl must match its exact colour variant`,
+        );
+      }
       const previousPrice = pricesByConfiguration.get(product.configurationKey);
       if (previousPrice !== undefined && previousPrice !== product[fields.new]) {
         throw new Error(
@@ -881,6 +963,7 @@ export function validateProducts(
 export function validateCatalog(
   catalog,
   marketProfile = DEFAULT_MARKET_PROFILE,
+  options = {},
 ) {
   if (catalog?.schemaVersion !== SCHEMA_VERSION) {
     throw new Error(`Catalog schemaVersion must be ${SCHEMA_VERSION}`);
@@ -910,7 +993,7 @@ export function validateCatalog(
   ) {
     throw new Error("Catalog must not contain timestamps");
   }
-  return validateProducts(catalog.products, marketProfile);
+  return validateProducts(catalog.products, marketProfile, options);
 }
 
 function buildCatalogTaxMetadata(marketProfile) {
@@ -959,7 +1042,9 @@ export function buildSuccessStatus(
     checkedAt,
     currentChipGeneration,
     pricedConfigurationCount,
+    pricedColourVariantCount = pricedConfigurationCount,
     unavailableConfigurationCount = 0,
+    unavailableColourVariantCount = 0,
     marketProfile = DEFAULT_MARKET_PROFILE,
     taxResolvedCount = 0,
     taxEstimatedCount = 0,
@@ -984,7 +1069,9 @@ export function buildSuccessStatus(
       ).size,
       pricedProducts: pricedProducts.length,
       pricedConfigurations: pricedConfigurationCount,
+      pricedColourVariants: pricedColourVariantCount,
       unavailableCurrentConfigurations: unavailableConfigurationCount,
+      unavailableCurrentColourVariants: unavailableColourVariantCount,
       unpricedCurrentProducts: products.length - pricedProducts.length,
       ...(hasReferenceLocationTax(marketProfile)
         ? {
@@ -1016,8 +1103,9 @@ export async function writeJsonAtomic(filePath, value) {
 export async function readAndValidateCatalog(
   filePath,
   marketProfile = DEFAULT_MARKET_PROFILE,
+  options = {},
 ) {
   const catalog = JSON.parse(await readFile(filePath, "utf8"));
-  validateCatalog(catalog, marketProfile);
+  validateCatalog(catalog, marketProfile, options);
   return catalog;
 }

@@ -302,6 +302,7 @@ node --test \
   scripts/apple-catalog-lib.test.mjs \
   tests/catalog-view-state.test.mjs \
   tests/changelog.test.mjs \
+  tests/configuration-picker.test.mjs \
   tests/exchange-rate.test.mjs \
   tests/html-escape.test.mjs \
   tests/market-engine.test.mjs \

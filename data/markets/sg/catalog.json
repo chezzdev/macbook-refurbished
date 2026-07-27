@@ -48,7 +48,7 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "512GB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-sky-blue-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
       "priceSgd": 1999,
       "newPriceSgd": 2199,
       "configurationKey": "air|13|standard|m5|10|10|24gb|512gb"
@@ -448,7 +448,7 @@
       "releaseYear": 2026,
       "memory": "32GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-2tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-silver-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-2tb-storage",
       "priceSgd": 3399,
       "newPriceSgd": 3999,
       "configurationKey": "air|15|standard|m5|10|10|32gb|2tb"
@@ -468,7 +468,7 @@
       "releaseYear": 2026,
       "memory": "32GB",
       "storage": "512GB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-512gb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-sky-blue-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-512gb-storage",
       "priceSgd": 2369,
       "newPriceSgd": 2799,
       "configurationKey": "air|15|standard|m5|10|10|32gb|512gb"
@@ -508,7 +508,7 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-sky-blue-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 2509,
       "newPriceSgd": 2949,
       "configurationKey": "air|15|standard|m5|10|10|24gb|1tb"
@@ -568,7 +568,7 @@
       "releaseYear": 2026,
       "memory": "16GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-sky-blue-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
       "priceSgd": 2249,
       "newPriceSgd": 2649,
       "configurationKey": "air|15|standard|m5|10|10|16gb|1tb"
@@ -608,7 +608,7 @@
       "releaseYear": 2026,
       "memory": "16GB",
       "storage": "512GB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-silver-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
       "priceSgd": 1859,
       "newPriceSgd": 2199,
       "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
@@ -628,7 +628,7 @@
       "releaseYear": 2026,
       "memory": "16GB",
       "storage": "512GB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-sky-blue-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
       "priceSgd": 1859,
       "newPriceSgd": 2199,
       "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
@@ -1168,7 +1168,7 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-space-black-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "priceSgd": 4919,
       "newPriceSgd": 5799,
       "configurationKey": "pro|14|standard|m5-max|18|32|36gb|2tb"
@@ -1208,7 +1208,7 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-2tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-space-black-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-2tb-storage",
       "priceSgd": 3819,
       "newPriceSgd": 4499,
       "configurationKey": "pro|14|standard|m5-pro|18|20|24gb|2tb"
@@ -1268,7 +1268,7 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-space-black-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 2969,
       "newPriceSgd": 3499,
       "configurationKey": "pro|14|standard|m5-pro|15|16|24gb|1tb"
@@ -1528,7 +1528,7 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-space-black-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
       "priceSgd": 5949,
       "newPriceSgd": 6999,
       "configurationKey": "pro|16|standard|m5-max|18|40|48gb|2tb"
@@ -1568,7 +1568,7 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-space-black-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
       "priceSgd": 5099,
       "newPriceSgd": 5999,
       "configurationKey": "pro|16|standard|m5-max|18|32|36gb|2tb"
@@ -1608,7 +1608,7 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-1tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-space-black-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-1tb-storage",
       "priceSgd": 4159,
       "newPriceSgd": 4899,
       "configurationKey": "pro|16|standard|m5-pro|18|20|48gb|1tb"
@@ -1648,7 +1648,7 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
+      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/16-inch-space-black-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
       "priceSgd": 3399,
       "newPriceSgd": 3999,
       "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb"

@@ -10,7 +10,12 @@ const { profiles } = await loadEnabledMarketProfiles();
 for (const profile of profiles) {
   const commands = [
     ["scripts/initialize-market.mjs", "--market", profile.id, "--check"],
-    ["scripts/validate-apple-catalog.mjs", "--market", profile.id],
+    [
+      "scripts/validate-apple-catalog.mjs",
+      "--market",
+      profile.id,
+      "--allow-stale-new-price-provenance",
+    ],
     ["scripts/rank-models.mjs", "--market", profile.id, "--check"],
     ["work/build-expanded-standalone.mjs", "--market", profile.id],
   ];

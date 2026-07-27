@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { hasExactNewProductSource } from "../scripts/apple-catalog-lib.mjs";
 import {
   loadEnabledMarketProfiles,
   loadMarketContext,
@@ -20,6 +21,26 @@ const [html, catalog, featured, changelog] = await Promise.all([
 const newPriceField = profile.currency.priceFields.new;
 const newTaxInclusivePriceField =
   profile.currency.priceFields.newTaxInclusive;
+const renderedProducts = catalog.products.map((product) => {
+  if (
+    Number.isFinite(product[newPriceField]) &&
+    product.newSourceUrl &&
+    hasExactNewProductSource(product, profile)
+  ) {
+    return product;
+  }
+  return {
+    ...product,
+    [newPriceField]: null,
+    newSourceUrl: null,
+    ...(newTaxInclusivePriceField
+      ? {
+          [newTaxInclusivePriceField]: null,
+          newTaxInclusivePricing: null,
+        }
+      : {}),
+  };
+});
 
 const shortlist = html.match(
   /<section class="section-shell" id="shortlist">([\s\S]*?)<section class="section-shell" id="comparison">/,
@@ -28,20 +49,117 @@ const changelogSection = html.match(
   /<section class="section-shell" id="changelog">([\s\S]*?)<\/main>/,
 )?.[1];
 
-test("embeds the complete catalog and exactly three ranked cards", () => {
+test("embeds the complete catalog and exactly three personalized cards", () => {
   assert.ok(catalog.products.length > 0);
   assert.equal(featured.items.length, 3);
-  const embeddedCatalog = JSON.stringify(catalog.products).replaceAll(
+  const embeddedCatalog = JSON.stringify(renderedProducts).replaceAll(
     "<",
     "\\u003c",
   );
   assert.match(html, new RegExp(`const products=${escapeRegex(embeddedCatalog)}`));
   assert.equal((shortlist?.match(/<article class="pick-card/g) ?? []).length, 3);
-  for (const item of featured.items) {
-    assert.match(html, new RegExp(escapeRegex(item.productCode)));
-  }
   assert.doesNotMatch(shortlist, /\/ 100/);
-  assert.equal((shortlist?.match(/· рейтинг /g) ?? []).length, 3);
+  assert.doesNotMatch(shortlist, /· рейтинг /);
+  assert.equal((shortlist?.match(/class="pick-match"/g) ?? []).length, 3);
+  assert.equal(
+    (shortlist?.match(/data-product-code="/g) ?? []).length,
+    3,
+  );
+});
+
+test("renders a client-side ideal configuration picker", () => {
+  assert.match(shortlist, /id="preference-picker"/);
+  for (const field of ["family", "screen", "memory", "storage", "budget"]) {
+    assert.match(shortlist, new RegExp(`id="target-${field}"`));
+  }
+  assert.equal(
+    (shortlist?.match(/class="control-label"/g) ?? []).length,
+    5,
+  );
+  assert.match(
+    html,
+    /\.picker-field select,.picker-budget input,.picker-reset\{font-family:inherit;font-size:16px/,
+  );
+  assert.match(html, /\.picker-budget:focus-within/);
+  assert.match(html, /const recommendConfigurations=function recommendConfigurations/);
+  assert.match(html, /const readPickerState=\(\)=>\{/);
+  assert.match(html, /const synchronizePickerUrl=\(\)=>\{/);
+  assert.match(html, /ideal-family/);
+  assert.match(html, /ideal-screen/);
+  assert.match(html, /ideal-memory/);
+  assert.match(html, /ideal-storage/);
+  assert.match(html, /max-price/);
+  assert.match(
+    html,
+    /parameters\.set\(pickerParameters\[field\],preferences\[field\]\|\|"any"\)/,
+  );
+  assert.doesNotMatch(
+    html,
+    /preferences\[field\]!==defaultPickerPreferences\[field\]/,
+  );
+  assert.match(html, /updatePersonalizedRecommendations\(\)/);
+  assert.match(shortlist, /Без магического рейтинга/);
+  const screenPicker = shortlist?.match(
+    /<select id="target-screen"[^>]*>([\s\S]*?)<\/select>/,
+  )?.[1];
+  assert.equal((screenPicker?.match(/<option /g) ?? []).length, 3);
+  assert.match(screenPicker, /value="" selected>Не важно/);
+  assert.match(screenPicker, /value="13-14">13–14″/);
+  assert.match(screenPicker, /value="15-16">15–16″/);
+  assert.doesNotMatch(screenPicker, /поменьше|побольше/);
+  for (const [field, value] of [
+    ["family", profile.ranking.reference.family],
+    ["memory", profile.ranking.reference.memory],
+    ["storage", profile.ranking.reference.storage],
+  ]) {
+    const options = shortlist?.match(
+      new RegExp(`<select id="target-${field}"[^>]*>([\\s\\S]*?)<\\/select>`),
+    )?.[1];
+    assert.match(
+      options,
+      new RegExp(`value="${escapeRegex(value)}"(?: selected)?>`),
+    );
+  }
+});
+
+test("aggregates colour variants with one shared picker state", () => {
+  assert.match(shortlist, /class="colour-picker pick-colours"/);
+  assert.match(shortlist, /class="colour-swatch [^"]+"/);
+  assert.match(shortlist, /aria-pressed="true"/);
+  assert.match(html, /const variantsByConfiguration=new Map\(\)/);
+  assert.match(
+    html,
+    /const selectedCodesByConfiguration=new Map\(configurationGroups\.map/,
+  );
+  assert.match(html, /colourPickerMarkup\(p,"table"\)/);
+  assert.match(
+    html,
+    /result\.length\+" из "\+configurationGroups\.length\+" конфигураций · "/,
+  );
+  assert.match(html, /visibleVariantCount\+" цветовых вариантов"/);
+  assert.doesNotMatch(shortlist, />Цвет</);
+  assert.doesNotMatch(shortlist, /✓|✔/);
+
+  const firstByConfiguration = new Map();
+  for (const product of renderedProducts) {
+    if (!firstByConfiguration.has(product.configurationKey)) {
+      firstByConfiguration.set(product.configurationKey, product);
+    }
+  }
+  const initialCardCodes = [
+    ...(shortlist?.matchAll(
+      /<article class="pick-card[^"]*" data-product-code="([^"]+)"/g,
+    ) ?? []),
+  ].map((match) => match[1]);
+  for (const productCode of initialCardCodes) {
+    const product = renderedProducts.find(
+      (candidate) => candidate.productCode === productCode,
+    );
+    assert.equal(
+      productCode,
+      firstByConfiguration.get(product.configurationKey).productCode,
+    );
+  }
 });
 
 test("keeps secondary source currency inside the table only", () => {
@@ -65,8 +183,13 @@ test("keeps secondary source currency inside the table only", () => {
 
 test("renders checkbox dropdown filters and one sorting select", () => {
   assert.equal((html.match(/<details class="filter-dropdown"/g) ?? []).length, 5);
+  assert.equal((html.match(/<div class="filter-field">/g) ?? []).length, 5);
+  assert.equal((html.match(/class="control-label"/g) ?? []).length, 11);
+  assert.doesNotMatch(html, /class="filter-title"/);
   assert.ok((html.match(/type="checkbox"/g) ?? []).length >= 5);
   assert.equal((html.match(/<select id="sorting">/g) ?? []).length, 1);
+  assert.match(html, /\.filter-field,.sort-control\{display:grid;gap:5px;min-width:0\}/);
+  assert.match(html, /\.sort-control select\{width:100%;min-width:0;min-height:48px\}/);
   assert.doesNotMatch(
     html,
     /<select id="(?:family|screen|chip|memory|storage)"/,
@@ -93,7 +216,7 @@ test("embeds shared URL view-state restoration and synchronization", () => {
 });
 
 test("retains exact Apple new-price links and the permanent canonical URL", () => {
-  const pricedProducts = catalog.products.filter(
+  const pricedProducts = renderedProducts.filter(
     (product) => product[newPriceField] !== null && product.newSourceUrl,
   );
   assert.ok(pricedProducts.length > 0);
@@ -255,6 +378,14 @@ test("renders explicit fixed-location tax estimates for the US market", () => {
   assert.match(html, /data-tax-location="sioux-falls-delivery-57105"/);
   assert.match(html, /new URLSearchParams\(window\.location\.search\)/);
   assert.match(html, /history\.replaceState/);
+  assert.match(
+    html,
+    /const recommendationProducts=hasDynamicTaxLocations\?[\s\S]*\[recommendationOptions\.priceField\]:taxPricingFor\(product,refurbishedPriceField\)\.amount/,
+  );
+  assert.match(
+    html,
+    /activeTaxLocation=nextLocation;[\s\S]*renderTaxLocationUi\(\);[\s\S]*updatePersonalizedRecommendations\(\);/,
+  );
   assert.match(html, /Refurb total · расчёт/);
   assert.match(html, /Новый total · расчёт/);
   assert.doesNotMatch(html, /Итого Apple/);

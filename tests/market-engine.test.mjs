@@ -15,6 +15,7 @@ import { promisify } from "node:util";
 
 import {
   buildCatalog,
+  buildNewProductUrl,
   calculateFixedLocationTaxEstimate,
   hydrateTaxInclusivePrices,
   parseExactNewPriceHtml,
@@ -624,6 +625,25 @@ test("conversion type is consistent with source and display currencies", () => {
   );
 });
 
+test("current-new pricing guards both configurations and colour variants", () => {
+  for (const profile of [sg, us]) {
+    assert.equal(
+      profile.currentNewPricing.minimumExactVariantMatchRatio,
+      0.5,
+    );
+    assert.equal(
+      profile.currentNewPricing.minimumExactVariantMatchCount,
+      1,
+    );
+  }
+  const missingVariantGuard = structuredClone(sg);
+  delete missingVariantGuard.currentNewPricing.minimumExactVariantMatchRatio;
+  assert.throws(
+    () => validateMarketProfile(missingVariantGuard),
+    /configuration and variant minimum counts and ratios/,
+  );
+});
+
 test("identity tax-included market renders no conversion methodology", async () => {
   const fixtureRoot = await mkdtemp(join(tmpdir(), "macbook-jp-build-"));
   const copiedProject = join(fixtureRoot, "project");
@@ -964,6 +984,7 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
   );
   assert.doesNotMatch(perMarketWorkflow, /npx --yes/);
   assert.match(perMarketWorkflow, /--immutable-source/);
+  assert.match(perMarketWorkflow, /tests\/configuration-picker\.test\.mjs/);
   assert.match(perMarketWorkflow, /--retired/);
   assert.match(perMarketWorkflow, /retired_publication_paths/);
   assert.match(perMarketWorkflow, /ls-files --error-unmatch/);
@@ -1308,6 +1329,12 @@ test("publication manifest derives every market path from enabled profiles", () 
   assert.ok(manifest.sourcePaths.includes("index.html"));
   assert.ok(manifest.sourcePaths.includes(".nojekyll"));
   assert.ok(
+    manifest.sourcePaths.includes("scripts/configuration-picker.mjs"),
+  );
+  assert.ok(
+    manifest.sourcePaths.includes("tests/configuration-picker.test.mjs"),
+  );
+  assert.ok(
     manifest.sourcePaths.includes(
       "work/deploy-unified-cloudflare-fallback.zsh",
     ),
@@ -1323,6 +1350,16 @@ test("publication manifest derives every market path from enabled profiles", () 
   );
   assert.ok(
     manifest.immutableSourcePaths.includes("config/ranking-policy.ca.json"),
+  );
+  assert.ok(
+    manifest.immutableSourcePaths.includes(
+      "scripts/configuration-picker.mjs",
+    ),
+  );
+  assert.ok(
+    manifest.immutableSourcePaths.includes(
+      "tests/configuration-picker.test.mjs",
+    ),
   );
   assert.ok(
     !manifest.immutableSourcePaths.includes("data/markets/ca/catalog.json"),
@@ -1487,7 +1524,7 @@ test("both profiles use the same parser, exact-match, catalog, and ranking path"
     assert.match(parsed.sourceUrl, new RegExp(profile.storefront.baseUrl));
 
     const exactHtml =
-      "<title>Buy 13-inch MacBook Air - Apple M5 chip, 10-core CPU, " +
+      "<title>Buy 13-inch MacBook Air - Midnight, Apple M5 chip, 10-core CPU, " +
       "10-core GPU, 24GB memory, 1TB storage</title>" +
       `<script>{"priceCurrency":"${profile.currency.source}","price":2199}</script>`;
     assert.equal(parseExactNewPriceHtml(exactHtml, parsed, profile), 2199);
@@ -1527,8 +1564,7 @@ test("US fixed-location estimate reproduces Apple checkout and screen fees", asy
     us,
   );
   products[0].newPriceUsd = 1799;
-  products[0].newSourceUrl =
-    "https://www.apple.com/shop/buy-mac/macbook-air/13-inch";
+  products[0].newSourceUrl = buildNewProductUrl(products[0], us);
   const estimated = await hydrateTaxInclusivePrices(products, {
     marketProfile: us,
   });
@@ -1927,8 +1963,10 @@ test("the shared UI builder renders the US profile without Singapore assumptions
       us,
     );
     parsedProducts[0].newPriceUsd = 1799;
-    parsedProducts[0].newSourceUrl =
-      "https://www.apple.com/shop/buy-mac/macbook-air/13-inch";
+    parsedProducts[0].newSourceUrl = buildNewProductUrl(
+      parsedProducts[0],
+      us,
+    );
     const { products } = await hydrateTaxInclusivePrices(parsedProducts, {
       marketProfile: us,
     });

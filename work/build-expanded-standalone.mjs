@@ -1,11 +1,13 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { hasExactNewProductSource } from "../scripts/apple-catalog-lib.mjs";
 import { escapeHtml } from "../scripts/html-escape.mjs";
 import {
   readCatalogViewState,
   writeCatalogViewSearch,
   writeOwnedChoiceSearch,
 } from "../scripts/catalog-view-state.mjs";
+import { recommendConfigurations } from "../scripts/configuration-picker.mjs";
 import {
   calculateTaxLocationAmounts,
   screenInchesFromLabel,
@@ -66,10 +68,30 @@ const changelogDocument = await readJson(paths.changelog);
 const site = await readJson(paths.site);
 const updateStatus = await readJson(paths.updateStatus, { optional: true });
 
-const products = Array.isArray(catalogDocument) ? catalogDocument : catalogDocument?.products;
-if (!Array.isArray(products) || products.length === 0) {
+const catalogProducts = Array.isArray(catalogDocument)
+  ? catalogDocument
+  : catalogDocument?.products;
+if (!Array.isArray(catalogProducts) || catalogProducts.length === 0) {
   throw new Error(`${paths.catalog} must contain a non-empty products array`);
 }
+const products = catalogProducts.map((product) => {
+  const hasVerifiedNewPrice =
+    Number.isFinite(product[newPriceField]) &&
+    product.newSourceUrl &&
+    hasExactNewProductSource(product, profile);
+  if (hasVerifiedNewPrice) return product;
+  return {
+    ...product,
+    [newPriceField]: null,
+    newSourceUrl: null,
+    ...(newTaxInclusivePriceField
+      ? {
+          [newTaxInclusivePriceField]: null,
+          newTaxInclusivePricing: null,
+        }
+      : {}),
+  };
+});
 if (hasTaxLocationSwitcher) {
   for (const location of taxLocationSwitcher.locations) {
     for (const product of products) {
@@ -156,19 +178,47 @@ const taxFormula = (pricing) =>
 const capacityNumber = (value) => Number(value.replace(/\D/g, "")) * (value.endsWith("TB") ? 1024 : 1);
 const chipNumber = (value) => Number(value.match(/\d+/)?.[0] || 0);
 const chipTier = (value) => (value.includes("Max") ? 2 : value.includes("Pro") ? 1 : 0);
-const configurationKeyFor = (product) => product.configurationKey || [
-  product.family,
-  product.screen,
-  product.display,
-  product.chip,
-  product.cpuCores,
-  product.gpuCores,
-  product.memory,
-  product.storage,
-].join("|");
+const colourNames = {
+  Silver: "Серебристый",
+  Midnight: "Тёмная ночь",
+  "Space Grey": "Серый космос",
+  "Space Black": "Чёрный космос",
+  Starlight: "Сияющая звезда",
+  "Sky Blue": "Небесно-голубой",
+};
+const colourClasses = {
+  Silver: "silver",
+  Midnight: "midnight",
+  "Space Grey": "space-grey",
+  "Space Black": "space-black",
+  Starlight: "starlight",
+  "Sky Blue": "sky-blue",
+};
+const variantsByConfiguration = new Map();
+for (const product of products) {
+  const variants = variantsByConfiguration.get(product.configurationKey) ?? [];
+  variants.push(product);
+  variantsByConfiguration.set(product.configurationKey, variants);
+}
+const configurationGroups = [...variantsByConfiguration.values()];
+const colourPicker = (product, placement) => {
+  const variants = variantsByConfiguration.get(product.configurationKey) ?? [product];
+  const buttons = variants.map((variant) => {
+    const colourName = colourNames[variant.colour] || variant.colour;
+    const colourClass = colourClasses[variant.colour] || "";
+    const pressed = variant.productCode === product.productCode;
+    return `<button class="colour-swatch ${escapeHtml(colourClass)}" type="button" data-colour-code="${escapeHtml(variant.productCode)}" data-configuration-key="${escapeHtml(product.configurationKey)}" aria-label="Выбрать ${escapeHtml(colourName)}" aria-pressed="${pressed}" title="${escapeHtml(colourName)}"></button>`;
+  }).join("");
+  return `<div class="colour-picker ${placement === "table" ? "table-colours" : "pick-colours"}"><span class="colour-swatches">${buttons}</span><span class="colour-name">${escapeHtml(colourNames[product.colour] || product.colour)}</span></div>`;
+};
 
-const airCount = products.filter((product) => product.family === "Air").length;
-const proCount = products.filter((product) => product.family === "Pro").length;
+const airCount = configurationGroups.filter(
+  ([product]) => product.family === "Air",
+).length;
+const proCount = configurationGroups.filter(
+  ([product]) => product.family === "Pro",
+).length;
+const configurationCount = configurationGroups.length;
 const minimumPrice = Math.min(
   ...products.map((product) => product[displayedRefurbishedPriceField]),
 );
@@ -178,96 +228,54 @@ const maximumPrice = Math.max(
 const chips = [...new Set(products.map((product) => product.chip))].sort((a, b) =>
   chipNumber(a) - chipNumber(b) || chipTier(a) - chipTier(b),
 );
-
-const fallbackLabels = ["Лучший выбор", "Сильная альтернатива", "Третий выбор"];
-const reasonTextByCode = {
-  ideal_match: "Максимально близко к целевой конфигурации.",
-  exact_ideal: "Полностью совпадает с целевой конфигурацией.",
-  current_generation: "Актуальное поколение чипа даёт хороший запас на несколько лет.",
-  latest_chip: "Новый чип — сильная база для долгой работы.",
-  memory_24gb: "24 GB памяти подходят для тяжёлой многозадачности.",
-  storage_1tb: "SSD на 1 TB оставляет больше места для локальных проектов.",
-  best_value: "Сильное соотношение характеристик и цены.",
-  balanced: "Сбалансированная конфигурация без явного слабого места.",
-  portable: "Компактный корпус удобен для ежедневной мобильной работы.",
-  larger_screen: "Большой экран даёт больше рабочего пространства.",
-  pro_performance: "Pro-конфигурация рассчитана на более длительную нагрузку.",
-  exact_new_price: "Для этой конфигурации доступно точное сравнение с новой моделью.",
+const families = [
+  ...new Set([
+    ...products.map((product) => product.family),
+    profile.ranking.reference.family,
+  ].filter(Boolean)),
+].sort((a, b) => a.localeCompare(b));
+const screens = [...new Set(products.map((product) => product.screen))]
+  .sort((a, b) => Number(a.replace(/\D/g, "")) - Number(b.replace(/\D/g, "")));
+const pickerScreenLabels = {
+  "13-14": "13–14″",
+  "15-16": "15–16″",
 };
-const humanizeReasonCode = (code) => String(code)
-  .replaceAll("_", " ")
-  .replaceAll("-", " ")
-  .trim();
-const fallbackReason = (entry, product) => {
-  const reasonCodes = Array.isArray(entry.reasonCodes) ? entry.reasonCodes : [];
-  const mapped = reasonCodes.map((code) => reasonTextByCode[code]).filter(Boolean);
-  if (mapped.length) return [...new Set(mapped)].join(" ");
-  if (reasonCodes.length) {
-    return `Причины выбора: ${reasonCodes.map(humanizeReasonCode).join(", ")}.`;
-  }
-  return `${product.chip}, ${product.memory} памяти и SSD ${product.storage} — сильная конфигурация в текущем каталоге.`;
+const pickerScreens = Object.keys(pickerScreenLabels);
+const memories = [
+  ...new Set([
+    ...products.map((product) => product.memory),
+    profile.ranking.reference.memory,
+  ].filter(Boolean)),
+].sort((a, b) => Number(a.replace(/\D/g, "")) - Number(b.replace(/\D/g, "")));
+const storages = [
+  ...new Set([
+    ...products.map((product) => product.storage),
+    profile.ranking.reference.storage,
+  ].filter(Boolean)),
+].sort((a, b) => capacityNumber(a) - capacityNumber(b));
+const defaultPickerPreferences = {
+  family: profile.ranking.reference.family,
+  screen: "",
+  memory: profile.ranking.reference.memory,
+  storage: profile.ranking.reference.storage,
+  budget: null,
 };
-const fallbackHeadline = (product) =>
-  `${product.screen} ${product.family} · ${product.memory} / ${product.storage}`;
-const resolveFeaturedProduct = (entry) =>
-  products.find((product) => entry.productCode && product.productCode === entry.productCode) ||
-  products.find((product) =>
-    entry.configurationKey && configurationKeyFor(product) === entry.configurationKey,
-  );
-const featured = featuredEntries
-  .map((entry, sourceIndex) => ({ entry, sourceIndex, product: resolveFeaturedProduct(entry) }))
-  .sort((a, b) =>
-    (Number(a.entry.rank) || Number.MAX_SAFE_INTEGER) -
-      (Number(b.entry.rank) || Number.MAX_SAFE_INTEGER) ||
-    b.entry.score - a.entry.score ||
-    a.sourceIndex - b.sourceIndex,
-  )
-  .slice(0, 3)
-  .map(({ entry, product }, index) => {
-    if (!product) {
-      throw new Error(
-        `Cannot resolve featured item rank ${entry.rank ?? index + 1} by productCode or configurationKey`,
-      );
-    }
-    const score = Number(entry.score);
-    if (!Number.isFinite(score)) {
-      throw new Error(`Featured item rank ${entry.rank ?? index + 1} has an invalid score`);
-    }
-    for (const fieldName of ["label", "headline", "reason"]) {
-      if (
-        sourceCurrency !== displayCurrency &&
-        entry[fieldName] &&
-        new RegExp(`\\b${sourceCurrency}\\b`).test(entry[fieldName])
-      ) {
-        throw new Error(
-          `Featured item rank ${entry.rank ?? index + 1} ${fieldName} must not contain secondary-currency copy`,
-        );
-      }
-    }
-    return {
-      ...entry,
-      rank: Number(entry.rank) || index + 1,
-      score,
-      product,
-      label: entry.label || fallbackLabels[index] || `Выбор №${index + 1}`,
-      headline: entry.headline || fallbackHeadline(product),
-      reason: entry.reason || fallbackReason(entry, product),
-    };
-  });
-if (featured.length !== 3) {
-  throw new Error(
-    `${paths.featured} must resolve exactly three featured items; found ${featured.length}`,
-  );
-}
-
-const embeddedFeatured = JSON.stringify(featured.map((item) => ({
-  productCode: item.product.productCode,
-  configurationKey: item.configurationKey || configurationKeyFor(item.product),
-  rank: item.rank,
-  score: item.score,
-}))).replaceAll("<", "\\u003c");
-const recommendedCodes = featured.map((item) => item.product.productCode);
-const formatScore = (score) => (score / 1000).toFixed(1);
+const recommendationOptions = {
+  priceField: displayedRefurbishedPriceField,
+  priceMultiplier: rate,
+};
+const initialRecommendations = recommendConfigurations(
+  products,
+  defaultPickerPreferences,
+  recommendationOptions,
+);
+const embeddedDefaultPickerPreferences = JSON.stringify(
+  defaultPickerPreferences,
+).replaceAll("<", "\\u003c");
+const embeddedRecommendationOptions = JSON.stringify(
+  recommendationOptions,
+).replaceAll("<", "\\u003c");
+const embeddedRecommendConfigurations = recommendConfigurations.toString();
 const embeddedEscapeHtml = escapeHtml.toString();
 const productChangeLabel = (product) => {
   const display =
@@ -363,49 +371,77 @@ const cardPrice = (product) =>
     : profile.tax.model === "included-in-list-price"
       ? `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb · налог включён</span>`
       : `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>`;
-const card = ({ product, label, heading, body, score, highlighted = false }) =>
-  `<article class="pick-card${highlighted ? " featured" : ""}" data-score="${escapeHtml(score)}"${hasTaxLocationSwitcher ? ` data-product-code="${escapeHtml(product.productCode)}"` : ""}>
-    <span class="pick-label">${escapeHtml(label)} · рейтинг ${escapeHtml(formatScore(score))}</span>
+const pickerFieldLabels = {
+  family: "Линейка",
+  screen: "Экран",
+  memory: "RAM",
+  storage: "SSD",
+};
+const recommendationHeadline = (product) =>
+  `MacBook ${product.family} ${product.screen} · ${product.chip} · ${product.memory} / ${product.storage}`;
+const recommendationFacts = (item) => {
+  const facts = [];
+  if (item.differences.length === 0) {
+    facts.push("Все выбранные параметры совпали.");
+  } else {
+    facts.push(
+      ...item.differences.map(
+        (difference) =>
+          `${pickerFieldLabels[difference.field]}: ${difference.actual} вместо ${difference.target}`,
+      ),
+    );
+  }
+  if (item.savingComparedToClosest > 0) {
+    facts.push(
+      `${displayFormatter.format(item.savingComparedToClosest)} дешевле самого точного варианта.`,
+    );
+  }
+  if (item.overBudgetBy > 0) {
+    facts.push(
+      `${displayFormatter.format(item.overBudgetBy)} сверх указанного бюджета.`,
+    );
+  }
+  return facts;
+};
+const card = ({ item, highlighted = false }) => {
+  const product =
+    variantsByConfiguration.get(item.product.configurationKey)?.[0] ??
+    item.product;
+  const matchLabel = item.preferenceCount > 0
+    ? `${item.matchCount} из ${item.preferenceCount} совпало`
+    : "Подбор по цене";
+  return `<article class="pick-card${highlighted ? " featured" : ""}" data-product-code="${escapeHtml(product.productCode)}">
+    <span class="pick-label">${escapeHtml(item.label)}</span>
+    <span class="pick-match">${escapeHtml(matchLabel)}</span>
     <div class="pick-chip">${escapeHtml(product.chip)}</div>
-    <h3>${escapeHtml(heading)}</h3>
-    <p>${escapeHtml(body)}</p>
-    <div class="pick-price"${hasTaxLocationSwitcher ? ' data-role="pick-price"' : ""}>${cardPrice(product)}</div>
-    <a class="pick-link" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">Открыть у Apple ↗</a>
+    <h3>${escapeHtml(recommendationHeadline(product))}</h3>
+    <ul class="pick-facts">${recommendationFacts(item).map((fact) => `<li>${escapeHtml(fact)}</li>`).join("")}</ul>
+    <div class="pick-price" data-role="pick-price">${cardPrice(product)}</div>
+    <div class="pick-actions">${colourPicker(product, "card")}<a class="pick-link" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">Открыть у Apple ↗</a></div>
   </article>`;
+};
 
-const shortlistHtml = featured.map((item, index) => card({
-  product: item.product,
-  label: item.label,
-  heading: item.headline,
-  body: item.reason,
-  score: item.score,
-  highlighted: index === 0,
-})).join("");
-const leadingPick = featured[0];
-const runnerUp = featured[1];
-const priceDelta = Math.abs(
-  leadingPick.product[displayedRefurbishedPriceField] -
-    runnerUp.product[displayedRefurbishedPriceField],
-);
-const priceComparison = priceDelta === 0
-  ? "Они стоят одинаково."
-  : `${leadingPick.product[displayedRefurbishedPriceField] > runnerUp.product[displayedRefurbishedPriceField] ? "Первый вариант дороже второго" : "Первый вариант дешевле второго"} на ${mainPrice(priceDelta)}.`;
+const shortlistHtml = initialRecommendations.items
+  .map((item, index) => card({ item, highlighted: index === 0 }))
+  .join("");
+const selectOptions = (
+  values,
+  { includeAny = true, labels = {}, selected = "" } = {},
+) =>
+  `${includeAny ? `<option value=""${selected === "" ? " selected" : ""}>Не важно</option>` : ""}${values
+    .map((value) => `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(labels[value] || value)}</option>`)
+    .join("")}`;
 
 const checkboxes = (name, values, labels = {}) => values
   .map((value, index) => `<label class="check-option" for="${escapeHtml(name)}-${index}"><input id="${escapeHtml(name)}-${index}" type="checkbox" name="${escapeHtml(name)}" value="${escapeHtml(value)}"><span>${escapeHtml(labels[value] || value)}</span></label>`)
   .join("");
-const filterDropdown = (name, title, values, labels = {}) => `<details class="filter-dropdown" data-filter="${escapeHtml(name)}">
-  <summary><span class="filter-title">${escapeHtml(title)}</span><span class="filter-value">Все</span></summary>
-  <div class="dropdown-menu">${checkboxes(name, values, labels)}</div>
-</details>`;
-const families = [...new Set(products.map((product) => product.family))]
-  .sort((a, b) => a.localeCompare(b));
-const screens = [...new Set(products.map((product) => product.screen))]
-  .sort((a, b) => Number(a.replace(/\D/g, "")) - Number(b.replace(/\D/g, "")));
-const memories = [...new Set(products.map((product) => product.memory))]
-  .sort((a, b) => Number(a.replace(/\D/g, "")) - Number(b.replace(/\D/g, "")));
-const storages = [...new Set(products.map((product) => product.storage))]
-  .sort((a, b) => capacityNumber(a) - capacityNumber(b));
+const filterDropdown = (name, title, values, labels = {}) => `<div class="filter-field">
+  <span class="control-label">${escapeHtml(title)}</span>
+  <details class="filter-dropdown" data-filter="${escapeHtml(name)}">
+    <summary><span class="filter-value">Все</span></summary>
+    <div class="dropdown-menu">${checkboxes(name, values, labels)}</div>
+  </details>
+</div>`;
 const exactNewPriceCount = products.filter((product) =>
   Number.isFinite(product[newPriceField]) && product.newSourceUrl,
 ).length;
@@ -590,6 +626,16 @@ const clientTaxFormatterSource = hasTaxLocationSwitcher
     const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
     const comparableNewPrice=p=>p[newPriceField];
     const comparisonPrice=tablePrice;`;
+const clientPickerPriceSource = hasTaxLocationSwitcher
+  ? `const pickerPrice=p=>{
+      const pricing=taxPricingFor(p,refurbishedPriceField);
+      return '<strong>'+taxCurrency.format(pricing.amount*rate)+'</strong><span>total · расчёт</span>'+priceFormula(pricing);
+    };`
+  : hasVerifiedTaxEstimate
+    ? `const pickerPrice=p=>'<strong>'+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</strong><span>total · расчёт</span>'+priceFormula(p.taxInclusivePricing);`
+  : profile.tax.model === "included-in-list-price"
+    ? `const pickerPrice=p=>'<strong>'+primaryCurrency.format(p[refurbishedPriceField]*rate)+'</strong><span>refurb · налог включён</span>';`
+    : `const pickerPrice=p=>'<strong>'+primaryCurrency.format(p[refurbishedPriceField]*rate)+'</strong><span>refurb до налога</span>';`;
 const refurbishedHeader = hasVerifiedTaxEstimate
   ? "Refurb total · расчёт"
   : hasReferenceLocationTax
@@ -617,20 +663,6 @@ const clientTaxLocationUiSource = hasTaxLocationSwitcher
       const tax="налог "+taxRatePercent(location)+"%";
       return labels.length?tax+" + "+labels.join(" + "):tax+"; без отдельного сбора";
     };
-    const productForFeatured=item=>products.find(p=>
-      item.productCode===p.productCode||
-      (!item.productCode&&item.configurationKey===configurationKeyFor(p))
-    );
-    const featuredPriceComparison=()=>{
-      const leading=productForFeatured(featured[0]);
-      const runnerUp=productForFeatured(featured[1]);
-      const leadingPrice=comparableRefurbishedPrice(leading);
-      const runnerUpPrice=comparableRefurbishedPrice(runnerUp);
-      const priceDelta=Math.abs(leadingPrice-runnerUpPrice);
-      if(priceDelta===0)return "Они стоят одинаково.";
-      return (leadingPrice>runnerUpPrice?"Первый вариант дороже второго":"Первый вариант дешевле второго")+
-        " на "+taxCurrency.format(priceDelta*rate)+".";
-    };
     const renderTaxLocationUi=()=>{
       document.querySelectorAll("[data-tax-location]").forEach(button=>
         button.setAttribute("aria-pressed",String(button.dataset.taxLocation===activeTaxLocation.id))
@@ -650,7 +682,6 @@ const clientTaxLocationUiSource = hasTaxLocationSwitcher
           '<strong>'+taxCurrency.format(pricing.amount*rate)+'</strong>'+
           '<span>total · расчёт</span>'+priceFormula(pricing)+sourcePriceFormula(pricing);
       });
-      document.querySelector("#decision-price-comparison").textContent=featuredPriceComparison();
       document.querySelector("#refurbished-price-header").textContent=
         "Refurb total · "+activeTaxLocation.shortLabel;
       document.querySelector("#new-price-header").textContent=
@@ -672,7 +703,7 @@ const clientTaxLocationUiSource = hasTaxLocationSwitcher
       activeTaxLocation=nextLocation;
       synchronizeCatalogViewUrl();
       renderTaxLocationUi();
-      render();
+      updatePersonalizedRecommendations();
     };`
   : "";
 const clientTaxLocationEventsSource = hasTaxLocationSwitcher
@@ -754,7 +785,7 @@ const html = `<!doctype html>
     html{scroll-behavior:smooth}
     body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
     a{color:inherit}
-    button,select{font:inherit}
+    button,select,input{font:inherit}
     .topbar{height:64px;padding:0 4vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ink);position:sticky;top:0;background:rgba(245,241,232,.94);backdrop-filter:blur(12px);z-index:10}
     .wordmark{font-weight:900;letter-spacing:.08em;text-decoration:none}
     .topbar-actions,.section-nav,.market-switcher${hasTaxLocationSwitcher ? ",.header-tax-switcher" : ""}{display:flex;align-items:center}
@@ -782,45 +813,59 @@ const html = `<!doctype html>
     .section-heading{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:40px}
     .section-heading h2{font-size:clamp(42px,6vw,78px);line-height:.9;letter-spacing:-.06em;margin:13px 0 0}
     .section-heading p{max-width:460px;margin:0;color:var(--muted);font-size:17px}
+    .preference-picker{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr)) minmax(170px,1.15fr) auto;gap:10px;align-items:end;background:var(--ink);padding:14px;margin-bottom:22px}
+    .picker-field{display:grid;gap:5px;min-width:0}
+    .control-label{font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--paper)}
+    .picker-field select,.picker-budget{width:100%;min-height:48px;border:0;border-radius:0;background:var(--white);color:var(--ink);padding:12px}
+    .picker-budget{display:flex;align-items:center;gap:8px;padding:0 12px}
+    .picker-field select,.picker-budget input,.picker-reset{font-family:inherit;font-size:16px;font-weight:400;letter-spacing:normal}
+    .picker-budget input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);padding:12px 0}
+    .picker-budget input::placeholder{color:var(--muted);opacity:1}
+    .picker-budget b{font:800 10px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}
+    .picker-reset{height:48px;border:1px solid var(--paper);background:transparent;color:var(--paper);padding:0 18px;cursor:pointer}
+    .picker-field select:focus-visible,.picker-budget:focus-within,.picker-reset:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+    .picker-context{margin:-8px 0 24px;color:var(--muted);font-size:13px}
     .picks-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
     .pick-card{position:relative;background:var(--white);border:1px solid var(--ink);padding:26px;min-height:410px;display:flex;flex-direction:column}
     .pick-card.featured{background:var(--lime)}
     .pick-label{font:700 11px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em}
+    .pick-match{position:absolute;right:20px;top:20px;border:1px solid var(--ink);padding:5px 7px;font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.05em}
     .pick-chip{font-size:clamp(54px,6vw,86px);font-weight:900;letter-spacing:-.08em;line-height:1;margin:32px 0 10px;white-space:nowrap}
     .pick-card h3{font-size:28px;letter-spacing:-.04em;margin:0 0 15px}
-    .pick-card p{color:#4e4d47;line-height:1.45;margin:0 0 25px}
+    .pick-facts{display:grid;gap:7px;color:#4e4d47;line-height:1.35;margin:0 0 25px;padding-left:18px;font-size:14px}
     .pick-price{margin-top:auto;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.pick-price strong{font-size:31px}.pick-price span{color:var(--muted)}
-    .pick-link{margin-top:20px;font-weight:750;text-underline-offset:4px}
+    .pick-actions{display:grid;gap:14px;margin-top:20px}.pick-link{font-weight:750;text-underline-offset:4px}
     .decision-note{margin-top:20px;background:var(--ink);color:var(--paper);padding:22px 26px;display:flex;gap:20px;align-items:center}
     .decision-note p{margin:0;font-size:18px}.decision-mark{display:grid;place-items:center;background:var(--blue);border-radius:50%;width:36px;height:36px;font-weight:900;flex:0 0 auto}
     .filters{position:relative;z-index:5;display:grid;grid-template-columns:repeat(5,minmax(120px,1fr)) minmax(210px,1.5fr) auto;gap:10px;align-items:end;background:var(--ink);padding:14px}
+    .filter-field,.sort-control{display:grid;gap:5px;min-width:0}
     .filter-dropdown{position:relative;min-width:0}
-    .filter-dropdown summary{position:relative;display:grid;gap:4px;min-height:51px;padding:9px 34px 9px 12px;background:var(--white);color:var(--ink);cursor:pointer;list-style:none}
+    .filter-dropdown summary{position:relative;display:flex;align-items:center;min-height:48px;padding:12px 34px 12px 12px;background:var(--white);color:var(--ink);cursor:pointer;list-style:none}
     .filter-dropdown summary::-webkit-details-marker{display:none}
-    .filter-dropdown summary::after{content:"⌄";position:absolute;right:12px;top:16px;font-size:18px;line-height:1;transition:transform .15s ease}
+    .filter-dropdown summary::after{content:"⌄";position:absolute;right:12px;top:50%;font-size:18px;line-height:1;transform:translateY(-50%);transition:transform .15s ease}
     .filter-dropdown[open] summary{background:var(--lime)}
-    .filter-dropdown[open] summary::after{transform:rotate(180deg)}
-    .filter-title,.sort-control>span{font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-    .filter-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:750}
+    .filter-dropdown[open] summary::after{transform:translateY(-50%) rotate(180deg)}
+    .filter-value,.sort-control select,.reset{font-family:inherit;font-size:16px;font-weight:400;letter-spacing:normal}
+    .filter-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .dropdown-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:max(100%,210px);max-height:310px;overflow:auto;background:var(--white);border:1px solid var(--ink);box-shadow:6px 6px 0 var(--ink);z-index:20}
     .check-option{display:flex;align-items:center;gap:9px;min-height:40px;padding:9px 11px;background:var(--white);color:var(--ink);border-bottom:1px solid var(--line);font-size:12px;font-weight:700;cursor:pointer;user-select:none}
     .check-option:last-child{border-bottom:0}
     .check-option:has(input:checked){background:var(--lime)}
     .check-option input{width:15px;height:15px;margin:0;accent-color:var(--blue)}
-    .sort-control{display:grid;gap:5px}
-    .sort-control>span{color:var(--paper)}
     select{border:0;border-radius:0;background:var(--white);color:var(--ink);padding:12px 32px 12px 12px;min-height:43px}
-    .reset{border:1px solid var(--paper);background:transparent;color:var(--paper);padding:0 18px;cursor:pointer;align-self:end;height:43px}
+    .sort-control select{width:100%;min-width:0;min-height:48px}
+    .reset{border:1px solid var(--paper);background:transparent;color:var(--paper);padding:0 18px;cursor:pointer;align-self:end;height:48px}
+    .filter-dropdown summary:focus-visible,.sort-control select:focus-visible,.reset:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
     .result-count{font:700 12px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.07em;margin:22px 0 12px}
     .table-wrap{overflow:auto;border:1px solid var(--ink);background:var(--white)}
-    table{width:100%;border-collapse:collapse;min-width:1380px}
-    th{text-align:left;background:var(--ink);color:var(--paper);font:700 10px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em;padding:15px}
-    td{padding:16px 15px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:14px}
+    table{width:100%;border-collapse:collapse;min-width:1200px}
+    th{text-align:left;background:var(--ink);color:var(--paper);font:700 10px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em;padding:13px 12px}
+    td{padding:14px 12px;border-bottom:1px solid var(--line);font-size:14px}
     tbody tr:hover{background:#eeeadf}.recommended{background:#efffc0}
     .model{display:flex;align-items:center;gap:12px}.model small{display:block;color:var(--muted);margin-top:4px;font:11px ui-monospace,SFMono-Regular,Menlo,monospace}
     .model-mark{display:grid;place-items:center;width:42px;height:42px;background:var(--ink);color:white;border-radius:9px;font-weight:900}
-    .chip-name{display:inline-block;background:#e8e5dc;padding:7px 9px;font-weight:850}.chip-m5{background:var(--blue);color:white}
-    .dot{display:inline-block;width:12px;height:12px;border:1px solid #777;border-radius:50%;margin-right:7px;vertical-align:-1px}
+    .chip-name{display:inline-block;background:#e8e5dc;padding:7px 9px;font-weight:850;white-space:nowrap}.chip-m5{background:var(--blue);color:white}
+    .colour-picker{min-width:0}.colour-swatches{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.colour-swatch{display:block;width:18px;height:18px;flex:0 0 18px;padding:0;border:1px solid #777;border-radius:50%;cursor:pointer}.colour-swatch[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:2px}.colour-swatch:focus-visible{outline:3px solid var(--blue);outline-offset:3px}.colour-name{font-size:12px;color:var(--muted);white-space:normal}.pick-colours{display:flex;align-items:center;gap:11px;flex-wrap:wrap}.table-colours{display:grid;gap:8px;min-width:112px}
     .silver{background:#e7e8e8}.midnight{background:#252a32}.space-grey{background:#838487}.space-black{background:#222}.starlight{background:#f1e5c9}.sky-blue{background:#b9d5e7}
     .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-unresolved,.price-formula,.source-tax-formula{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.pick-price small{flex-basis:100%;font-size:12px;color:var(--muted)}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
     .price-link{color:inherit;text-decoration-color:#aaa;text-underline-offset:3px}
@@ -834,9 +879,9 @@ const html = `<!doctype html>
     .changelog-list{display:grid;gap:12px}.change-entry{border:1px solid var(--ink);background:var(--white);padding:22px}.change-entry-head{display:flex;justify-content:space-between;gap:20px;margin-bottom:15px}.change-entry-head time{font-size:19px;font-weight:850}.change-entry-head span{font:700 10px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;color:var(--blue)}.change-entry p{margin:0;color:var(--muted);line-height:1.5}.change-entry ul{margin:0;padding-left:20px;display:grid;gap:9px;line-height:1.45}
     footer{padding:30px 4vw;display:flex;justify-content:space-between;gap:20px;font-size:12px;color:var(--muted)}
     footer div{display:flex;gap:20px;flex-wrap:wrap}
-    @media(max-width:1100px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.sort-control{grid-column:span 2}.reset{width:100%}}
+    @media(max-width:1100px){.preference-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.picker-reset{width:100%}.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.sort-control{grid-column:span 2}.reset{width:100%}}
     @media(max-width:850px){.section-nav{display:none}.topbar-actions{gap:10px}.market-switcher${hasTaxLocationSwitcher ? ",.header-tax-switcher" : ""}{padding-left:10px}.hero{padding-top:48px}h1{margin-bottom:40px}.hero-grid,.picks-grid,.method-grid{grid-template-columns:1fr}${responsiveHeroAsideCss}.hero-stats{grid-template-columns:1fr}.hero-stats div{border-right:0;border-bottom:1px solid var(--ink);padding:18px 0!important}.section-shell{padding:70px 4vw}.section-heading{display:block}.section-heading p{margin-top:20px}.reset{width:100%}.pick-card{min-height:340px}.change-latest,.change-entry-head{align-items:flex-start;flex-direction:column}footer{display:block}footer div{margin-top:15px}}
-    @media(max-width:620px){${hasTaxLocationSwitcher ? ".topbar{height:auto;min-height:64px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}.topbar-actions{display:contents}.market-switcher{grid-column:2;grid-row:1;height:64px}.header-tax-switcher{grid-column:1/-1;grid-row:2;margin:0 -4vw;padding:8px 4vw;border-left:0;border-top:1px solid var(--line);justify-content:space-between}.header-tax-switcher .tax-location-switcher{margin-left:auto}" : ""}h1{font-size:54px}.lede{font-size:22px}.filters{grid-template-columns:1fr}.sort-control{grid-column:auto}.dropdown-menu{position:static;min-width:0;margin-top:6px;box-shadow:none}.section-heading h2{font-size:44px}.pick-chip{font-size:58px}}
+    @media(max-width:620px){${hasTaxLocationSwitcher ? ".topbar{height:auto;min-height:64px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}.topbar-actions{display:contents}.market-switcher{grid-column:2;grid-row:1;height:64px}.header-tax-switcher{grid-column:1/-1;grid-row:2;margin:0 -4vw;padding:8px 4vw;border-left:0;border-top:1px solid var(--line);justify-content:space-between}.header-tax-switcher .tax-location-switcher{margin-left:auto}" : ""}h1{font-size:54px}.lede{font-size:22px}.preference-picker,.filters{grid-template-columns:1fr}.sort-control{grid-column:auto}.dropdown-menu{position:static;min-width:0;margin-top:6px;box-shadow:none}.section-heading h2{font-size:44px}.pick-chip{font-size:58px}.pick-match{position:static;align-self:flex-start;margin-top:10px}}
     @media print{.topbar,.filters,.open{display:none}.hero{padding-top:30px}.section-shell{padding:40px 3vw}.table-wrap{overflow:visible}table{min-width:0}th,td{padding:8px;font-size:8px}}
   </style>
 </head>
@@ -844,7 +889,7 @@ const html = `<!doctype html>
   <header class="topbar">
     <a class="wordmark" href="#top">MAC / FINDER</a>
     <div class="topbar-actions">
-      <nav class="section-nav" aria-label="Разделы"><a href="#shortlist">Короткий список</a><a href="#comparison">Все модели</a><a href="#method">О данных</a><a href="#changelog">Изменения</a></nav>
+      <nav class="section-nav" aria-label="Разделы"><a href="#shortlist">Подбор</a><a href="#comparison">Все модели</a><a href="#method">О данных</a><a href="#changelog">Изменения</a></nav>
 ${taxLocationHeaderHtml ? `      ${taxLocationHeaderHtml}\n` : ""}      <nav class="market-switcher" aria-label="Выбор рынка"><span>Рынок</span>${marketSwitcherHtml}</nav>
     </div>
   </header>
@@ -858,27 +903,36 @@ ${taxLocationHeaderHtml ? `      ${taxLocationHeaderHtml}\n` : ""}      <nav cla
         ${heroAsideHtml}
       </div>
       <div class="hero-stats">
-        <div><strong>${products.length}</strong><span>актуальные позиции</span></div>
-        <div><strong>${airCount} Air · ${proCount} Pro</strong><span>весь каталог ноутбуков</span></div>
+        <div><strong>${configurationCount}</strong><span>конфигураций · ${products.length} цветовых вариантов</span></div>
+        <div><strong>${airCount} Air · ${proCount} Pro</strong><span>конфигурации в каталоге</span></div>
         <div class="price-range"><strong${hasTaxLocationSwitcher ? ' id="price-range-value"' : ""}>${mainPrice(minimumPrice)} – ${mainPrice(maximumPrice)}</strong><span>${hasVerifiedTaxEstimate ? "диапазон total · расчёт" : hasReferenceLocationTax ? "диапазон до налога" : "диапазон цен"}</span></div>
       </div>
     </section>
 
     <section class="section-shell" id="shortlist">
-      <div class="section-heading"><div><span class="section-index">01</span><h2>Если выбирать быстро</h2></div><p>Три лидера текущего каталога по единой политике оценки.</p></div>
-      <div class="picks-grid">${shortlistHtml}</div>
-      <div class="decision-note"><span class="decision-mark">!</span><p><strong>Главный ориентир:</strong> ${escapeHtml(leadingPick.headline)} занимает первое место с оценкой ${escapeHtml(formatScore(leadingPick.score))}. ${hasTaxLocationSwitcher ? `<span id="decision-price-comparison">${escapeHtml(priceComparison)}</span>` : escapeHtml(priceComparison)}</p></div>
+      <div class="section-heading"><div><span class="section-index">01</span><h2>Что подойдёт вам?</h2></div><p>Опишите желаемую конфигурацию. Подбор мгновенно пересчитается по моделям, которые сейчас есть у Apple.</p></div>
+      <form class="preference-picker" id="preference-picker">
+        <label class="picker-field"><span class="control-label">Линейка</span><select id="target-family" name="ideal-family">${selectOptions(families, { selected: defaultPickerPreferences.family })}</select></label>
+        <label class="picker-field"><span class="control-label">Экран</span><select id="target-screen" name="ideal-screen">${selectOptions(pickerScreens, { labels: pickerScreenLabels, selected: defaultPickerPreferences.screen })}</select></label>
+        <label class="picker-field"><span class="control-label">Память</span><select id="target-memory" name="ideal-memory">${selectOptions(memories, { selected: defaultPickerPreferences.memory })}</select></label>
+        <label class="picker-field"><span class="control-label">SSD</span><select id="target-storage" name="ideal-storage">${selectOptions(storages, { selected: defaultPickerPreferences.storage })}</select></label>
+        <label class="picker-field"><span class="control-label">Максимальный бюджет</span><span class="picker-budget"><input id="target-budget" name="max-price" type="number" min="1" step="1" inputmode="decimal" placeholder="Без лимита"><b>${escapeHtml(displayCurrency)}</b></span></label>
+        <button class="picker-reset" id="picker-reset" type="button">Вернуть пример</button>
+      </form>
+      <p class="picker-context" id="picker-summary" aria-live="polite"></p>
+      <div class="picks-grid" id="personal-picks">${shortlistHtml}</div>
+      <div class="decision-note"><span class="decision-mark">!</span><p><strong>Без магического рейтинга:</strong> сначала учитывается близость к выбранному железу и бюджету; недобор RAM или SSD штрафуется сильнее, чем небольшой запас сверху.</p></div>
     </section>
 
     <section class="section-shell" id="comparison">
-      <div class="section-heading"><div><span class="section-index">02</span><h2>Полная таблица</h2></div><p>Фильтруйте по линейке, диагонали и железу. Каждая строка — реально доступная сейчас позиция Apple.</p></div>
+      <div class="section-heading"><div><span class="section-index">02</span><h2>Полная таблица</h2></div><p>Фильтруйте по линейке, диагонали и железу. Одна строка — одна конфигурация; доступные цвета собраны внутри.</p></div>
       <div class="filters">
         ${filterDropdown("family", "Линейка", families, { Air: "MacBook Air", Pro: "MacBook Pro" })}
         ${filterDropdown("screen", "Экран", screens)}
         ${filterDropdown("chip", "Чип", chips)}
         ${filterDropdown("memory", "Память", memories)}
         ${filterDropdown("storage", "SSD", storages)}
-        <label class="sort-control"><span>Сортировка</span><select id="sorting"><option value="recommended">Сначала рекомендуемые</option><option value="price-asc">Цена: по возрастанию</option><option value="price-desc">Цена: по убыванию</option><option value="memory">Больше памяти</option><option value="newest">Сначала новые чипы</option></select></label>
+        <label class="sort-control"><span class="control-label">Сортировка</span><select id="sorting"><option value="recommended">Сначала рекомендуемые</option><option value="price-asc">Цена: по возрастанию</option><option value="price-desc">Цена: по убыванию</option><option value="memory">Больше памяти</option><option value="newest">Сначала новые чипы</option></select></label>
         <button class="reset" id="reset" type="button">Сбросить</button>
       </div>
       <div class="result-count" id="count"></div>
@@ -895,7 +949,7 @@ ${taxLocationHeaderHtml ? `      ${taxLocationHeaderHtml}\n` : ""}      <nav cla
       <div class="section-heading"><div><span class="section-index">03</span><h2>Что важно знать</h2></div></div>
       <div class="method-grid">
         <article><span>01</span><h3>Остатки меняются</h3><p>Снимок каталога проверен ${checkedDateLong}. Apple не публикует расписание пополнений, а отдельные модели могут исчезнуть в любой момент.</p></article>
-        <article><span>02</span><h3>Новая цена — только точная</h3><p>Для ${exactNewPriceCount} актуальных позиций проверены те же экран, чип, ядра, RAM и SSD. Если точного совпадения нет, новая цена не приписывается.</p></article>
+        <article><span>02</span><h3>Новая цена — только точная</h3><p>Для ${exactNewPriceCount} цветовых вариантов проверены те же экран, чип, ядра, RAM, SSD и цвет. Если точного совпадения нет, новая цена не приписывается.</p></article>
         ${taxMethodCopy}
       </div>
     </section>
@@ -919,15 +973,54 @@ ${taxLocationHeaderHtml ? `      ${taxLocationHeaderHtml}\n` : ""}      <nav cla
     const newPriceField=${JSON.stringify(newPriceField)};
     const taxInclusivePriceField=${JSON.stringify(taxInclusivePriceField)};
     const newTaxInclusivePriceField=${JSON.stringify(newTaxInclusivePriceField)};
-${clientTaxLocationDataSource}    const featured=${embeddedFeatured};
-    const recommendedCodes=${JSON.stringify(recommendedCodes)};
+${clientTaxLocationDataSource}    const hasDynamicTaxLocations=${hasTaxLocationSwitcher};
     const escapeHtml=${embeddedEscapeHtml};
-    const names={Silver:"Серебристый",Midnight:"Тёмная ночь","Space Grey":"Серый космос","Space Black":"Чёрный космос",Starlight:"Сияющая звезда","Sky Blue":"Небесно-голубой"};
-    const classes={Silver:"silver",Midnight:"midnight","Space Grey":"space-grey","Space Black":"space-black",Starlight:"starlight","Sky Blue":"sky-blue"};
+    const recommendConfigurations=${embeddedRecommendConfigurations};
+    const recommendationOptions=${embeddedRecommendationOptions};
+    const defaultPickerPreferences=${embeddedDefaultPickerPreferences};
+    const pickerScreenLabels=${JSON.stringify(pickerScreenLabels)};
+    const names=${JSON.stringify(colourNames)};
+    const classes=${JSON.stringify(colourClasses)};
     const primaryCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:${profile.currency.displayFractionDigits},maximumFractionDigits:${profile.currency.displayFractionDigits}});
     const taxCurrency=new Intl.NumberFormat(${JSON.stringify(profile.currency.displayLocale)},{style:"currency",currency:${JSON.stringify(displayCurrency)},minimumFractionDigits:${profile.currency.displayFractionDigits},maximumFractionDigits:${profile.currency.displayFractionDigits}});
     ${clientPriceFormatterSource}
-    ${clientTaxFormatterSource}${clientTaxLocationUiSource ? `\n    ${clientTaxLocationUiSource}` : ""}
+    ${clientTaxFormatterSource}
+    ${clientPickerPriceSource}
+    const variantsByConfiguration=new Map();
+    products.forEach(product=>{
+      const variants=variantsByConfiguration.get(product.configurationKey)||[];
+      variants.push(product);
+      variantsByConfiguration.set(product.configurationKey,variants);
+    });
+    const configurationGroups=[...variantsByConfiguration.values()];
+    const selectedCodesByConfiguration=new Map(configurationGroups.map(variants=>{
+      const product=variants[0];
+      return [product.configurationKey,product.productCode];
+    }));
+    const selectedVariant=(configurationKey,fallback)=>{
+      const variants=variantsByConfiguration.get(configurationKey)||[];
+      const selectedCode=selectedCodesByConfiguration.get(configurationKey);
+      return variants.find(product=>product.productCode===selectedCode)||
+        variants.find(product=>product.productCode===fallback?.productCode)||
+        variants[0]||fallback;
+    };
+    const colourPickerMarkup=(product,placement)=>{
+      const variants=variantsByConfiguration.get(product.configurationKey)||[product];
+      const buttons=variants.map(variant=>{
+        const colourName=names[variant.colour]||variant.colour;
+        const colourClass=classes[variant.colour]||"";
+        const pressed=variant.productCode===product.productCode;
+        return '<button class="colour-swatch '+escapeHtml(colourClass)+'" type="button" '+
+          'data-colour-code="'+escapeHtml(variant.productCode)+'" '+
+          'data-configuration-key="'+escapeHtml(product.configurationKey)+'" '+
+          'aria-label="Выбрать '+escapeHtml(colourName)+'" aria-pressed="'+pressed+'" '+
+          'title="'+escapeHtml(colourName)+'"></button>';
+      }).join("");
+      return '<div class="colour-picker '+(placement==="table"?"table-colours":"pick-colours")+
+        '" role="group" aria-label="Доступные цвета"><span class="colour-swatches">'+buttons+
+        '</span><span class="colour-name">'+escapeHtml(names[product.colour]||product.colour)+'</span></div>';
+    };
+${clientTaxLocationUiSource ? `    ${clientTaxLocationUiSource}\n` : ""}
     const readCatalogViewState=${readCatalogViewState.toString()};
     const writeCatalogViewSearch=${writeCatalogViewSearch.toString()};
 ${clientOwnedChoiceSource}    const filterNames=["family","screen","chip","memory","storage"];
@@ -944,14 +1037,136 @@ ${clientOwnedChoiceSource}    const filterNames=["family","screen","chip","memor
     const storageNumber=value=>Number(value.replace(/\\D/g,""))*(value.endsWith("TB")?1024:1);
     const chipNumber=value=>Number(value.match(/\\d+/)?.[0]||0);
     const chipTier=value=>value.includes("Max")?2:value.includes("Pro")?1:0;
-    const configurationKeyFor=p=>p.configurationKey||[p.family,p.screen,p.display,p.chip,p.cpuCores,p.gpuCores,p.memory,p.storage].join("|");
-    const featuredFor=p=>featured.find(item=>
-      item.productCode===p.productCode||
-      (!item.productCode&&item.configurationKey===configurationKeyFor(p))
-    );
+    let recommendedConfigurationKeys=[];
+    let currentRecommendations=null;
     const score=p=>{
-      const item=featuredFor(p);
-      return item?1000000-item.rank*1000+item.score:(p.chip.startsWith("M5")?100:50)+memoryNumber(p.memory)/10-p[refurbishedPriceField]/10000;
+      const rank=recommendedConfigurationKeys.indexOf(p.configurationKey);
+      return rank>=0?1000000-rank*1000:(p.chip.startsWith("M5")?100:50)+memoryNumber(p.memory)/10-p[refurbishedPriceField]/10000;
+    };
+    const pickerFields=["family","screen","memory","storage"];
+    const pickerParameters={family:"ideal-family",screen:"ideal-screen",memory:"ideal-memory",storage:"ideal-storage",budget:"max-price"};
+    const pickerFieldLabels={family:"Линейка",screen:"Экран",memory:"RAM",storage:"SSD"};
+    const pickerControls={
+      family:document.querySelector("#target-family"),
+      screen:document.querySelector("#target-screen"),
+      memory:document.querySelector("#target-memory"),
+      storage:document.querySelector("#target-storage"),
+      budget:document.querySelector("#target-budget"),
+    };
+    const pickerAllowedValues=Object.fromEntries(pickerFields.map(field=>[
+      field,new Set([...pickerControls[field].options].map(option=>option.value)),
+    ]));
+    const readPickerState=()=>{
+      const parameters=new URLSearchParams(location.search);
+      const preferences={};
+      pickerFields.forEach(field=>{
+        const requested=parameters.get(pickerParameters[field]);
+        preferences[field]=requested===null?defaultPickerPreferences[field]:
+          requested==="any"?"":pickerAllowedValues[field].has(requested)?requested:
+          defaultPickerPreferences[field];
+      });
+      const requestedBudget=Number(parameters.get(pickerParameters.budget));
+      preferences.budget=Number.isFinite(requestedBudget)&&requestedBudget>0?requestedBudget:null;
+      return preferences;
+    };
+    const currentPickerPreferences=()=>({
+      family:pickerControls.family.value,
+      screen:pickerControls.screen.value,
+      memory:pickerControls.memory.value,
+      storage:pickerControls.storage.value,
+      budget:Number(pickerControls.budget.value)>0?Number(pickerControls.budget.value):null,
+    });
+    const restorePickerState=()=>{
+      const preferences=readPickerState();
+      pickerFields.forEach(field=>{pickerControls[field].value=preferences[field]});
+      pickerControls.budget.value=preferences.budget??"";
+    };
+    const synchronizePickerUrl=()=>{
+      const parameters=new URLSearchParams(location.search);
+      const preferences=currentPickerPreferences();
+      pickerFields.forEach(field=>{
+        parameters.set(pickerParameters[field],preferences[field]||"any");
+      });
+      parameters.delete(pickerParameters.budget);
+      if(preferences.budget!==null){
+        parameters.set(pickerParameters.budget,String(preferences.budget));
+      }
+      const search=parameters.toString();
+      history.replaceState(history.state,"",location.pathname+(search?"?"+search:"")+location.hash);
+    };
+    const pickerFactText=(item,closest)=>{
+      const facts=item.differences.length===0?
+        ["Все выбранные параметры совпали."]:
+        item.differences.map(difference=>
+          pickerFieldLabels[difference.field]+": "+difference.actual+" вместо "+difference.target
+        );
+      if(item.savingComparedToClosest>0){
+        facts.push(primaryCurrency.format(item.savingComparedToClosest)+" дешевле самого точного варианта.");
+      }
+      if(item.kind==="headroom"&&item.product.chip!==closest.product.chip){
+        facts.push("Чип "+item.product.chip+" вместо "+closest.product.chip+".");
+      }
+      if(item.overBudgetBy>0){
+        facts.push(primaryCurrency.format(item.overBudgetBy)+" сверх указанного бюджета.");
+      }
+      return facts;
+    };
+    const recommendationCard=(item,index,closest)=>{
+      const product=selectedVariant(item.product.configurationKey,item.product);
+      const displayItem={...item,product};
+      const matchLabel=item.preferenceCount>0?
+        item.matchCount+" из "+item.preferenceCount+" совпало":"Подбор по цене";
+      const headline="MacBook "+product.family+" "+product.screen+" · "+product.chip+" · "+product.memory+" / "+product.storage;
+      const facts=pickerFactText(displayItem,closest).map(fact=>"<li>"+escapeHtml(fact)+"</li>").join("");
+      return '<article class="pick-card'+(index===0?" featured":"")+'" data-product-code="'+escapeHtml(product.productCode)+'">'+
+        '<span class="pick-label">'+escapeHtml(item.label)+'</span>'+
+        '<span class="pick-match">'+escapeHtml(matchLabel)+'</span>'+
+        '<div class="pick-chip">'+escapeHtml(product.chip)+'</div>'+
+        '<h3>'+escapeHtml(headline)+'</h3>'+
+        '<ul class="pick-facts">'+facts+'</ul>'+
+        '<div class="pick-price" data-role="pick-price">'+pickerPrice(product)+'</div>'+
+        '<div class="pick-actions">'+colourPickerMarkup(product,"card")+
+        '<a class="pick-link" href="'+escapeHtml(product.sourceUrl)+'" target="_blank" rel="noreferrer">Открыть у Apple ↗</a></div>'+
+        '</article>';
+    };
+    const renderRecommendationCards=()=>{
+      if(!currentRecommendations)return;
+      const closestItem=currentRecommendations.items[0];
+      const closest={
+        ...closestItem,
+        product:selectedVariant(closestItem.product.configurationKey,closestItem.product),
+      };
+      document.querySelector("#personal-picks").innerHTML=currentRecommendations.items
+        .map((item,index)=>recommendationCard(item,index,closest)).join("");
+    };
+    const updatePickerSummary=preferences=>{
+      const parts=[];
+      if(preferences.family)parts.push("MacBook "+preferences.family);
+      if(preferences.screen)parts.push(pickerScreenLabels[preferences.screen]||preferences.screen);
+      if(preferences.memory)parts.push(preferences.memory+" RAM");
+      if(preferences.storage)parts.push(preferences.storage+" SSD");
+      if(preferences.budget)parts.push("до "+primaryCurrency.format(preferences.budget));
+      document.querySelector("#picker-summary").textContent=
+        "Сейчас ищем: "+(parts.length?parts.join(" · "):"любую конфигурацию по минимальной цене")+". Выбор сохранён в ссылке.";
+    };
+    const updatePersonalizedRecommendations=()=>{
+      const preferences=currentPickerPreferences();
+      const recommendationProducts=hasDynamicTaxLocations?
+        products.map(product=>({
+          ...product,
+          [recommendationOptions.priceField]:taxPricingFor(product,refurbishedPriceField).amount,
+        })):products;
+      currentRecommendations=recommendConfigurations(recommendationProducts,preferences,recommendationOptions);
+      recommendedConfigurationKeys=currentRecommendations.items.map(item=>item.product.configurationKey);
+      renderRecommendationCards();
+      updatePickerSummary(preferences);
+      render();
+    };
+    const resetPicker=()=>{
+      pickerFields.forEach(field=>{pickerControls[field].value=defaultPickerPreferences[field]});
+      pickerControls.budget.value="";
+      updatePersonalizedRecommendations();
+      synchronizePickerUrl();
     };
     const selected=name=>new Set([...document.querySelectorAll(\`input[name="\${name}"]:checked\`)].map(input=>input.value));
     const updateFilterLabels=()=>document.querySelectorAll(".filter-dropdown").forEach(dropdown=>{
@@ -983,35 +1198,42 @@ ${clientOwnedChoiceSource}    const filterNames=["family","screen","chip","memor
     };
     const render=()=>{
       const selections=Object.fromEntries(filterNames.map(name=>[name,selected(name)]));
-      let result=products.filter(p=>filterNames.every(name=>selections[name].size===0||selections[name].has(p[name])));
-      result.sort((a,b)=>
-        sorting.value==="price-asc"?comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
-        sorting.value==="price-desc"?comparableRefurbishedPrice(b)-comparableRefurbishedPrice(a):
-        sorting.value==="memory"?memoryNumber(b.memory)-memoryNumber(a.memory)||storageNumber(b.storage)-storageNumber(a.storage)||comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
-        sorting.value==="newest"?chipNumber(b.chip)-chipNumber(a.chip)||chipTier(b.chip)-chipTier(a.chip)||comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
-        score(b)-score(a)||a[refurbishedPriceField]-b[refurbishedPriceField]
-      );
-      document.querySelector("#count").textContent=result.length+" из "+products.length+" позиций";
+      let result=configurationGroups.filter(group=>{
+        const p=group[0];
+        return filterNames.every(name=>selections[name].size===0||selections[name].has(p[name]));
+      });
+      result.sort((leftGroup,rightGroup)=>{
+        const a=selectedVariant(leftGroup[0].configurationKey,leftGroup[0]);
+        const b=selectedVariant(rightGroup[0].configurationKey,rightGroup[0]);
+        return sorting.value==="price-asc"?comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
+          sorting.value==="price-desc"?comparableRefurbishedPrice(b)-comparableRefurbishedPrice(a):
+          sorting.value==="memory"?memoryNumber(b.memory)-memoryNumber(a.memory)||storageNumber(b.storage)-storageNumber(a.storage)||comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
+          sorting.value==="newest"?chipNumber(b.chip)-chipNumber(a.chip)||chipTier(b.chip)-chipTier(a.chip)||comparableRefurbishedPrice(a)-comparableRefurbishedPrice(b):
+          score(b)-score(a)||a[refurbishedPriceField]-b[refurbishedPriceField];
+      });
+      const visibleVariantCount=result.reduce((sum,group)=>sum+group.length,0);
+      document.querySelector("#count").textContent=
+        result.length+" из "+configurationGroups.length+" конфигураций · "+
+        visibleVariantCount+" цветовых вариантов";
       document.querySelector("#empty").hidden=result.length!==0;
-      document.querySelector("#rows").innerHTML=result.map(p=>{
+      document.querySelector("#rows").innerHTML=result.map(group=>{
+        const p=selectedVariant(group[0].configurationKey,group[0]);
         const refurbishedComparisonPrice=comparableRefurbishedPrice(p);
         const newComparisonPrice=comparableNewPrice(p);
         const difference=newComparisonPrice?newComparisonPrice-refurbishedComparisonPrice:null;
         const discount=difference===null?'<span class="na">нет цены</span>':difference>=0?
           \`<span class="saving">−\${comparisonPrice(difference)} · \${Math.round(difference/newComparisonPrice*100)}%</span>\`:
           \`<span class="overpay">+\${comparisonPrice(-difference)} · \${Math.round(-difference/newComparisonPrice*100)}%</span>\`;
-        const rowClass=recommendedCodes.includes(p.productCode)?"recommended":"";
+        const rowClass=recommendedConfigurationKeys.includes(p.configurationKey)?"recommended":"";
         const chipClass=p.chip.startsWith("M5")?"chip-m5":"";
-        const colourClass=classes[p.colour]||"";
-        const colourName=names[p.colour]||p.colour;
-        return \`<tr class="\${rowClass}">
+        return \`<tr class="\${rowClass}" data-configuration-key="\${escapeHtml(p.configurationKey)}">
           <td><div class="model"><span class="model-mark">\${p.family==="Air"?"A":"P"}</span><div>${clientModelMetadataSource}</div></div></td>
           <td><strong>\${escapeHtml(p.screen)}</strong></td>
           <td><span class="chip-name \${chipClass}">\${escapeHtml(p.chip)}</span></td>
           <td><strong>\${escapeHtml(p.memory)}</strong></td>
           <td><strong>\${escapeHtml(p.storage)}</strong></td>
           <td>\${escapeHtml(p.cpuCores)} / \${escapeHtml(p.gpuCores)} ядер</td>
-          <td><span class="dot \${colourClass}"></span>\${escapeHtml(colourName)}</td>
+          <td>\${colourPickerMarkup(p,"table")}</td>
           <td>\${refurbishedPrice(p)}</td>
           <td>\${exactNewPrice(p)}</td>
           <td>\${discount}</td>${separateAppleCellSource}
@@ -1023,12 +1245,39 @@ ${clientOwnedChoiceSource}    const filterNames=["family","screen","chip","memor
       if(dropdown.open)document.querySelectorAll(".filter-dropdown[open]").forEach(other=>{if(other!==dropdown)other.removeAttribute("open")});
     }));
     document.addEventListener("click",event=>document.querySelectorAll(".filter-dropdown[open]").forEach(dropdown=>{if(!dropdown.contains(event.target))dropdown.removeAttribute("open")}));
+    document.addEventListener("click",event=>{
+      const colourButton=event.target.closest?.(".colour-swatch");
+      if(!colourButton)return;
+      selectedCodesByConfiguration.set(
+        colourButton.dataset.configurationKey,
+        colourButton.dataset.colourCode,
+      );
+      renderRecommendationCards();
+      render();
+    });
     sorting.addEventListener("change",()=>{render();synchronizeCatalogViewUrl()});
     document.querySelector("#reset").addEventListener("click",reset);
-    document.querySelector("#empty-reset").addEventListener("click",reset);${clientTaxLocationEventsSource ? `\n    ${clientTaxLocationEventsSource}` : ""}
+    document.querySelector("#empty-reset").addEventListener("click",reset);
+${clientTaxLocationEventsSource ? `    ${clientTaxLocationEventsSource}\n` : ""}
+    pickerFields.forEach(field=>pickerControls[field].addEventListener("change",()=>{
+      updatePersonalizedRecommendations();
+      synchronizePickerUrl();
+    }));
+    pickerControls.budget.addEventListener("input",()=>{
+      updatePersonalizedRecommendations();
+      synchronizePickerUrl();
+    });
+    document.querySelector("#preference-picker").addEventListener("submit",event=>{
+      event.preventDefault();
+      updatePersonalizedRecommendations();
+      synchronizePickerUrl();
+    });
+    document.querySelector("#picker-reset").addEventListener("click",resetPicker);
     restoreCatalogViewState();
+    restorePickerState();
     updateFilterLabels();
-    render();
+    updatePersonalizedRecommendations();
+    synchronizePickerUrl();
     synchronizeCatalogViewUrl();
   </script>
 </body>

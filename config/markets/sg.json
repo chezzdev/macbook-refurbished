@@ -33,7 +33,9 @@
   },
   "currentNewPricing": {
     "minimumExactMatchCount": 1,
-    "minimumExactMatchRatio": 0.5
+    "minimumExactMatchRatio": 0.5,
+    "minimumExactVariantMatchCount": 1,
+    "minimumExactVariantMatchRatio": 0.5
   },
   "tax": {
     "model": "included-in-list-price",

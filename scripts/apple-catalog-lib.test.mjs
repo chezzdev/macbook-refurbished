@@ -4,7 +4,9 @@ import {
   buildCatalog,
   buildConfigurationKey,
   buildNewProductUrl,
+  DEFAULT_MARKET_PROFILE,
   extractJsonArray,
+  hasExactNewProductSource,
   hydrateCurrentNewPrices,
   parseExactNewPriceHtml,
   parseRefurbishedCatalog,
@@ -66,7 +68,7 @@ test("exact-new parsing rejects a redirected or inexact configuration", () => {
     `<script>{"tiles":${JSON.stringify([tile])}}</script>`,
   );
   const exactHtml =
-    "<title>Buy 13-inch MacBook Air - Apple M5 chip, 10-core CPU, 10-core GPU, 24GB memory, 512GB storage</title>" +
+    "<title>Buy 13-inch MacBook Air - Midnight, Apple M5 chip, 10-core CPU, 10-core GPU, 24GB memory, 512GB storage</title>" +
     '<script>{"priceCurrency":"SGD","price":2199.00}</script>';
   assert.equal(parseExactNewPriceHtml(exactHtml, product), 2199);
   assert.throws(
@@ -76,6 +78,14 @@ test("exact-new parsing rejects a redirected or inexact configuration", () => {
         product,
       ),
     /24gb memory/,
+  );
+  assert.throws(
+    () =>
+      parseExactNewPriceHtml(
+        exactHtml.replace("Midnight", "Sky Blue"),
+        product,
+      ),
+    /midnight/,
   );
 });
 
@@ -97,7 +107,7 @@ test("only newest-generation exact configurations receive new prices", async () 
         assert.equal(url, buildNewProductUrl(currentProduct));
         return {
           html:
-            "<title>Buy 13-inch MacBook Air - Apple M5 chip, 10-core CPU, 10-core GPU, 24GB memory, 512GB storage</title>" +
+            "<title>Buy 13-inch MacBook Air - Midnight, Apple M5 chip, 10-core CPU, 10-core GPU, 24GB memory, 512GB storage</title>" +
             '<script>{"priceCurrency":"SGD","price":2199}</script>',
           finalUrl: url,
         };
@@ -128,7 +138,7 @@ test("keeps isolated unavailable exact-new configurations null", async () => {
       }
       return {
         html:
-          "<title>Buy 13-inch MacBook Air - Apple M5 chip, 10-core CPU, " +
+          "<title>Buy 13-inch MacBook Air - Midnight, Apple M5 chip, 10-core CPU, " +
           "10-core GPU, 24GB memory, 512GB storage</title>" +
           '<script>{"priceCurrency":"SGD","price":2199}</script>',
         finalUrl: url,
@@ -141,6 +151,103 @@ test("keeps isolated unavailable exact-new configurations null", async () => {
   assert.equal(result.products[0].newPriceSgd, 2199);
   assert.equal(result.products[1].newPriceSgd, null);
   assert.equal(result.products[1].newSourceUrl, null);
+});
+
+test("matches and links every colour variant independently", async () => {
+  const [midnight] = parseRefurbishedCatalog(
+    `<script>{"tiles":${JSON.stringify([tile])}}</script>`,
+  );
+  const [skyBlue] = parseRefurbishedCatalog(
+    `<script>{"tiles":${JSON.stringify([
+      {
+        ...tile,
+        partNumber: "TEST2ZP/A",
+        title: tile.title.replace("Midnight", "Sky Blue"),
+        filters: {
+          dimensions: {
+            ...tile.filters.dimensions,
+            dimensionColor: "Sky Blue",
+          },
+        },
+      },
+    ])}}</script>`,
+  );
+  assert.equal(midnight.configurationKey, skyBlue.configurationKey);
+
+  const requestedUrls = [];
+  const result = await hydrateCurrentNewPrices([midnight, skyBlue], {
+    fetchTextImpl: async (url) => {
+      requestedUrls.push(url);
+      const colour = url.includes("sky-blue") ? "Sky Blue" : "Midnight";
+      return {
+        html:
+          `<title>Buy 13-inch MacBook Air - ${colour}, Apple M5 chip, 10-core CPU, ` +
+          "10-core GPU, 24GB memory, 512GB storage</title>" +
+          '<script>{"priceCurrency":"SGD","price":2199}</script>',
+        finalUrl: url,
+      };
+    },
+  });
+
+  assert.equal(result.pricedConfigurationCount, 1);
+  assert.equal(result.pricedColourVariantCount, 2);
+  assert.equal(result.unavailableColourVariantCount, 0);
+  assert.equal(requestedUrls.length, 2);
+  assert.match(result.products[0].newSourceUrl, /13-inch-midnight-/);
+  assert.match(result.products[1].newSourceUrl, /13-inch-sky-blue-/);
+});
+
+test("fails closed when colour variants fail inside otherwise matched configurations", async () => {
+  const baseProducts = parseRefurbishedCatalog(
+    `<script>{"tiles":${JSON.stringify([
+      tile,
+      {
+        ...tile,
+        partNumber: "TEST2ZP/A",
+        title: tile.title.replace("Midnight", "Sky Blue"),
+        filters: {
+          dimensions: {
+            ...tile.filters.dimensions,
+            dimensionColor: "Sky Blue",
+          },
+        },
+      },
+    ])}}</script>`,
+  );
+  const products = [
+    ...baseProducts,
+    ...baseProducts.map((product, index) => {
+      const copy = {
+        ...product,
+        productCode: `TEST${index + 3}ZP/A`,
+        storage: "1TB",
+      };
+      copy.configurationKey = buildConfigurationKey(copy);
+      return copy;
+    }),
+  ];
+  const marketProfile = structuredClone(DEFAULT_MARKET_PROFILE);
+  marketProfile.currentNewPricing.minimumExactVariantMatchRatio = 0.75;
+
+  await assert.rejects(
+    hydrateCurrentNewPrices(products, {
+      marketProfile,
+      fetchTextImpl: async (url) => {
+        if (url.includes("sky-blue")) {
+          throw new Error("Apple colour offer unavailable");
+        }
+        const storage = url.includes("1tb") ? "1TB" : "512GB";
+        return {
+          html:
+            "<title>Buy 13-inch MacBook Air - Midnight, Apple M5 chip, 10-core CPU, " +
+            `10-core GPU, 24GB memory, ${storage} storage</title>` +
+            '<script>{"priceCurrency":"SGD","price":2199}</script>',
+          finalUrl: url,
+        };
+      },
+    }),
+    /2\/4 colour variants matched/,
+  );
 });
 
 test("fails closed when exact-new matching fails systemically", async () => {
@@ -163,6 +270,7 @@ test("matches nano-texture MacBook Pro prices as a distinct exact configuration"
     screen: "14″",
     display: "Nano-texture",
     chip: "M5 Pro",
+    colour: "Silver",
     cpuCores: 15,
     gpuCores: 16,
     memory: "48GB",
@@ -212,6 +320,30 @@ test("catalog validation enforces stable ordering and rejects timestamps", () =>
   });
   assert.equal(catalog.products[0].colour, "Midnight");
   assert.equal(validateCatalog(catalog), true);
+  const wrongColourSource = {
+    ...product,
+    newPriceSgd: 2199,
+    newSourceUrl: buildNewProductUrl(
+      { ...product, colour: "Sky Blue" },
+      DEFAULT_MARKET_PROFILE,
+    ),
+  };
+  assert.equal(
+    hasExactNewProductSource(wrongColourSource, DEFAULT_MARKET_PROFILE),
+    false,
+  );
+  assert.throws(
+    () => buildCatalog([wrongColourSource], DEFAULT_MARKET_PROFILE),
+    /newSourceUrl must match its exact colour variant/,
+  );
+  assert.equal(
+    validateCatalog(
+      { ...catalog, products: [wrongColourSource] },
+      DEFAULT_MARKET_PROFILE,
+      { allowStaleNewPriceProvenance: true },
+    ),
+    true,
+  );
   assert.throws(
     () => validateCatalog({ ...catalog, generatedAt: "2026-07-26T00:00:00Z" }),
     /must not contain timestamps/,

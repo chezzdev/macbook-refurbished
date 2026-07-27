@@ -28,6 +28,7 @@ export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
   "scripts/apple-catalog-lib.test.mjs",
   "scripts/build-enabled-markets.mjs",
   "scripts/catalog-view-state.mjs",
+  "scripts/configuration-picker.mjs",
   "scripts/fixed-location-tax.mjs",
   "scripts/html-escape.mjs",
   "scripts/initialize-market.mjs",
@@ -44,6 +45,7 @@ export const COMMON_PUBLICATION_SOURCE_PATHS = Object.freeze([
   "scripts/validate-apple-catalog.mjs",
   "tests/changelog.test.mjs",
   "tests/catalog-view-state.test.mjs",
+  "tests/configuration-picker.test.mjs",
   "tests/exchange-rate.test.mjs",
   "tests/html-escape.test.mjs",
   "tests/market-engine.test.mjs",
@@ -490,10 +492,19 @@ export function validateMarketProfile(profile) {
     profile.currentNewPricing.minimumExactMatchCount < 1 ||
     !Number.isFinite(profile.currentNewPricing?.minimumExactMatchRatio) ||
     profile.currentNewPricing.minimumExactMatchRatio <= 0 ||
-    profile.currentNewPricing.minimumExactMatchRatio > 1
+    profile.currentNewPricing.minimumExactMatchRatio > 1 ||
+    !Number.isSafeInteger(
+      profile.currentNewPricing?.minimumExactVariantMatchCount,
+    ) ||
+    profile.currentNewPricing.minimumExactVariantMatchCount < 1 ||
+    !Number.isFinite(
+      profile.currentNewPricing?.minimumExactVariantMatchRatio,
+    ) ||
+    profile.currentNewPricing.minimumExactVariantMatchRatio <= 0 ||
+    profile.currentNewPricing.minimumExactVariantMatchRatio > 1
   ) {
     throw new Error(
-      "currentNewPricing must declare a positive minimum count and ratio in (0, 1]",
+      "currentNewPricing must declare positive configuration and variant minimum counts and ratios in (0, 1]",
     );
   }
 
