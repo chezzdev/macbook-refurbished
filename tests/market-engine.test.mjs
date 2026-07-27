@@ -1668,12 +1668,13 @@ test("US state switcher reproduces all verified Apple cart totals", () => {
   assert.equal(switcher.defaultLocationId, "apple-beverly-center");
   assert.deepEqual(
     switcher.locations.map((location) => location.shortLabel),
-    ["CA", "CO", "SD"],
+    ["CA", "CO", "MA", "SD"],
   );
 
   const expected = new Map([
     ["CA", { tax: 160.55, fee: 4, total: 1693.55 }],
     ["CO", { tax: 139.9, fee: 0.31, total: 1669.21 }],
+    ["MA", { tax: 95.56, fee: 0, total: 1624.56 }],
     ["SD", { tax: 94.8, fee: 0, total: 1623.8 }],
   ]);
   for (const location of switcher.locations) {

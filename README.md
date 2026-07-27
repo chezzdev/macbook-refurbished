@@ -114,23 +114,25 @@ fee — $4 для экранов меньше 15″ и $5 для экранов 
 $1,529.00 + $160.55 + $4.00 = $1,693.55.
 
 На US-сайте tax location переключается в runtime, без перехода на другую
-страницу. Профиль содержит три актуальные контрольные проверки для одного и
+страницу. Профиль содержит четыре актуальные контрольные проверки для одного и
 того же `FDH94LL/A`:
 
 - California, Apple Beverly Center / ZIP 90048:
   `$1,529.00 + $160.55 tax + $4.00 CA recycling fee = $1,693.55`;
 - Colorado, Apple Cherry Creek / ZIP 80206:
   `$1,529.00 + $139.90 tax + $0.31 State Delivery Fee = $1,669.21`;
+- Massachusetts, Apple Boylston Street / ZIP 02116:
+  `$1,529.00 + $95.56 tax = $1,624.56`;
 - South Dakota, delivery ZIP 57105:
   `$1,529.00 + $94.80 tax = $1,623.80`.
 
 У Apple нет retail store в South Dakota, поэтому этот вариант явно обозначен
-как delivery ZIP. Выбор `CA / CO / SD` меняет total, компактную формулу,
+как delivery ZIP. Выбор `CA / CO / MA / SD` меняет total, компактную формулу,
 featured-карточки, диапазон цен, таблицу, скидки и price sorting на месте.
-California — default и не добавляется в URL; `CO` и `SD` канонично отражаются
-в query-параметре `state`. Некорректное значение удаляется, а filters, sorting,
-сторонние query parameters и hash сохраняются. HTML и catalog остаются одними
-и теми же.
+California — default и не добавляется в URL; `CO`, `MA` и `SD` канонично
+отражаются в query-параметре `state`. Некорректное значение удаляется, а
+filters, sorting, сторонние query parameters и hash сохраняются. HTML и
+catalog остаются одними и теми же.
 
 Переключатель штатов находится в header и использует те же размеры и
 типографику, что и market switcher. Price columns не меняют положение между

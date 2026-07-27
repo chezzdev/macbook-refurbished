@@ -372,9 +372,10 @@ test("renders explicit fixed-location tax estimates for the US market", () => {
     html,
     /class="tax-location-card"[\s\S]*class="tax-location-switcher"/,
   );
-  assert.equal((html.match(/data-tax-location="/g) ?? []).length, 3);
+  assert.equal((html.match(/data-tax-location="/g) ?? []).length, 4);
   assert.match(html, /data-tax-location="apple-beverly-center"/);
   assert.match(html, /data-tax-location="apple-cherry-creek"/);
+  assert.match(html, /data-tax-location="apple-boylston-street"/);
   assert.match(html, /data-tax-location="sioux-falls-delivery-57105"/);
   assert.match(html, /new URLSearchParams\(window\.location\.search\)/);
   assert.match(html, /history\.replaceState/);

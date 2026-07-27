@@ -107,7 +107,7 @@ test("writes a non-default owned choice while preserving unrelated params", () =
       {
         parameter: "state",
         value: "co",
-        allowedValues: ["ca", "co", "sd"],
+        allowedValues: ["ca", "co", "ma", "sd"],
         defaultValue: "ca",
       },
     ),
@@ -118,7 +118,7 @@ test("writes a non-default owned choice while preserving unrelated params", () =
 test("removes default or unsupported owned choices from the query", () => {
   const choiceOptions = {
     parameter: "state",
-    allowedValues: ["ca", "co", "sd"],
+    allowedValues: ["ca", "co", "ma", "sd"],
     defaultValue: "ca",
   };
   assert.equal(
