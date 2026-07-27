@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "status": "success",
-  "checkedAt": "2026-07-26T23:46:40.896Z",
+  "checkedAt": "2026-07-27T00:31:26.906Z",
   "currentChipGeneration": "M5",
   "counts": {
     "products": 179,
@@ -10,7 +10,9 @@
     "configurations": 96,
     "pricedProducts": 156,
     "pricedConfigurations": 79,
+    "pricedColourVariants": 156,
     "unavailableCurrentConfigurations": 0,
+    "unavailableCurrentColourVariants": 0,
     "unpricedCurrentProducts": 23,
     "taxInclusiveAppleResolvedProducts": 0,
     "taxInclusiveEstimatedProducts": 179,
