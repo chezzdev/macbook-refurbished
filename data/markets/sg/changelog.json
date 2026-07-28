@@ -2,24 +2,96 @@
   "schemaVersion": 1,
   "latestRun": {
     "schemaVersion": 1,
-    "checkedAt": "2026-07-27T05:01:47.943Z",
-    "hasChanges": false,
+    "checkedAt": "2026-07-28T05:01:35.059Z",
+    "hasChanges": true,
     "counts": {
       "added": 0,
-      "removed": 0,
+      "removed": 2,
       "refurbPriceChanges": 0,
       "newPriceChanges": 0,
       "configurationChanges": 0,
       "featuredChanges": 0
     },
     "added": [],
-    "removed": [],
+    "removed": [
+      {
+        "productCode": "FC7C4ZP/A",
+        "family": "Air",
+        "screen": "15″",
+        "display": "Standard",
+        "chip": "M4",
+        "cpuCores": 10,
+        "gpuCores": 10,
+        "memory": "16GB",
+        "storage": "512GB",
+        "priceSgd": 1749,
+        "newPriceSgd": null
+      },
+      {
+        "productCode": "FGEC4ZP/A",
+        "family": "Pro",
+        "screen": "16″",
+        "display": "Standard",
+        "chip": "M5 Pro",
+        "cpuCores": 18,
+        "gpuCores": 20,
+        "memory": "48GB",
+        "storage": "1TB",
+        "priceSgd": 4159,
+        "newPriceSgd": 4899
+      }
+    ],
     "refurbPriceChanges": [],
     "newPriceChanges": [],
     "configurationChanges": [],
     "featured": null
   },
   "entries": [
+    {
+      "type": "changes",
+      "checkedAt": "2026-07-28T05:01:35.059Z",
+      "counts": {
+        "added": 0,
+        "removed": 2,
+        "refurbPriceChanges": 0,
+        "newPriceChanges": 0,
+        "configurationChanges": 0,
+        "featuredChanges": 0
+      },
+      "added": [],
+      "removed": [
+        {
+          "productCode": "FC7C4ZP/A",
+          "family": "Air",
+          "screen": "15″",
+          "display": "Standard",
+          "chip": "M4",
+          "cpuCores": 10,
+          "gpuCores": 10,
+          "memory": "16GB",
+          "storage": "512GB",
+          "priceSgd": 1749,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "FGEC4ZP/A",
+          "family": "Pro",
+          "screen": "16″",
+          "display": "Standard",
+          "chip": "M5 Pro",
+          "cpuCores": 18,
+          "gpuCores": 20,
+          "memory": "48GB",
+          "storage": "1TB",
+          "priceSgd": 4159,
+          "newPriceSgd": 4899
+        }
+      ],
+      "refurbPriceChanges": [],
+      "newPriceChanges": [],
+      "configurationChanges": [],
+      "featured": null
+    },
     {
       "type": "changes",
       "checkedAt": "2026-07-26T16:17:42.824Z",
