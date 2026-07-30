@@ -6,13 +6,13 @@
   "canonicalUrl": "https://chezzdev.github.io/macbook-refurbished/markets/sg/",
   "plannedProductionUrl": null,
   "currency": {
-    "sgdToUsd": 0.7738735418943302,
+    "sgdToUsd": 0.7750737878691115,
     "sourceCurrency": "SGD",
     "displayCurrency": "USD",
     "conversionType": "cbr-cross-rate",
-    "sourceToDisplayRate": 0.7738735418943302,
-    "rateDate": "2026-07-29",
-    "sourceUrl": "https://www.cbr.ru/currency_base/daily/?UniDbQuery.Posted=True&UniDbQuery.To=29.07.2026"
+    "sourceToDisplayRate": 0.7750737878691115,
+    "rateDate": "2026-07-31",
+    "sourceUrl": "https://www.cbr.ru/currency_base/daily/?UniDbQuery.Posted=True&UniDbQuery.To=31.07.2026"
   },
   "tax": {
     "model": "included-in-list-price"
