@@ -14,26 +14,6 @@
   },
   "products": [
     {
-      "productCode": "G1L61ZP/A",
-      "sourceUrl": "https://www.apple.com/sg/shop/product/g1l61zp/a",
-      "title": "Refurbished 13‑inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Midnight",
-      "family": "Air",
-      "model": "MacBook Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "colour": "Midnight",
-      "releaseYear": 2026,
-      "memory": "24GB",
-      "storage": "512GB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
-      "priceSgd": 1999,
-      "newPriceSgd": 2199,
-      "configurationKey": "air|13|standard|m5|10|10|24gb|512gb"
-    },
-    {
       "productCode": "FDVN4ZP/A",
       "sourceUrl": "https://www.apple.com/sg/shop/product/fdvn4zp/a",
       "title": "Refurbished 15‑inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Midnight",
@@ -452,26 +432,6 @@
       "priceSgd": 4719,
       "newPriceSgd": 5549,
       "configurationKey": "pro|14|standard|m5|10|10|32gb|4tb"
-    },
-    {
-      "productCode": "G1KK2ZP/A",
-      "sourceUrl": "https://www.apple.com/sg/shop/product/g1kk2zp/a/Refurbished-14-inch-MacBook-Pro-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Space-Black",
-      "title": "Refurbished 14-inch MacBook Pro Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Space Black",
-      "family": "Pro",
-      "model": "MacBook Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "colour": "Space Black",
-      "releaseYear": 2025,
-      "memory": "32GB",
-      "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-space-black-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-1tb-storage",
-      "priceSgd": 2799,
-      "newPriceSgd": 3299,
-      "configurationKey": "pro|14|standard|m5|10|10|32gb|1tb"
     },
     {
       "productCode": "FDE64ZP/A",
