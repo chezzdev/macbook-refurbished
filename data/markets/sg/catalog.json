@@ -174,26 +174,6 @@
       "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
     },
     {
-      "productCode": "FDVD4ZP/A",
-      "sourceUrl": "https://www.apple.com/sg/shop/product/fdvd4zp/a",
-      "title": "Refurbished 15‑inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Starlight",
-      "family": "Air",
-      "model": "MacBook Air",
-      "screen": "15″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "colour": "Starlight",
-      "releaseYear": 2026,
-      "memory": "16GB",
-      "storage": "512GB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-starlight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-512gb-storage",
-      "priceSgd": 1859,
-      "newPriceSgd": 2199,
-      "configurationKey": "air|15|standard|m5|10|10|16gb|512gb"
-    },
-    {
       "productCode": "FC7D4ZP/A",
       "sourceUrl": "https://www.apple.com/sg/shop/product/fc7d4zp/a/Refurbished-15-inch-MacBook-Air-Apple-M4-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Sky-Blue",
       "title": "Refurbished 15-inch MacBook Air Apple M4 chip with 10‑Core CPU and 10‑Core GPU - Sky Blue",
@@ -392,26 +372,6 @@
       "priceSgd": 3819,
       "newPriceSgd": 4499,
       "configurationKey": "pro|14|standard|m5-pro|18|20|24gb|2tb"
-    },
-    {
-      "productCode": "FGDN4ZP/A",
-      "sourceUrl": "https://www.apple.com/sg/shop/product/fgdn4zp/a/Refurbished-14-inch-MacBook-Pro-Apple-M5-Pro-chip-with-15%E2%80%91Core-CPU-and-16%E2%80%91Core-GPU-Silver",
-      "title": "Refurbished 14-inch MacBook Pro Apple M5 Pro chip with 15‑Core CPU and 16‑Core GPU - Silver",
-      "family": "Pro",
-      "model": "MacBook Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5 Pro",
-      "cpuCores": 15,
-      "gpuCores": 16,
-      "colour": "Silver",
-      "releaseYear": 2026,
-      "memory": "24GB",
-      "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-pro-chip-15-core-cpu-16-core-gpu-24gb-memory-1tb-storage",
-      "priceSgd": 2969,
-      "newPriceSgd": 3499,
-      "configurationKey": "pro|14|standard|m5-pro|15|16|24gb|1tb"
     },
     {
       "productCode": "G1KN4ZP/A",
