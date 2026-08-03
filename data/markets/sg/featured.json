@@ -12,7 +12,7 @@
       "rank": 1,
       "recommendationKey": "air|15|standard|m5|10|10|24gb|1tb",
       "configurationKey": "air|15|standard|m5|10|10|24gb|1tb",
-      "productCode": "FDVN4ZP/A",
+      "productCode": "FDVU4ZP/A",
       "score": 97547,
       "scoreBreakdown": {
         "memory": 32000,
@@ -62,29 +62,30 @@
     },
     {
       "rank": 3,
-      "recommendationKey": "air|15|standard|m5|10|10|24gb|512gb",
-      "configurationKey": "air|15|standard|m5|10|10|24gb|512gb",
-      "productCode": "G1LW0ZP/A",
-      "score": 89528,
+      "recommendationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb",
+      "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb",
+      "productCode": "FGE44ZP/A",
+      "score": 86415,
       "scoreBreakdown": {
         "memory": 32000,
-        "storage": 16000,
-        "formFactor": 14000,
-        "chipRecency": 10000,
-        "affordability": 12848,
-        "verifiedDiscount": 4680
+        "storage": 26000,
+        "formFactor": 6000,
+        "chipRecency": 10800,
+        "affordability": 7115,
+        "verifiedDiscount": 4500
       },
       "reasonCodes": [
         "MEMORY_IDEAL_24GB",
-        "STORAGE_512GB",
-        "FORM_AIR_15",
+        "STORAGE_IDEAL_1TB",
+        "FORM_PRO_16",
         "CHIP_GENERATION_M5",
-        "PRICE_HIGH_VALUE",
+        "CHIP_TIER_PRO",
+        "PRICE_PREMIUM",
         "DISCOUNT_VERIFIED"
       ],
       "label": "Ещё один удачный вариант",
-      "headline": "MacBook Air 15″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 512 ГБ",
-      "reason": "24 ГБ памяти, SSD на 512 ГБ и чип M5 дают один из лучших вариантов рядом с целевой конфигурацией. Подтверждённая скидка усиливает ценность."
+      "headline": "MacBook Pro 16″ · M5 Pro (18-ядерный CPU, 20-ядерный GPU) · 24 ГБ · 1 ТБ",
+      "reason": "24 ГБ памяти и SSD на 1 ТБ соответствуют цели; здесь они в корпусе MacBook Pro 16″. Подтверждённая скидка усиливает ценность."
     }
   ]
 }
