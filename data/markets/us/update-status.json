@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
   "status": "success",
-  "checkedAt": "2026-08-04T05:03:15.787Z",
+  "checkedAt": "2026-08-05T05:03:36.231Z",
   "currentChipGeneration": "M5",
   "counts": {
-    "products": 203,
-    "air": 60,
-    "pro": 143,
-    "configurations": 111,
-    "pricedProducts": 184,
-    "pricedConfigurations": 97,
-    "pricedColourVariants": 184,
-    "unavailableCurrentConfigurations": 3,
-    "unavailableCurrentColourVariants": 4,
-    "unpricedCurrentProducts": 19,
+    "products": 183,
+    "air": 55,
+    "pro": 128,
+    "configurations": 96,
+    "pricedProducts": 170,
+    "pricedConfigurations": 87,
+    "pricedColourVariants": 170,
+    "unavailableCurrentConfigurations": 0,
+    "unavailableCurrentColourVariants": 0,
+    "unpricedCurrentProducts": 13,
     "taxInclusiveAppleResolvedProducts": 0,
-    "taxInclusiveEstimatedProducts": 203,
+    "taxInclusiveEstimatedProducts": 183,
     "taxInclusiveUnresolvedProducts": 0,
-    "newTaxInclusiveEstimatedProducts": 184
+    "newTaxInclusiveEstimatedProducts": 170
   }
 }
