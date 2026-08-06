@@ -12,7 +12,7 @@
       "rank": 1,
       "recommendationKey": "air|13|standard|m5|10|10|24gb|1tb",
       "configurationKey": "air|13|standard|m5|10|10|24gb|1tb",
-      "productCode": "FDH94ZP/A",
+      "productCode": "FDHD4ZP/A",
       "score": 108756,
       "scoreBreakdown": {
         "memory": 32000,
@@ -38,7 +38,7 @@
       "rank": 2,
       "recommendationKey": "air|13|standard|m4|10|10|24gb|1tb",
       "configurationKey": "air|13|standard|m4|10|10|24gb|1tb",
-      "productCode": "G1H90ZP/A",
+      "productCode": "G1GU0ZP/A",
       "score": 102760,
       "scoreBreakdown": {
         "memory": 32000,
@@ -61,29 +61,29 @@
     },
     {
       "rank": 3,
-      "recommendationKey": "air|15|standard|m5|10|10|24gb|1tb",
-      "configurationKey": "air|15|standard|m5|10|10|24gb|1tb",
-      "productCode": "FDVC4ZP/A",
-      "score": 97547,
+      "recommendationKey": "air|13|standard|m5|10|10|24gb|2tb",
+      "configurationKey": "air|13|standard|m5|10|10|24gb|2tb",
+      "productCode": "G1L80ZP/A",
+      "score": 100882,
       "scoreBreakdown": {
         "memory": 32000,
-        "storage": 26000,
-        "formFactor": 14000,
+        "storage": 21000,
+        "formFactor": 24000,
         "chipRecency": 10000,
-        "affordability": 11071,
-        "verifiedDiscount": 4476
+        "affordability": 9382,
+        "verifiedDiscount": 4500
       },
       "reasonCodes": [
         "MEMORY_IDEAL_24GB",
-        "STORAGE_IDEAL_1TB",
-        "FORM_AIR_15",
+        "STORAGE_2TB",
+        "FORM_IDEAL_AIR_13",
         "CHIP_GENERATION_M5",
         "PRICE_BALANCED",
         "DISCOUNT_VERIFIED"
       ],
       "label": "Ещё один удачный вариант",
-      "headline": "MacBook Air 15″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 1 ТБ",
-      "reason": "24 ГБ памяти и SSD на 1 ТБ соответствуют цели; здесь они в корпусе MacBook Air 15″. Подтверждённая скидка усиливает ценность."
+      "headline": "MacBook Air 13″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 2 ТБ",
+      "reason": "Соответствует целевым параметрам MacBook Air 13″ и 24 ГБ памяти; главный компромисс — SSD на 2 ТБ. Подтверждённая скидка усиливает ценность."
     }
   ]
 }
