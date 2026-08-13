@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-08-12T05:00:46.601Z",
+  "checkedAt": "2026-08-13T05:07:12.024Z",
   "hasChanges": true,
   "counts": {
-    "added": 3,
+    "added": 2,
     "removed": 4,
     "refurbPriceChanges": 0,
     "newPriceChanges": 0,
@@ -11,6 +11,34 @@
     "featuredChanges": 1
   },
   "added": [
+    {
+      "productCode": "FC6V4ZP/A",
+      "family": "Air",
+      "screen": "13″",
+      "display": "Standard",
+      "chip": "M4",
+      "cpuCores": 10,
+      "gpuCores": 10,
+      "memory": "24GB",
+      "storage": "512GB",
+      "priceSgd": 1749,
+      "newPriceSgd": null
+    },
+    {
+      "productCode": "G1H70ZP/A",
+      "family": "Air",
+      "screen": "13″",
+      "display": "Standard",
+      "chip": "M4",
+      "cpuCores": 10,
+      "gpuCores": 10,
+      "memory": "16GB",
+      "storage": "256GB",
+      "priceSgd": 1369,
+      "newPriceSgd": null
+    }
+  ],
+  "removed": [
     {
       "productCode": "G1KK3ZP/A",
       "family": "Pro",
@@ -38,22 +66,7 @@
       "newPriceSgd": 3524
     },
     {
-      "productCode": "G1KN9ZP/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Nano-texture",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "32GB",
-      "storage": "2TB",
-      "priceSgd": 3629,
-      "newPriceSgd": 4274
-    }
-  ],
-  "removed": [
-    {
-      "productCode": "FDHD4ZP/A",
+      "productCode": "G1L80ZP/A",
       "family": "Air",
       "screen": "13″",
       "display": "Standard",
@@ -61,38 +74,12 @@
       "cpuCores": 10,
       "gpuCores": 10,
       "memory": "24GB",
-      "storage": "1TB",
-      "priceSgd": 2249,
-      "newPriceSgd": 2649
+      "storage": "2TB",
+      "priceSgd": 2889,
+      "newPriceSgd": 3399
     },
     {
-      "productCode": "FDHE4ZP/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 8,
-      "memory": "16GB",
-      "storage": "512GB",
-      "priceSgd": 1609,
-      "newPriceSgd": 1899
-    },
-    {
-      "productCode": "FW0Y3ZP/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M4",
-      "cpuCores": 10,
-      "gpuCores": 8,
-      "memory": "16GB",
-      "storage": "256GB",
-      "priceSgd": 1239,
-      "newPriceSgd": null
-    },
-    {
-      "productCode": "G1LT0ZP/A",
+      "productCode": "G1LZ0ZP/A",
       "family": "Air",
       "screen": "15″",
       "display": "Standard",
@@ -110,14 +97,14 @@
   "configurationChanges": [],
   "featured": {
     "before": [
-      "FDHD4ZP/A",
+      "FDHK4ZP/A",
       "G1GU0ZP/A",
       "G1L80ZP/A"
     ],
     "after": [
       "FDHK4ZP/A",
       "G1GU0ZP/A",
-      "G1L80ZP/A"
+      "G1L61ZP/A"
     ]
   }
 }

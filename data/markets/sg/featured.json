@@ -61,29 +61,29 @@
     },
     {
       "rank": 3,
-      "recommendationKey": "air|13|standard|m5|10|10|24gb|2tb",
-      "configurationKey": "air|13|standard|m5|10|10|24gb|2tb",
-      "productCode": "G1L80ZP/A",
-      "score": 100882,
+      "recommendationKey": "air|13|standard|m5|10|10|24gb|512gb",
+      "configurationKey": "air|13|standard|m5|10|10|24gb|512gb",
+      "productCode": "G1L61ZP/A",
+      "score": 98064,
       "scoreBreakdown": {
         "memory": 32000,
-        "storage": 21000,
+        "storage": 16000,
         "formFactor": 24000,
         "chipRecency": 10000,
-        "affordability": 9382,
-        "verifiedDiscount": 4500
+        "affordability": 13337,
+        "verifiedDiscount": 2727
       },
       "reasonCodes": [
         "MEMORY_IDEAL_24GB",
-        "STORAGE_2TB",
+        "STORAGE_512GB",
         "FORM_IDEAL_AIR_13",
         "CHIP_GENERATION_M5",
-        "PRICE_BALANCED",
+        "PRICE_HIGH_VALUE",
         "DISCOUNT_VERIFIED"
       ],
       "label": "Ещё один удачный вариант",
-      "headline": "MacBook Air 13″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 2 ТБ",
-      "reason": "Соответствует целевым параметрам MacBook Air 13″ и 24 ГБ памяти; главный компромисс — SSD на 2 ТБ. Подтверждённая скидка усиливает ценность."
+      "headline": "MacBook Air 13″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 512 ГБ",
+      "reason": "Соответствует целевым параметрам MacBook Air 13″ и 24 ГБ памяти; главный компромисс — SSD на 512 ГБ. Подтверждённая скидка усиливает ценность."
     }
   ]
 }
