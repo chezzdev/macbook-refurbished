@@ -215,11 +215,17 @@ test("embeds shared URL view-state restoration and synchronization", () => {
   assert.match(html, /sorting\.addEventListener\("change",\(\)=>\{render\(\);synchronizeCatalogViewUrl\(\)\}\)/);
 });
 
-test("retains exact Apple new-price links and the permanent canonical URL", () => {
+test("links both Apple prices without a separate table link column", () => {
   const pricedProducts = renderedProducts.filter(
     (product) => product[newPriceField] !== null && product.newSourceUrl,
   );
   assert.ok(pricedProducts.length > 0);
+  assert.match(
+    html,
+    /const refurbishedPrice=p=>(?:\{[\s\S]*?return )?'<a class="price-link" href="'\+escapeHtml\(p\.sourceUrl\)\+'"/,
+  );
+  assert.doesNotMatch(html, /<th>Apple<\/th>/);
+  assert.doesNotMatch(html, /class="open"/);
   for (const product of pricedProducts) {
     assert.match(html, new RegExp(escapeRegex(product.newSourceUrl)));
   }
@@ -418,8 +424,11 @@ test("keeps tax-included markets on the list-price display contract", () => {
   assert.doesNotMatch(html, /data-tax-location="/);
   assert.doesNotMatch(html, /header-tax-switcher/);
   assert.doesNotMatch(html, /stable-tax-columns/);
-  assert.match(html, /<th>Apple<\/th>/);
-  assert.match(html, /class="open" href="/);
+  assert.match(
+    html,
+    /const refurbishedPrice=p=>'<a class="price-link" href="'\+escapeHtml\(p\.sourceUrl\)\+'"/,
+  );
+  assert.doesNotMatch(html, /<th>Apple<\/th>|class="open"/);
   assert.match(shortlist, /refurb · налог включён/);
   assert.doesNotMatch(shortlist, /refurb до налога/);
 });

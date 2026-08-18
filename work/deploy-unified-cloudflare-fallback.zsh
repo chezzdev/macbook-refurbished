@@ -139,49 +139,44 @@ for market_artifact in "${market_artifacts[@]}"; do
   route_by_market[$market_id]="${relative_file:h}/"
 done
 
-fallback_projects=(
-  "macbook-sg-refurbished|https://macbook-sg-refurbished.pages.dev"
-  "macbook-us-refurbished|https://macbook-us-refurbished.pages.dev"
+cloudflare_project="macbook-refurbished"
+production_url="https://macbook-refurbished.pages.dev"
+
+print "Deploying pinned unified fallback to ${cloudflare_project}"
+(
+  cd "$runtime_dir"
+  "${workspace_dir}/node_modules/.bin/wrangler" pages deploy "$deployment_dir" \
+    --project-name "$cloudflare_project" \
+    --branch "$expected_branch" \
+    --commit-hash "$publish_commit"
 )
 
-for fallback_target in "${fallback_projects[@]}"; do
-  IFS="|" read -r cloudflare_project production_url <<< "$fallback_target"
-  print "Deploying pinned unified fallback to ${cloudflare_project}"
-  (
-    cd "$runtime_dir"
-    "${workspace_dir}/node_modules/.bin/wrangler" pages deploy "$deployment_dir" \
-      --project-name "$cloudflare_project" \
-      --branch "$expected_branch" \
-      --commit-hash "$publish_commit"
-  )
-
-  for market_id in "${market_ids[@]}"; do
-    expected_hash="${expected_hash_by_market[$market_id]}"
-    market_route="${route_by_market[$market_id]}"
-    live_file="${runtime_dir}/live-${cloudflare_project}-${market_id}.html"
-    live_matches=false
-    attempt_number=1
-    while (( attempt_number <= 12 )); do
-      if curl -fsSL --max-time 15 \
-        "${production_url%/}/${market_route}?catalog_hash=${expected_hash}" \
-        -o "$live_file"; then
-        live_hash="$(shasum -a 256 "$live_file" | awk '{print $1}')"
-        if [[ "$live_hash" == "$expected_hash" ]]; then
-          live_matches=true
-          break
-        fi
+for market_id in "${market_ids[@]}"; do
+  expected_hash="${expected_hash_by_market[$market_id]}"
+  market_route="${route_by_market[$market_id]}"
+  live_file="${runtime_dir}/live-${cloudflare_project}-${market_id}.html"
+  live_matches=false
+  attempt_number=1
+  while (( attempt_number <= 12 )); do
+    if curl -fsSL --max-time 15 \
+      "${production_url%/}/${market_route}?catalog_hash=${expected_hash}" \
+      -o "$live_file"; then
+      live_hash="$(shasum -a 256 "$live_file" | awk '{print $1}')"
+      if [[ "$live_hash" == "$expected_hash" ]]; then
+        live_matches=true
+        break
       fi
-      if (( attempt_number < 12 )); then
-        sleep 5
-      fi
-      attempt_number=$((attempt_number + 1))
-    done
-    if [[ "$live_matches" != "true" ]]; then
-      print -u2 \
-        "${production_url%/}/${market_route} did not serve the pinned artifact"
-      exit 1
     fi
+    if (( attempt_number < 12 )); then
+      sleep 5
+    fi
+    attempt_number=$((attempt_number + 1))
   done
+  if [[ "$live_matches" != "true" ]]; then
+    print -u2 \
+      "${production_url%/}/${market_route} did not serve the pinned artifact"
+    exit 1
+  fi
 done
 
 print \

@@ -605,7 +605,7 @@ const clientTaxFormatterSource = hasTaxLocationSwitcher
       taxCurrency.format(pricing.preTaxAmount*rate)+' + '+
       taxCurrency.format(pricing.salesTaxAmount*rate)+' + '+
       taxCurrency.format(pricing.recyclingFeeAmount*rate)+'</small>';
-    const refurbishedPrice=p=>'<strong class="primary-currency">'+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.taxInclusivePricing)${sourceTaxFormulaCall};
+    const refurbishedPrice=p=>'<a class="price-link" href="'+escapeHtml(p.sourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть refurbished у Apple"><strong class="primary-currency">'+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.taxInclusivePricing)${sourceTaxFormulaCall}+'</a>';
     const exactNewPrice=p=>p[newTaxInclusivePriceField]?
       '<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple"><strong class="primary-currency">'+taxCurrency.format(p[newTaxInclusivePriceField]*rate)+'</strong>'+priceFormula(p.newTaxInclusivePricing)${newSourceTaxFormulaCall}+'</a>':
       '<span class="na">—</span>';
@@ -616,12 +616,12 @@ const clientTaxFormatterSource = hasTaxLocationSwitcher
       ? `const taxPrice=p=>p[taxInclusivePriceField]?
       '<small class="tax-inclusive">Итого Apple: '+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</small>':
       '<small class="tax-unresolved">Итого с налогом: не получено</small>';
-    const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField])+taxPrice(p);
+    const refurbishedPrice=p=>'<a class="price-link" href="'+escapeHtml(p.sourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть refurbished у Apple">'+tablePrice(p[refurbishedPriceField])+taxPrice(p)+'</a>';
     const exactNewPrice=p=>p[newPriceField]?'<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">'+tablePrice(p[newPriceField])+'</a>':'<span class="na">—</span>';
     const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
     const comparableNewPrice=p=>p[newPriceField];
     const comparisonPrice=tablePrice;`
-      : `const refurbishedPrice=p=>tablePrice(p[refurbishedPriceField]);
+      : `const refurbishedPrice=p=>'<a class="price-link" href="'+escapeHtml(p.sourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть refurbished у Apple">'+tablePrice(p[refurbishedPriceField])+'</a>';
     const exactNewPrice=p=>p[newPriceField]?'<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">'+tablePrice(p[newPriceField])+'</a>':'<span class="na">—</span>';
     const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
     const comparableNewPrice=p=>p[newPriceField];
@@ -763,11 +763,6 @@ const clientViewSearchSource = hasTaxLocationSwitcher
         value:activeTaxLocation.shortLabel.toLowerCase(),
       });`
   : "const search=writeCatalogViewSearch(location.search,currentViewState(),viewStateOptions);";
-const separateAppleHeaderHtml = hasTaxLocationSwitcher ? "" : "<th>Apple</th>";
-const separateAppleCellSource = hasTaxLocationSwitcher
-  ? ""
-  : `
-          <td><a class="open" href="\${escapeHtml(p.sourceUrl)}" target="_blank" rel="noreferrer" aria-label="Открыть \${escapeHtml(p.productCode)} у Apple">↗</a></td>`;
 const clientModelMetadataSource = hasTaxLocationSwitcher
   ? `<strong>MacBook \${escapeHtml(p.family)}</strong><small>\${escapeHtml(p.releaseYear)} · \${escapeHtml(p.productCode)}</small>\${p.display==="Nano-texture"?'<small class="model-display">Nano-texture</small>':""}`
   : `<strong>MacBook \${escapeHtml(p.family)}</strong><small>\${escapeHtml(p.releaseYear)} · \${escapeHtml(p.productCode)}\${p.display==="Nano-texture"?" · Nano-texture":""}</small>`;
@@ -870,7 +865,6 @@ const html = `<!doctype html>
     .primary-currency{font-size:18px}.source-secondary,.tax-inclusive,.tax-unresolved,.price-formula,.source-tax-formula{display:block;font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}.pick-price small{flex-basis:100%;font-size:12px;color:var(--muted)}.badge{display:inline-block;background:var(--blue);color:white;margin-left:8px;padding:3px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
     .price-link{color:inherit;text-decoration-color:#aaa;text-underline-offset:3px}
     .saving{font-weight:800;color:#187235}.overpay{font-weight:800;color:#c12b22}.na{color:var(--muted)}
-    .open{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--ink);text-decoration:none}.open:hover{background:var(--blue);color:white}
     .empty{padding:40px;text-align:center}.empty button{border:0;background:none;text-decoration:underline;cursor:pointer}
     .method-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink)}
     .method-grid article{background:var(--paper);padding:28px;min-height:220px}.method-grid span{font:700 12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--blue)}
@@ -882,7 +876,7 @@ const html = `<!doctype html>
     @media(max-width:1100px){.preference-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.picker-reset{width:100%}.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.sort-control{grid-column:span 2}.reset{width:100%}}
     @media(max-width:850px){.section-nav{display:none}.topbar-actions{gap:10px}.market-switcher${hasTaxLocationSwitcher ? ",.header-tax-switcher" : ""}{padding-left:10px}.hero{padding-top:48px}h1{margin-bottom:40px}.hero-grid,.picks-grid,.method-grid{grid-template-columns:1fr}${responsiveHeroAsideCss}.hero-stats{grid-template-columns:1fr}.hero-stats div{border-right:0;border-bottom:1px solid var(--ink);padding:18px 0!important}.section-shell{padding:70px 4vw}.section-heading{display:block}.section-heading p{margin-top:20px}.reset{width:100%}.pick-card{min-height:340px}.change-latest,.change-entry-head{align-items:flex-start;flex-direction:column}footer{display:block}footer div{margin-top:15px}}
     @media(max-width:620px){${hasTaxLocationSwitcher ? ".topbar{height:auto;min-height:64px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}.topbar-actions{display:contents}.market-switcher{grid-column:2;grid-row:1;height:64px}.header-tax-switcher{grid-column:1/-1;grid-row:2;margin:0 -4vw;padding:8px 4vw;border-left:0;border-top:1px solid var(--line);justify-content:space-between}.header-tax-switcher .tax-location-switcher{margin-left:auto}" : ""}h1{font-size:54px}.lede{font-size:22px}.preference-picker,.filters{grid-template-columns:1fr}.sort-control{grid-column:auto}.dropdown-menu{position:static;min-width:0;margin-top:6px;box-shadow:none}.section-heading h2{font-size:44px}.pick-chip{font-size:58px}.pick-match{position:static;align-self:flex-start;margin-top:10px}}
-    @media print{.topbar,.filters,.open{display:none}.hero{padding-top:30px}.section-shell{padding:40px 3vw}.table-wrap{overflow:visible}table{min-width:0}th,td{padding:8px;font-size:8px}}
+    @media print{.topbar,.filters{display:none}.hero{padding-top:30px}.section-shell{padding:40px 3vw}.table-wrap{overflow:visible}table{min-width:0}th,td{padding:8px;font-size:8px}}
   </style>
 </head>
 <body>
@@ -938,7 +932,7 @@ ${taxLocationHeaderHtml ? `      ${taxLocationHeaderHtml}\n` : ""}      <nav cla
       <div class="result-count" id="count"></div>
       <div class="table-wrap">
         <table${hasTaxLocationSwitcher ? ' class="stable-tax-columns"' : ""}>
-          <thead><tr><th>Модель</th><th>Экран</th><th>Чип</th><th>RAM</th><th>SSD</th><th>CPU / GPU</th><th>Цвет</th><th${hasTaxLocationSwitcher ? ' id="refurbished-price-header"' : ""}>${escapeHtml(refurbishedHeader)}</th><th${hasTaxLocationSwitcher ? ' id="new-price-header"' : ""}>${escapeHtml(newHeader)}</th><th>Скидка</th>${separateAppleHeaderHtml}</tr></thead>
+          <thead><tr><th>Модель</th><th>Экран</th><th>Чип</th><th>RAM</th><th>SSD</th><th>CPU / GPU</th><th>Цвет</th><th${hasTaxLocationSwitcher ? ' id="refurbished-price-header"' : ""}>${escapeHtml(refurbishedHeader)}</th><th${hasTaxLocationSwitcher ? ' id="new-price-header"' : ""}>${escapeHtml(newHeader)}</th><th>Скидка</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
         <div class="empty" id="empty" hidden>Такой комбинации сейчас нет. <button id="empty-reset" type="button">Сбросить фильтры</button></div>
@@ -1236,7 +1230,7 @@ ${clientOwnedChoiceSource}    const filterNames=["family","screen","chip","memor
           <td>\${colourPickerMarkup(p,"table")}</td>
           <td>\${refurbishedPrice(p)}</td>
           <td>\${exactNewPrice(p)}</td>
-          <td>\${discount}</td>${separateAppleCellSource}
+          <td>\${discount}</td>
         </tr>\`;
       }).join("");
     };

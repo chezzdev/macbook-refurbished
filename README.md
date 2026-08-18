@@ -59,7 +59,10 @@ pipeline-owned `data/markets/<id>/changelog.json`, а состояние пос�
 стоит под кружками. Тот же выбор есть перед ссылкой Apple в каждой верхней
 карточке, но в одну строку с названием. Выбор общий для карточек и таблицы:
 смена цвета одновременно меняет product code, цены и обе Apple-ссылки. Цвет не
-записывается в URL; по умолчанию всегда выбран первый показанный цвет.
+записывается в URL; по умолчанию всегда выбран первый показанный цвет. Во всех
+рынках refurbished-цена в таблице сама ведёт на соответствующий товар Apple,
+а exact-new цена — на точную новую конфигурацию. Отдельной колонки Apple со
+стрелкой нет.
 
 ## Архитектура рынков
 
@@ -79,6 +82,10 @@ tax adapter, validator, ranker, changelog, builder и publication workflow.
 `data/markets/es/*`, `data/markets/sg/*` и `data/markets/us/*`,
 `outputs/markets/es/index.html`, `outputs/markets/sg/index.html` и
 `outputs/markets/us/index.html`.
+Это не временные локальные файлы: JSON хранит каноническое состояние последнего
+успешного refresh, а HTML является воспроизводимым локальным артефактом того же
+состояния. Они намеренно отслеживаются Git и не должны попадать в `.gitignore`;
+после завершённого refresh их фиксируют вместе как актуальный snapshot.
 
 Текущий эталон всех трёх профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
 Политики изолированы: `config/ranking-policy.es.json` для ES,
@@ -152,9 +159,7 @@ catalog остаются одними и теми же.
 Переключатель штатов находится в header и использует те же размеры и
 типографику, что и market switcher. Price columns не меняют положение между
 штатами, а таблица целиком помещается в desktop viewport 1366 px без
-горизонтального overflow. Refurb total является ссылкой на refurbished product
-у Apple, exact-new total — на точную новую конфигурацию. Отдельной Apple-колонки
-на US нет; `Nano-texture` выводится третьей строкой модели.
+горизонтального overflow. `Nano-texture` выводится третьей строкой модели.
 
 Валюта, точность minor unit и сборы принадлежат tax policy и обязаны совпадать
 с исходной валютой профиля; контрольный checkout указывает размер экрана, а
@@ -253,15 +258,12 @@ Spain использует тот же канонический workflow с ло
 ```
 
 Если GitHub Pages недоступен, одна и та же проверенная публикационная сборка
-разворачивается на обоих существующих Cloudflare Pages проектах. Каждый
+разворачивается на единственном market-neutral Cloudflare Pages проекте. Один
 fallback-домен содержит все enabled-рынки:
 
-- <https://macbook-sg-refurbished.pages.dev/markets/es/>
-- <https://macbook-sg-refurbished.pages.dev/markets/sg/>
-- <https://macbook-sg-refurbished.pages.dev/markets/us/>
-- <https://macbook-us-refurbished.pages.dev/markets/es/>
-- <https://macbook-us-refurbished.pages.dev/markets/sg/>
-- <https://macbook-us-refurbished.pages.dev/markets/us/>
+- <https://macbook-refurbished.pages.dev/markets/es/>
+- <https://macbook-refurbished.pages.dev/markets/sg/>
+- <https://macbook-refurbished.pages.dev/markets/us/>
 
 ```zsh
 MACBOOK_PUBLISH_DIR=/absolute/path/to/work/gh-pages-site \
@@ -274,11 +276,11 @@ Fallback-команда использует тот же общий publication 
 source-controlled contract до создания `git archive` и до запуска кода из
 publication checkout. После этого команда фиксирует commit, читает enabled
 markets и их artifact routes из registry-driven publication manifest внутри
-архива, а затем публикует именно распакованный immutable archive в каждый
-проект. Для каждого enabled market проверяется точный SHA-256 его страницы;
-dirty-checkout override не используется. Поэтому новый enabled market
-автоматически появляется на обоих fallback-доменах без отдельной правки
-deploy-скрипта.
+архива, а затем публикует именно распакованный immutable archive в единый
+проект `macbook-refurbished`. Для каждого enabled market проверяется точный
+SHA-256 его страницы; dirty-checkout override не используется. Поэтому новый
+enabled market автоматически появляется на fallback-домене без отдельной
+правки deploy-скрипта.
 
 Workflow выбирает артефакт и market URL только из выбранного профиля, поэтому
 данные ES, SG и US не смешиваются, хотя публикуются на одном сайте.
@@ -385,11 +387,11 @@ MACBOOK_PUBLISH_DIR=/Users/alexander/Documents/vibe/macbook-refurbished/work/gh-
 данные нового рынка. После seed запускаются `npm test`, `npm run lint`,
 `npm run build`, затем полный `update-all-markets.zsh` и только после его
 успеха — unified Cloudflare fallback. Финальная проверка сравнивает HTTP 200 и
-точный hash каждого market artifact на GitHub Pages и обоих Cloudflare
-проектах.
+точный hash каждого market artifact на GitHub Pages и единственном Cloudflare
+проекте.
 
 Само включение в registry автоматически добавляет рынок в switcher,
-all-enabled build, daily batch, publication manifest и оба Cloudflare mirror.
+all-enabled build, daily batch, publication manifest и Cloudflare mirror.
 Отдельная scheduled-команда, новый page builder, hardcoded fallback route и
 ручной baseline/changelog не нужны.
 

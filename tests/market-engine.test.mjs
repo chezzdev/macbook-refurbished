@@ -67,6 +67,10 @@ const publicationGuardScript = join(
   projectRoot,
   "work/publication-guards.zsh",
 );
+const cloudflareFallbackScriptText = await readFile(
+  join(projectRoot, "work/deploy-unified-cloudflare-fallback.zsh"),
+  "utf8",
+);
 const dependabotConfigText = await readFile(
   join(projectRoot, ".github/dependabot.yml"),
   "utf8",
@@ -1097,8 +1101,8 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
     publicationGuards,
     /Publication index contains a path outside the manifest/,
   );
-  assert.match(fallbackWorkflow, /macbook-sg-refurbished/);
-  assert.match(fallbackWorkflow, /macbook-us-refurbished/);
+  assert.match(fallbackWorkflow, /cloudflare_project="macbook-refurbished"/);
+  assert.doesNotMatch(fallbackWorkflow, /macbook-(?:sg|us)-refurbished/);
   assert.match(fallbackWorkflow, /\.publication-update\.lock/);
   assert.match(fallbackWorkflow, /publication_require_clean_synced_checkout/);
   assert.match(
@@ -1346,6 +1350,25 @@ test("fallback rejects a clean foreign repository before executing its manifest"
     await rm(markerFile, { force: true });
     await rm(fixture.fixtureRoot, { recursive: true, force: true });
   }
+});
+
+test("fallback deploys once to the market-neutral Cloudflare project", () => {
+  assert.match(
+    cloudflareFallbackScriptText,
+    /cloudflare_project="macbook-refurbished"/,
+  );
+  assert.match(
+    cloudflareFallbackScriptText,
+    /production_url="https:\/\/macbook-refurbished\.pages\.dev"/,
+  );
+  assert.doesNotMatch(
+    cloudflareFallbackScriptText,
+    /macbook-(?:sg|us)-refurbished/,
+  );
+  assert.equal(
+    cloudflareFallbackScriptText.match(/pages deploy/g)?.length,
+    1,
+  );
 });
 
 test("publication manifest derives every market path from enabled profiles", () => {
