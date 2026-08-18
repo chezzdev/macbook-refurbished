@@ -44,11 +44,21 @@ import {
 import { updateExchangeRate } from "../scripts/update-exchange-rate.mjs";
 import { buildCatalogDelta } from "../scripts/update-changelog.mjs";
 
-const [sg, us, sgContext, usContext, enabledMarketState] = await Promise.all([
+const [
+  sg,
+  us,
+  es,
+  sgContext,
+  usContext,
+  esContext,
+  enabledMarketState,
+] = await Promise.all([
   loadMarketProfile("sg"),
   loadMarketProfile("us"),
+  loadMarketProfile("es"),
   loadMarketContext("sg"),
   loadMarketContext("us"),
+  loadMarketContext("es"),
   loadEnabledMarketProfiles(),
 ]);
 const execFileAsync = promisify(execFile);
@@ -64,9 +74,10 @@ const dependabotConfigText = await readFile(
   if (error?.code === "ENOENT") return "";
   throw error;
 });
-const [sgPolicy, usPolicy] = await Promise.all([
+const [sgPolicy, usPolicy, esPolicy] = await Promise.all([
   readFile(sgContext.policyPath, "utf8").then(JSON.parse),
   readFile(usContext.policyPath, "utf8").then(JSON.parse),
+  readFile(esContext.policyPath, "utf8").then(JSON.parse),
 ]);
 
 async function runGit(cwd, args) {
@@ -177,9 +188,8 @@ function tile({
   return {
     partNumber: productCode,
     productDetailsUrl:
-      marketId === "sg"
-        ? `/sg/shop/product/${productCode.toLowerCase()}`
-        : `/shop/product/${productCode.toLowerCase()}`,
+      `${marketId === "us" ? "" : `/${marketId}`}/shop/product/` +
+      productCode.toLowerCase(),
     title:
       `Refurbished ${screenInches}‑inch MacBook Air Apple M5 chip with ` +
       `10‑Core CPU and 10‑Core GPU - ${colour}`,
@@ -272,6 +282,7 @@ function futureCaProfile() {
     refurbishedCatalogUrl:
       "https://www.apple.com/ca/shop/refurbished/mac",
     newCatalogBaseUrl: "https://www.apple.com/ca/shop/buy-mac",
+    newProductUrlStyle: "english",
   };
   profile.currency = {
     source: "CAD",
@@ -472,7 +483,7 @@ async function buildSyntheticMarketHtml({
   }
 }
 
-test("Singapore and US are equal first-class profiles with isolated state", () => {
+test("enabled markets are equal first-class profiles with isolated state", () => {
   const commonShape = (profile) => ({
     topLevel: Object.keys(profile).sort(),
     storefront: Object.keys(profile.storefront).sort(),
@@ -482,6 +493,7 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     publication: Object.keys(profile.publication).sort(),
   });
   assert.deepEqual(commonShape(sg), commonShape(us));
+  assert.deepEqual(commonShape(sg), commonShape(es));
   assert.equal(sg.currency.priceFields.taxInclusive, null);
   assert.equal(sg.currency.priceFields.newTaxInclusive, null);
   assert.equal(us.currency.priceFields.taxInclusive, "taxInclusivePriceUsd");
@@ -491,6 +503,7 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
   );
   assert.equal(sg.siteName, "MacBook SG Refurbished");
   assert.equal(us.siteName, "MacBook US Refurbished");
+  assert.equal(es.siteName, "MacBook ES Refurbished");
   assert.equal(
     buildInitialSiteDocument(sg).pageTitle,
     sg.pageTitle,
@@ -500,6 +513,10 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     us.pageTitle,
   );
   assert.equal(
+    buildInitialSiteDocument(es).pageTitle,
+    es.pageTitle,
+  );
+  assert.equal(
     sg.publication.productionUrl,
     "https://chezzdev.github.io/macbook-refurbished/markets/sg/",
   );
@@ -507,28 +524,39 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     us.publication.productionUrl,
     "https://chezzdev.github.io/macbook-refurbished/markets/us/",
   );
+  assert.equal(
+    es.publication.productionUrl,
+    "https://chezzdev.github.io/macbook-refurbished/markets/es/",
+  );
   assert.equal(sg.publication.provider, "github-pages");
   assert.equal(us.publication.provider, "github-pages");
   assert.equal(us.publication.approvalRequired, false);
   assert.equal(us.publication.status, "active");
+  assert.equal(es.publication.provider, "github-pages");
+  assert.equal(es.publication.approvalRequired, false);
+  assert.equal(es.publication.status, "active");
   assert.deepEqual(
     enabledMarketState.profiles.map((profile) => profile.id),
     enabledMarketState.registry.enabledMarkets,
   );
   assert.ok(enabledMarketState.registry.enabledMarkets.includes("sg"));
   assert.ok(enabledMarketState.registry.enabledMarkets.includes("us"));
+  assert.ok(enabledMarketState.registry.enabledMarkets.includes("es"));
   assert.equal(
     sg.publication.repository,
     us.publication.repository,
   );
+  assert.equal(es.publication.repository, us.publication.repository);
   assert.equal(
     sg.publication.checkoutPath,
     us.publication.checkoutPath,
   );
+  assert.equal(es.publication.checkoutPath, us.publication.checkoutPath);
   assert.equal(
     sg.publication.projectSlug,
     us.publication.projectSlug,
   );
+  assert.equal(es.publication.projectSlug, us.publication.projectSlug);
   assert.equal(
     sg.namespace.artifactDirectory,
     "outputs/markets/sg",
@@ -546,12 +574,20 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     "outputs/markets/us",
   );
   assert.equal(
+    es.namespace.artifactDirectory,
+    "outputs/markets/es",
+  );
+  assert.equal(
     sg.publication.artifactDirectory,
     "markets/sg",
   );
   assert.equal(
     us.publication.artifactDirectory,
     "markets/us",
+  );
+  assert.equal(
+    es.publication.artifactDirectory,
+    "markets/es",
   );
   assert.equal(
     sg.namespace.artifactDirectory.replace("/sg", "/<market>"),
@@ -570,10 +606,17 @@ test("Singapore and US are equal first-class profiles with isolated state", () =
     us.publication.artifactDirectory.replace("/us", "/<market>"),
   );
   assert.notEqual(sgContext.paths.catalog, usContext.paths.catalog);
+  assert.notEqual(esContext.paths.catalog, usContext.paths.catalog);
   assert.notEqual(sgContext.paths.artifact, usContext.paths.artifact);
+  assert.notEqual(esContext.paths.artifact, usContext.paths.artifact);
   assert.notEqual(sgContext.policyPath, usContext.policyPath);
+  assert.notEqual(esContext.policyPath, usContext.policyPath);
   assert.deepEqual(sgPolicy.ideal, sg.ranking.reference);
   assert.deepEqual(usPolicy.ideal, us.ranking.reference);
+  assert.deepEqual(esPolicy.ideal, es.ranking.reference);
+  assert.equal(sg.storefront.newProductUrlStyle, "english");
+  assert.equal(us.storefront.newProductUrlStyle, "english");
+  assert.equal(es.storefront.newProductUrlStyle, "spanish");
 });
 
 test("third-market copy is driven by country and display currency", () => {
@@ -623,10 +666,17 @@ test("conversion type is consistent with source and display currencies", () => {
     () => validateMarketProfile(sameCurrencyCrossRate),
     /cbr-cross-rate conversion requires different source\/display currencies/,
   );
+
+  const unsupportedUrlStyle = structuredClone(es);
+  unsupportedUrlStyle.storefront.newProductUrlStyle = "market-id-branch";
+  assert.throws(
+    () => validateMarketProfile(unsupportedUrlStyle),
+    /newProductUrlStyle is unsupported/,
+  );
 });
 
 test("current-new pricing guards both configurations and colour variants", () => {
-  for (const profile of [sg, us]) {
+  for (const profile of [sg, us, es]) {
     assert.equal(
       profile.currentNewPricing.minimumExactVariantMatchRatio,
       0.5,
@@ -677,6 +727,7 @@ test("identity tax-included market renders no conversion methodology", async () 
       refurbishedCatalogUrl:
         "https://www.apple.com/jp/shop/refurbished/mac",
       newCatalogBaseUrl: "https://www.apple.com/jp/shop/buy-mac",
+      newProductUrlStyle: "english",
     };
     profile.currency = {
       source: "JPY",
@@ -910,16 +961,23 @@ test("workflow config selects one shared checkout and each market artifact", asy
   );
   const sgWorkflow = configurationsById.get("sg");
   const usWorkflow = configurationsById.get("us");
+  const esWorkflow = configurationsById.get("es");
   assert.equal(sgWorkflow[9], "outputs/markets/sg");
   assert.equal(usWorkflow[9], "outputs/markets/us");
+  assert.equal(esWorkflow[9], "outputs/markets/es");
   assert.equal(sgWorkflow[14], usWorkflow[14]);
+  assert.equal(esWorkflow[14], usWorkflow[14]);
   assert.equal(sgWorkflow[15], usWorkflow[15]);
+  assert.equal(esWorkflow[15], usWorkflow[15]);
   assert.equal(sgWorkflow[16], "markets/sg");
   assert.equal(usWorkflow[16], "markets/us");
+  assert.equal(esWorkflow[16], "markets/es");
   assert.equal(sgWorkflow[18], "false");
   assert.equal(usWorkflow[18], "false");
+  assert.equal(esWorkflow[18], "false");
   assert.equal(sgWorkflow[12], "github-pages");
   assert.equal(usWorkflow[12], "github-pages");
+  assert.equal(esWorkflow[12], "github-pages");
 });
 
 test("publication workflow shares one lock and keeps prepare-only non-canonical", async () => {
@@ -1242,6 +1300,7 @@ test("fallback rejects a clean foreign repository before executing its manifest"
     "scripts/publication-manifest.mjs": maliciousManifest,
   });
   try {
+    await mkdir(join(fixture.fixtureRoot, "work"), { recursive: true });
     await assert.rejects(
       () =>
         execFileAsync(
@@ -1252,6 +1311,7 @@ test("fallback rejects a clean foreign repository before executing its manifest"
             env: {
               ...process.env,
               MACBOOK_PUBLISH_DIR: fixture.checkoutDirectory,
+              MACBOOK_WORKSPACE_DIR: fixture.fixtureRoot,
             },
           },
         ),
@@ -1289,12 +1349,13 @@ test("publication manifest derives every market path from enabled profiles", () 
     "https://chezzdev.github.io/macbook-refurbished/markets/ca/";
   futureProfile.publication.canonicalUrl =
     "https://chezzdev.github.io/macbook-refurbished/markets/ca/";
-  const manifest = buildPublicationManifest([sg, us, futureProfile]);
+  const manifest = buildPublicationManifest([sg, us, es, futureProfile]);
 
-  assert.deepEqual(manifest.marketIds, ["sg", "us", "ca"]);
+  assert.deepEqual(manifest.marketIds, ["sg", "us", "es", "ca"]);
   assert.deepEqual(manifest.marketArtifacts, [
     { marketId: "sg", relativePath: "markets/sg/index.html" },
     { marketId: "us", relativePath: "markets/us/index.html" },
+    { marketId: "es", relativePath: "markets/es/index.html" },
     { marketId: "ca", relativePath: "markets/ca/index.html" },
   ]);
   assert.equal(
@@ -1307,6 +1368,10 @@ test("publication manifest derives every market path from enabled profiles", () 
     "config/ranking-policy.ca.json",
     "data/markets/ca/catalog.json",
     "data/markets/ca/changelog.json",
+    "config/markets/es.json",
+    "config/ranking-policy.es.json",
+    "data/markets/es/catalog.json",
+    "markets/es/index.html",
     "markets/ca/index.html",
   ]) {
     assert.ok(
@@ -1506,9 +1571,20 @@ test("staging preserves complete profile-relative namespace paths", async () => 
     stagedSgContext.paths.artifact,
     join(stagingRoot, "outputs/markets/sg/index.html"),
   );
+  const stagedEsContext = await loadMarketContext("es", {
+    namespaceRoot: stagingRoot,
+  });
+  assert.equal(
+    stagedEsContext.paths.catalog,
+    join(stagingRoot, "data/markets/es/catalog.json"),
+  );
+  assert.equal(
+    stagedEsContext.paths.artifact,
+    join(stagingRoot, "outputs/markets/es/index.html"),
+  );
 });
 
-test("both profiles use the same parser, exact-match, catalog, and ranking path", () => {
+test("English storefront profiles use the same parser, exact-match, catalog, and ranking path", () => {
   for (const [profile, policy] of [
     [sg, sgPolicy],
     [us, usPolicy],
@@ -1547,6 +1623,65 @@ test("both profiles use the same parser, exact-match, catalog, and ranking path"
       1,
     );
   }
+});
+
+test("Spain parses localized Apple catalog data and exact-new URLs", () => {
+  const spanishTile = {
+    partNumber: "FDH74Y/A",
+    productDetailsUrl: "/es/shop/product/fdh74y/a?fnode=example",
+    title:
+      "MacBook Air reacondicionado de 13 pulgadas con chip M5 de Apple, " +
+      "CPU de 10 núcleos y GPU de 10 núcleos - Plata",
+    filters: {
+      dimensions: {
+        refurbClearModel: "macbookair",
+        dimensionScreensize: "13inch",
+        dimensionColor: "silver",
+        dimensionRelYear: "2026",
+        tsMemorySize: "24gb",
+        dimensionCapacity: "1tb",
+      },
+    },
+    price: {
+      currentPrice: {
+        amount: "1.679,00 €",
+        raw_amount: "1679.00",
+      },
+    },
+  };
+  const [product] = parseTiles([spanishTile], es);
+  assert.equal(product.priceEur, 1679);
+  assert.equal(product.colour, "Silver");
+  assert.equal(product.chip, "M5");
+  assert.equal(product.cpuCores, 10);
+  assert.equal(product.gpuCores, 10);
+  assert.equal(product.memory, "24GB");
+  assert.equal(product.storage, "1TB");
+  assert.equal(
+    buildNewProductUrl(product, es),
+    "https://www.apple.com/es/shop/buy-mac/macbook-air/" +
+      "13-pulgadas-silver-chip-m5-cpu-de-10-n%C3%BAcleos-" +
+      "gpu-de-10-n%C3%BAcleos-24-gb-de-memoria-1tb-de-capacidad",
+  );
+
+  const exactHtml =
+    "<title>Comprar MacBook Air, 13 pulgadas, chip M5, CPU de 10 núcleos, " +
+    "GPU de 10 núcleos, Plata, 24 GB de memoria, 1 TB de capacidad - " +
+    "Apple (ES)</title>" +
+    '<script>{"priceCurrency":"EUR","price":1979.00}</script>';
+  assert.equal(parseExactNewPriceHtml(exactHtml, product, es), 1979);
+  assert.throws(
+    () =>
+      parseExactNewPriceHtml(
+        exactHtml.replace("24 GB de memoria", "16 GB de memoria"),
+        product,
+        es,
+      ),
+    /24 gb de memoria/,
+  );
+
+  const ranked = rankCatalog(rankingCatalog(es), esPolicy, es);
+  assert.equal(ranked.items.length, 3);
 });
 
 test("US fixed-location estimate reproduces Apple checkout and screen fees", async () => {
@@ -2073,6 +2208,10 @@ test("the shared UI builder renders the US profile without Singapore assumptions
       html.includes(
         'href="../us/" aria-current="page" aria-label="MacBook US Refurbished"',
       ),
+    );
+    assert.match(
+      html,
+      /href="\.\.\/es\/"[^>]*aria-label="MacBook ES Refurbished"/,
     );
     assert.doesNotMatch(html, /class="source-secondary"/);
     assert.doesNotMatch(html, /Apple Singapore|priceSgd|newPriceSgd/);

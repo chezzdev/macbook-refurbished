@@ -6,7 +6,9 @@ Apple Store. Рынок является частью URL одного GitHub Pa
 - **MacBook SG Refurbished**:
   <https://chezzdev.github.io/macbook-refurbished/markets/sg/>
 - **MacBook US Refurbished**:
-  <https://chezzdev.github.io/macbook-refurbished/markets/us/>.
+  <https://chezzdev.github.io/macbook-refurbished/markets/us/>
+- **MacBook ES Refurbished**:
+  <https://chezzdev.github.io/macbook-refurbished/markets/es/>.
 
 В интерфейсе есть переключатель рынков, построенный из
 `config/markets/registry.json`. Он меняет market path внутри общего сайта и не
@@ -70,15 +72,17 @@ pipeline-owned `data/markets/<id>/changelog.json`, а состояние пос�
 - именем сайта, page title, общим GitHub Pages project и market-specific
   каноническим URL.
 
-Singapore и US проходят через одни и те же parser, exact-new matcher, tax
-adapter, validator, ranker, changelog, builder и publication workflow.
+Singapore, US и Spain проходят через одни и те же parser, exact-new matcher,
+tax adapter, validator, ranker, changelog, builder и publication workflow.
 Данные и выходные артефакты полностью симметричны:
-`data/markets/sg/*` и `data/markets/us/*`,
-`outputs/markets/sg/index.html` и `outputs/markets/us/index.html`.
+`data/markets/sg/*`, `data/markets/us/*` и `data/markets/es/*`,
+`outputs/markets/sg/index.html`, `outputs/markets/us/index.html` и
+`outputs/markets/es/index.html`.
 
-Текущий эталон обоих профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
-Политики изолированы: `config/ranking-policy.sg.json` для SG и
-`config/ranking-policy.us.json` для US. Цветовые дубли одной точной
+Текущий эталон всех трёх профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
+Политики изолированы: `config/ranking-policy.sg.json` для SG,
+`config/ranking-policy.us.json` для US и `config/ranking-policy.es.json` для
+ES. Цветовые дубли одной точной
 `configurationKey` не занимают несколько featured-мест; различия display,
 CPU/GPU, памяти или SSD считаются отдельными конфигурациями. Порядок полностью
 детерминирован.
@@ -100,7 +104,16 @@ Validator требует, чтобы сохранённый `newSourceUrl` со�
 цены нового устройства и ссылки на него.
 
 SGD конвертируется в основную валюту USD по существующему официальному
-кросс-курсу. Для US исходная и основная валюты — USD, поэтому курс равен 1.
+кросс-курсу. Для US исходная и основная валюты — USD, а для ES — EUR, поэтому
+в обоих профилях курс равен 1. Цены Apple Spain уже включают IVA и показываются
+в EUR с двумя знаками после запятой.
+
+Apple Spain локализует каталог и точные buy-Mac URL: цены приходят в формате
+`1.209,00 €`, а конфигурации используют `pulgadas`, `núcleos`, `memoria` и
+`capacidad`. Профиль ES выбирает стиль URL `spanish`; SG и US — `english`.
+Общий parser нормализует испанские названия чипов, ядер, дисплеев и цветов,
+берёт точную цену из `raw_amount`, а production-код выбирает локализацию по
+профилю, не по market id.
 
 US catalog market-wide и не фильтруется по delivery или pickup. California
 остаётся default tax location для pipeline:
@@ -168,6 +181,7 @@ npm run lint
 npm run build
 npm run build:catalog -- --market sg
 npm run build:catalog -- --market us
+npm run build:catalog -- --market es
 npm run catalog:rank:check -- --market sg
 node scripts/initialize-market.mjs --market sg --check
 ```
@@ -215,9 +229,9 @@ manifest. Устаревшие directory roots можно только удал�
 попасть в публичную ветку.
 Для провайдера без автоматического deploy `--prepare-only` оставляет canonical
 state неизменным и возвращает путь к проверенному временному артефакту и его
-SHA-256. Оба рынка используют checkout `work/gh-pages-site`, один public remote
+SHA-256. Все рынки используют checkout `work/gh-pages-site`, один public remote
 и одну ветку GitHub Pages; публикуемые файлы изолированы как
-`markets/sg/index.html` и `markets/us/index.html`. В отдельном outer worktree
+`markets/sg/index.html`, `markets/us/index.html` и `markets/es/index.html`. В отдельном outer worktree
 checkout можно передать через абсолютный `MACBOOK_PUBLISH_DIR`. Полный US
 workflow использует тот же общий путь без отдельного hosting-кода:
 
@@ -225,14 +239,22 @@ workflow использует тот же общий путь без отдел�
 ./work/update-market-site.zsh --market us
 ```
 
+Spain использует тот же канонический workflow с локализованным Apple matcher:
+
+```zsh
+./work/update-market-site.zsh --market es
+```
+
 Если GitHub Pages недоступен, одна и та же проверенная публикационная сборка
 разворачивается на обоих существующих Cloudflare Pages проектах. Каждый
-fallback-домен содержит оба рынка:
+fallback-домен содержит все enabled-рынки:
 
 - <https://macbook-sg-refurbished.pages.dev/markets/sg/>
 - <https://macbook-sg-refurbished.pages.dev/markets/us/>
+- <https://macbook-sg-refurbished.pages.dev/markets/es/>
 - <https://macbook-us-refurbished.pages.dev/markets/sg/>
 - <https://macbook-us-refurbished.pages.dev/markets/us/>
+- <https://macbook-us-refurbished.pages.dev/markets/es/>
 
 ```zsh
 MACBOOK_PUBLISH_DIR=/absolute/path/to/work/gh-pages-site \
@@ -252,7 +274,7 @@ dirty-checkout override не используется. Поэтому новый
 deploy-скрипта.
 
 Workflow выбирает артефакт и market URL только из выбранного профиля, поэтому
-данные SG и US не смешиваются, хотя публикуются на одном сайте.
+данные SG, US и ES не смешиваются, хотя публикуются на одном сайте.
 Cross-rate adapter также берёт source/display валюты и имя поля результата из
 профиля; `identity` разрешён только при одинаковых source/display валютах, а
 cross-rate — только при разных. Новый рынок не требует валютного кода в общем
@@ -294,8 +316,8 @@ Europe/Minsk использует тот же registry-driven entrypoint и яв
 единственным scheduler. Добавление enabled market не требует отдельной
 scheduled-команды.
 All-market entrypoint фиксирует один Git HEAD, читает registry из его archive
-snapshot и передаёт тот же SHA каждому рынку; SG и US в одном batch не могут
-быть собраны из разных commits.
+snapshot и передаёт тот же SHA каждому рынку; SG, US и ES в одном batch не
+могут быть собраны из разных commits.
 
 Production UI существует в одном варианте:
 `work/build-expanded-standalone.mjs`. `npm run build` валидирует и собирает

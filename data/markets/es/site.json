@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "siteName": "MacBook ES Refurbished",
+  "pageTitle": "MacBook ES Refurbished — сравнение восстановленных MacBook",
+  "productionUrl": "https://chezzdev.github.io/macbook-refurbished/markets/es/",
+  "canonicalUrl": "https://chezzdev.github.io/macbook-refurbished/markets/es/",
+  "plannedProductionUrl": null,
+  "currency": {
+    "sourceCurrency": "EUR",
+    "displayCurrency": "EUR",
+    "conversionType": "identity",
+    "sourceToDisplayRate": 1
+  },
+  "tax": {
+    "model": "included-in-list-price"
+  }
+}

@@ -234,11 +234,17 @@ test("retains exact Apple new-price links and the permanent canonical URL", () =
   for (const product of pricedProducts.filter(
     (item) => item.family === "Pro",
   )) {
+    const localizedDisplayPath =
+      profile.storefront.newProductUrlStyle === "spanish"
+        ? product.display === "Nano-texture"
+          ? /pantalla-con-vidrio-nanotexturizado/
+          : /pantalla-est%C3%A1ndar/
+        : product.display === "Nano-texture"
+          ? /nano-texture-display/
+          : /standard-display/;
     assert.match(
       product.newSourceUrl,
-      product.display === "Nano-texture"
-        ? /nano-texture-display/
-        : /standard-display/,
+      localizedDisplayPath,
     );
   }
 });
@@ -272,7 +278,7 @@ test("contains syntactically valid inline JavaScript", () => {
   }
 });
 
-test("renders a USD-only changelog and latest-run result at the page bottom", () => {
+test("renders a primary-currency changelog and latest-run result at the page bottom", () => {
   assert.ok(changelogSection);
   assert.match(changelogSection, /Что изменилось/);
   assert.match(changelogSection, /Старт отслеживания|изменений/);
@@ -392,8 +398,8 @@ test("renders explicit fixed-location tax estimates for the US market", () => {
   assert.doesNotMatch(html, /Итого Apple/);
 });
 
-test("keeps Singapore on its existing list-price display contract", () => {
-  if (profile.id !== "sg") return;
+test("keeps tax-included markets on the list-price display contract", () => {
+  if (profile.tax.model !== "included-in-list-price") return;
   assert.equal(profile.tax.model, "included-in-list-price");
   assert.equal(profile.currency.priceFields.taxInclusive, null);
   assert.equal(profile.currency.priceFields.newTaxInclusive, null);

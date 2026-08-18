@@ -430,6 +430,13 @@ export function validateMarketProfile(profile) {
     profile.storefront?.newCatalogBaseUrl,
     "storefront.newCatalogBaseUrl",
   );
+  if (
+    !["english", "spanish"].includes(
+      profile.storefront?.newProductUrlStyle,
+    )
+  ) {
+    throw new Error("storefront.newProductUrlStyle is unsupported");
+  }
 
   for (const field of ["source", "display"]) {
     if (!/^[A-Z]{3}$/.test(profile.currency?.[field] ?? "")) {

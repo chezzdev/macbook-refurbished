@@ -10,7 +10,8 @@
     "countryName": "United States",
     "baseUrl": "https://www.apple.com",
     "refurbishedCatalogUrl": "https://www.apple.com/shop/refurbished/mac",
-    "newCatalogBaseUrl": "https://www.apple.com/shop/buy-mac"
+    "newCatalogBaseUrl": "https://www.apple.com/shop/buy-mac",
+    "newProductUrlStyle": "english"
   },
   "currency": {
     "source": "USD",

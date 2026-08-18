@@ -9,9 +9,13 @@ import {
   hasExactNewProductSource,
   hydrateCurrentNewPrices,
   parseExactNewPriceHtml,
+  parseMemoryFromProductHtml,
   parseRefurbishedCatalog,
   validateCatalog,
 } from "./apple-catalog-lib.mjs";
+import { loadMarketProfile } from "./market-profile.mjs";
+
+const ES_MARKET_PROFILE = await loadMarketProfile("es");
 
 const tile = {
   partNumber: "TEST1ZP/A",
@@ -61,6 +65,75 @@ test("refurbished catalog parsing preserves required normalized fields", () => {
     newSourceUrl: null,
     configurationKey: "air|13|standard|m5|10|10|24gb|512gb",
   });
+});
+
+test("Spanish catalog parsing normalizes localized fields and decimal prices", () => {
+  const spanishTile = {
+    ...tile,
+    partNumber: "FDH74Y/A",
+    productDetailsUrl: "/es/shop/product/fdh74y/a?fnode=example",
+    title:
+      "MacBook Air reacondicionado de 13 pulgadas con chip M5 de Apple, " +
+      "CPU de 10 núcleos y GPU de 10 núcleos - Plata",
+    filters: {
+      dimensions: {
+        ...tile.filters.dimensions,
+        dimensionColor: "silver",
+        tsMemorySize: "24gb",
+        dimensionCapacity: "1tb",
+      },
+    },
+    price: {
+      currentPrice: {
+        amount: "1.679,00 €",
+        raw_amount: "1679.00",
+      },
+    },
+  };
+  const [product] = parseRefurbishedCatalog(
+    `<script>{"tiles":${JSON.stringify([spanishTile])}}</script>`,
+    ES_MARKET_PROFILE,
+  );
+  assert.equal(product.priceEur, 1679);
+  assert.equal(product.colour, "Silver");
+  assert.equal(product.chip, "M5");
+  assert.equal(product.cpuCores, 10);
+  assert.equal(product.gpuCores, 10);
+  assert.equal(product.memory, "24GB");
+  assert.equal(product.storage, "1TB");
+  assert.equal(parseMemoryFromProductHtml("24 GB de memoria unificada"), "24GB");
+  assert.match(
+    buildNewProductUrl(product, ES_MARKET_PROFILE),
+    /13-pulgadas-silver-chip-m5-cpu-de-10-n%C3%BAcleos/,
+  );
+  assert.equal(
+    parseExactNewPriceHtml(
+      "<title>Comprar MacBook Air, 13 pulgadas, chip M5, CPU de 10 núcleos, " +
+        "GPU de 10 núcleos, Plata, 24 GB de memoria, 1 TB de capacidad - " +
+        "Apple (ES)</title>" +
+        '<script>{"priceCurrency":"EUR","price":1979.00}</script>',
+      product,
+      ES_MARKET_PROFILE,
+    ),
+    1979,
+  );
+
+  const [legacyProduct] = parseRefurbishedCatalog(
+    `<script>{"tiles":${JSON.stringify([
+      {
+        ...spanishTile,
+        partNumber: "G15Z7Y/A",
+        title:
+          'MacBook Air reacondicionado de 13" con chip M2 de Apple, ' +
+          "CPU de ocho núcleos y GPU de diez núcleos - Blanco estrella",
+      },
+    ])}}</script>`,
+    ES_MARKET_PROFILE,
+  );
+  assert.equal(legacyProduct.chip, "M2");
+  assert.equal(legacyProduct.cpuCores, 8);
+  assert.equal(legacyProduct.gpuCores, 10);
+  assert.equal(legacyProduct.colour, "Starlight");
 });
 
 test("exact-new parsing rejects a redirected or inexact configuration", () => {
@@ -297,6 +370,35 @@ test("matches nano-texture MacBook Pro prices as a distinct exact configuration"
         nanoProduct,
       ),
     /nano-texture display/,
+  );
+});
+
+test("matches localized Spanish nano-texture MacBook Pro configurations", () => {
+  const nanoProduct = {
+    family: "Pro",
+    screen: "14″",
+    display: "Nano-texture",
+    chip: "M5 Pro",
+    colour: "Space Black",
+    cpuCores: 15,
+    gpuCores: 16,
+    memory: "48GB",
+    storage: "2TB",
+  };
+  assert.match(
+    buildNewProductUrl(nanoProduct, ES_MARKET_PROFILE),
+    /14-pulgadas-space-black-pantalla-con-vidrio-nanotexturizado-chip-m5-pro-de-apple/,
+  );
+  assert.equal(
+    parseExactNewPriceHtml(
+      "<title>Comprar MacBook Pro, 14 pulgadas, chip M5 Pro, CPU de 15 núcleos, " +
+        "GPU de 16 núcleos, Negro espacial, Pantalla con vidrio nanotexturizado, " +
+        "48 GB de memoria, 2 TB de capacidad - Apple (ES)</title>" +
+        '<script>{"priceCurrency":"EUR","price":5374.00}</script>',
+      nanoProduct,
+      ES_MARKET_PROFILE,
+    ),
+    5374,
   );
 });
 

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "id": "es",
+  "siteName": "MacBook ES Refurbished",
+  "pageTitle": "MacBook ES Refurbished — сравнение восстановленных MacBook",
+  "language": "ru",
+  "locale": "ru-RU",
+  "storefront": {
+    "countryCode": "ES",
+    "countryName": "Spain",
+    "baseUrl": "https://www.apple.com/es",
+    "refurbishedCatalogUrl": "https://www.apple.com/es/shop/refurbished/mac",
+    "newCatalogBaseUrl": "https://www.apple.com/es/shop/buy-mac",
+    "newProductUrlStyle": "spanish"
+  },
+  "currency": {
+    "source": "EUR",
+    "display": "EUR",
+    "sourceFractionDigits": 2,
+    "displayFractionDigits": 2,
+    "displayLocale": "es-ES",
+    "secondarySymbol": null,
+    "secondaryLocale": "es-ES",
+    "priceFields": {
+      "refurbished": "priceEur",
+      "new": "newPriceEur",
+      "taxInclusive": null,
+      "newTaxInclusive": null
+    },
+    "conversion": {
+      "type": "identity",
+      "siteField": null
+    }
+  },
+  "currentNewPricing": {
+    "minimumExactMatchCount": 1,
+    "minimumExactMatchRatio": 0.5,
+    "minimumExactVariantMatchCount": 1,
+    "minimumExactVariantMatchRatio": 0.5
+  },
+  "tax": {
+    "model": "included-in-list-price",
+    "acquisition": null,
+    "referenceLocation": null,
+    "availabilityPolicy": "catalog-wide",
+    "filterByDeliveryOrPickup": false
+  },
+  "ranking": {
+    "policyPath": "config/ranking-policy.es.json",
+    "reference": {
+      "family": "Air",
+      "screen": "13″",
+      "memory": "24GB",
+      "storage": "1TB"
+    }
+  },
+  "namespace": {
+    "catalog": "data/markets/es/catalog.json",
+    "featured": "data/markets/es/featured.json",
+    "site": "data/markets/es/site.json",
+    "updateStatus": "data/markets/es/update-status.json",
+    "updateDelta": "data/markets/es/update-delta.json",
+    "changelog": "data/markets/es/changelog.json",
+    "artifactDirectory": "outputs/markets/es"
+  },
+  "publication": {
+    "status": "active",
+    "provider": "github-pages",
+    "projectSlug": "macbook-refurbished",
+    "repository": "git@github.com:chezzdev/macbook-refurbished.git",
+    "checkoutPath": "work/gh-pages-site",
+    "artifactDirectory": "markets/es",
+    "branch": "main",
+    "productionUrl": "https://chezzdev.github.io/macbook-refurbished/markets/es/",
+    "canonicalUrl": "https://chezzdev.github.io/macbook-refurbished/markets/es/",
+    "plannedUrl": null,
+    "approvalRequired": false
+  }
+}

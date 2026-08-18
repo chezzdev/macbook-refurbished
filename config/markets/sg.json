@@ -10,7 +10,8 @@
     "countryName": "Singapore",
     "baseUrl": "https://www.apple.com/sg",
     "refurbishedCatalogUrl": "https://www.apple.com/sg/shop/refurbished/mac/macbook-pro",
-    "newCatalogBaseUrl": "https://www.apple.com/sg/shop/buy-mac"
+    "newCatalogBaseUrl": "https://www.apple.com/sg/shop/buy-mac",
+    "newProductUrlStyle": "english"
   },
   "currency": {
     "source": "SGD",

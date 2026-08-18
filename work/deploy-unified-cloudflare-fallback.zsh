@@ -2,7 +2,8 @@
 set -euo pipefail
 
 script_dir="${0:A:h}"
-workspace_dir="${script_dir:h}"
+workspace_dir="${MACBOOK_WORKSPACE_DIR:-${script_dir:h}}"
+workspace_dir="${workspace_dir:A}"
 publish_dir="${MACBOOK_PUBLISH_DIR:-${workspace_dir}/work/gh-pages-site}"
 publish_dir="${publish_dir:A}"
 temporary_root="${TMPDIR:-/tmp}"

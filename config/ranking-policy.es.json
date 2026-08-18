@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "2026-08-18.es.1",
+  "scoreUnit": "milli-points",
+  "shortlistSize": 3,
+  "ideal": {
+    "family": "Air",
+    "screen": "13″",
+    "memory": "24GB",
+    "storage": "1TB"
+  },
+  "deduplication": {
+    "key": "configurationKey",
+    "representativeOrdering": [
+      "priceEur:asc",
+      "productCode:asc"
+    ]
+  },
+  "featuredSelection": {
+    "key": "configurationKey",
+    "method": "top-ranked-unique-configurations"
+  },
+  "components": {
+    "memory": {
+      "scoresMilliPoints": {
+        "8GB": 4000,
+        "16GB": 18000,
+        "18GB": 22000,
+        "24GB": 32000,
+        "32GB": 28000,
+        "36GB": 26000,
+        "48GB": 23000,
+        "64GB": 21000,
+        "128GB": 19000
+      }
+    },
+    "storage": {
+      "scoresMilliPoints": {
+        "256GB": 4000,
+        "512GB": 16000,
+        "1TB": 26000,
+        "2TB": 21000,
+        "4TB": 17000,
+        "8TB": 13000
+      }
+    },
+    "formFactor": {
+      "scoresMilliPoints": {
+        "Air|13″": 24000,
+        "Air|15″": 14000,
+        "Pro|14″": 10000,
+        "Pro|16″": 6000
+      }
+    },
+    "chipRecency": {
+      "generationMilliPoints": {
+        "M1": 2000,
+        "M2": 4000,
+        "M3": 6000,
+        "M4": 8000,
+        "M5": 10000
+      },
+      "tierBonusMilliPoints": {
+        "base": 0,
+        "Pro": 800,
+        "Max": 1200
+      }
+    },
+    "affordability": {
+      "fullScoreAtOrBelowEur": 1200,
+      "zeroScoreAtOrAboveEur": 4500,
+      "maxMilliPoints": 16000
+    },
+    "verifiedDiscount": {
+      "fullScoreAtBasisPoints": 2000,
+      "maxMilliPoints": 6000
+    }
+  },
+  "totalOrdering": [
+    "score:desc",
+    "priceEur:asc",
+    "gpuCores:desc",
+    "cpuCores:desc",
+    "configurationKey:asc",
+    "productCode:asc"
+  ]
+}

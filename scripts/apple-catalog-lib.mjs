@@ -218,6 +218,84 @@ function formatCapacity(value = "") {
   return normalizeSpaces(value).toUpperCase();
 }
 
+const SPANISH_COLOUR_TO_CANONICAL = new Map([
+  ["azul cielo", "Sky Blue"],
+  ["blanco estrella", "Starlight"],
+  ["gris espacial", "Space Grey"],
+  ["medianoche", "Midnight"],
+  ["negro espacial", "Space Black"],
+  ["plata", "Silver"],
+]);
+
+const CANONICAL_TO_SPANISH_COLOUR = new Map(
+  [...SPANISH_COLOUR_TO_CANONICAL].map(([spanish, canonical]) => [
+    canonical,
+    spanish,
+  ]),
+);
+
+const SPANISH_COLOUR_SLUGS = new Map([
+  ["Midnight", "medianoche"],
+  ["Silver", "silver"],
+  ["Sky Blue", "azul-cielo"],
+  ["Space Black", "space-black"],
+  ["Space Grey", "space-gray"],
+  ["Starlight", "blanco-estrella"],
+]);
+
+const SPANISH_CORE_COUNTS = new Map([
+  ["ocho", 8],
+  ["diez", 10],
+  ["doce", 12],
+  ["catorce", 14],
+  ["dieciséis", 16],
+  ["dieciseis", 16],
+  ["dieciocho", 18],
+  ["diecinueve", 19],
+  ["veinte", 20],
+  ["veinticuatro", 24],
+  ["treinta", 30],
+  ["treinta y dos", 32],
+  ["treinta y ocho", 38],
+  ["cuarenta", 40],
+]);
+
+function parseChipFromTitle(title) {
+  return normalizeSpaces(
+    title.match(/Apple\s+(M\d+(?:\s+(?:Pro|Max))?)\s+(?:Chip|chip)/i)?.[1] ||
+      title.match(/\bchip\s+(M\d+(?:\s+(?:Pro|Max))?)(?:\s+de Apple)?/i)?.[1] ||
+      title.match(/\bcon\s+(M\d+(?:\s+(?:Pro|Max))?)(?:\s|,|$)/i)?.[1] ||
+      "",
+  );
+}
+
+function parseCoreCount(title, component) {
+  const englishCount = title.match(
+    new RegExp(`(\\d+)[‑-]Core ${component}`, "i"),
+  )?.[1];
+  if (englishCount) return Number(englishCount);
+  const spanishCount = normalizeForMatch(
+    title.match(
+      new RegExp(`${component}\\s+de\\s+(.+?)\\s+n[úu]cleos`, "i"),
+    )?.[1] || "",
+  );
+  if (/^\d+$/.test(spanishCount)) return Number(spanishCount);
+  return SPANISH_CORE_COUNTS.get(spanishCount) || 0;
+}
+
+function parseColourFromTitle(title, marketProfile) {
+  const titleColour = normalizeSpaces(
+    title.match(/\s[-–—]\s(.+)$/)?.[1] || "",
+  );
+  if (marketProfile.storefront.newProductUrlStyle !== "spanish") {
+    return titleColour;
+  }
+  return (
+    SPANISH_COLOUR_TO_CANONICAL.get(normalizeForMatch(titleColour)) ||
+    titleColour
+  );
+}
+
 export function unresolvedTaxInclusivePricing(
   product,
   marketProfile,
@@ -260,25 +338,25 @@ export function parseRefurbishedTile(
     family,
     model: `MacBook ${family}`,
     screen: `${dimensions.dimensionScreensize?.match(/\d+/)?.[0] || ""}″`,
-    display: /nano-texture display/i.test(title)
+    display: /nano-texture display|pantalla nanotexturizada|pantalla con vidrio nanotexturizado/i.test(title)
       ? "Nano-texture"
       : "Standard",
-    chip: normalizeSpaces(
-      title.match(/Apple\s+(M\d+(?:\s+(?:Pro|Max))?)\s+(?:Chip|chip)/i)?.[1] ||
-        "",
-    ),
-    cpuCores: Number(title.match(/(\d+)[‑-]Core CPU/i)?.[1] || 0),
-    gpuCores: Number(title.match(/(\d+)[‑-]Core GPU/i)?.[1] || 0),
-    colour: normalizeSpaces(
-      title.match(/\s[-–—]\s(.+)$/)?.[1] || dimensions.dimensionColor || "",
-    ),
+    chip: parseChipFromTitle(title),
+    cpuCores: parseCoreCount(title, "CPU"),
+    gpuCores: parseCoreCount(title, "GPU"),
+    colour:
+      parseColourFromTitle(title, marketProfile) ||
+      normalizeSpaces(dimensions.dimensionColor || ""),
     releaseYear: Number(dimensions.dimensionRelYear || 0),
     memory: formatCapacity(dimensions.tsMemorySize),
     storage: formatCapacity(dimensions.dimensionCapacity),
     newSourceUrl: null,
   };
   const fields = priceFields(marketProfile);
-  product[fields.refurbished] = parsePrice(tile?.price?.currentPrice?.amount);
+  product[fields.refurbished] = parsePrice(
+    tile?.price?.currentPrice?.raw_amount ??
+      tile?.price?.currentPrice?.amount,
+  );
   product[fields.new] = null;
   if (hasReferenceLocationTax(marketProfile)) {
     product[fields.taxInclusive] = null;
@@ -311,14 +389,56 @@ export function parseRefurbishedCatalog(
 }
 
 export function parseMemoryFromProductHtml(html) {
-  const amount = normalizeSpaces(html).match(/(\d+)GB unified memory/i)?.[1];
+  const amount = normalizeSpaces(html).match(
+    /(\d+)\s*GB (?:de )?(?:memoria unificada|unified memory)/i,
+  )?.[1];
   return amount ? `${amount}GB` : "";
+}
+
+function spanishColourLabel(colour) {
+  return CANONICAL_TO_SPANISH_COLOUR.get(colour) || colour;
+}
+
+function spanishColourSlug(colour) {
+  const slug = SPANISH_COLOUR_SLUGS.get(colour);
+  if (!slug) {
+    throw new Error(`Unsupported Spanish Apple colour: ${colour}`);
+  }
+  return slug;
+}
+
+function buildSpanishNewProductUrl(product, marketProfile) {
+  const screen = product.screen.replace(/\D/g, "");
+  const chip = normalizeForMatch(product.chip).replaceAll(" ", "-");
+  const colour = spanishColourSlug(product.colour);
+  const memory = product.memory.match(/\d+/)?.[0];
+  const storage = product.storage.toLowerCase();
+  if (!memory || !/^\d+(?:gb|tb)$/.test(storage)) {
+    throw new Error("Spanish Apple URL requires normalized memory and storage");
+  }
+
+  const common =
+    `cpu-de-${product.cpuCores}-núcleos-` +
+    `gpu-de-${product.gpuCores}-núcleos-` +
+    `${memory}-gb-de-memoria-${storage}-de-capacidad`;
+  const relative =
+    product.family === "Air"
+      ? `macbook-air/${screen}-pulgadas-${colour}-chip-${chip}-${common}`
+      : `macbook-pro/${screen}-pulgadas-${colour}-${
+          product.display === "Nano-texture"
+            ? "pantalla-con-vidrio-nanotexturizado"
+            : "pantalla-estándar"
+        }-chip-${chip}-de-apple-${common}`;
+  return new URL(relative, `${marketProfile.storefront.newCatalogBaseUrl}/`).href;
 }
 
 export function buildNewProductUrl(
   product,
   marketProfile = DEFAULT_MARKET_PROFILE,
 ) {
+  if (marketProfile.storefront.newProductUrlStyle === "spanish") {
+    return buildSpanishNewProductUrl(product, marketProfile);
+  }
   const screen = product.screen.replace(/\D/g, "");
   const chip = normalizeForMatch(product.chip).replaceAll(" ", "-");
   const colour = normalizeColourForMatch(product.colour).replaceAll(" ", "-");
@@ -364,21 +484,40 @@ export function parseExactNewPriceHtml(
   const title = normalizeColourForMatch(
     html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "",
   );
-  const expectedFragments = [
-    `macbook ${product.family.toLowerCase()}`,
-    `${product.screen.replace(/\D/g, "")}-inch`,
-    normalizeForMatch(`${product.chip} chip`),
-    `${product.cpuCores}-core cpu`,
-    `${product.gpuCores}-core gpu`,
-    `${product.memory.toLowerCase()} memory`,
-    `${product.storage.toLowerCase()} storage`,
-    normalizeColourForMatch(product.colour),
-  ];
+  const isSpanish =
+    marketProfile.storefront.newProductUrlStyle === "spanish";
+  const storageAmount = product.storage.match(/\d+/)?.[0];
+  const storageUnit = product.storage.match(/[a-z]+/i)?.[0]?.toLowerCase();
+  const expectedFragments = isSpanish
+    ? [
+        `macbook ${product.family.toLowerCase()}`,
+        `${product.screen.replace(/\D/g, "")} pulgadas`,
+        normalizeForMatch(`chip ${product.chip}`),
+        `cpu de ${product.cpuCores} núcleos`,
+        `gpu de ${product.gpuCores} núcleos`,
+        `${product.memory.match(/\d+/)?.[0]} gb de memoria`,
+        `${storageAmount} ${storageUnit} de capacidad`,
+        normalizeColourForMatch(spanishColourLabel(product.colour)),
+      ]
+    : [
+        `macbook ${product.family.toLowerCase()}`,
+        `${product.screen.replace(/\D/g, "")}-inch`,
+        normalizeForMatch(`${product.chip} chip`),
+        `${product.cpuCores}-core cpu`,
+        `${product.gpuCores}-core gpu`,
+        `${product.memory.toLowerCase()} memory`,
+        `${product.storage.toLowerCase()} storage`,
+        normalizeColourForMatch(product.colour),
+      ];
   if (product.family === "Pro") {
     expectedFragments.push(
-      product.display === "Nano-texture"
-        ? "nano-texture display"
-        : "standard display",
+      isSpanish
+        ? product.display === "Nano-texture"
+          ? "pantalla con vidrio nanotexturizado"
+          : "pantalla estándar"
+        : product.display === "Nano-texture"
+          ? "nano-texture display"
+          : "standard display",
     );
   }
   const missingFragment = expectedFragments.find(

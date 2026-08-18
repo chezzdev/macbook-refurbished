@@ -3,6 +3,7 @@
   "defaultMarket": "sg",
   "enabledMarkets": [
     "sg",
-    "us"
+    "us",
+    "es"
   ]
 }
