@@ -168,6 +168,64 @@
       "configurationKey": "air|13|standard|m5|10|10|24gb|1tb"
     },
     {
+      "productCode": "G1L61LL/A",
+      "sourceUrl": "https://www.apple.com/shop/product/g1l61ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Midnight",
+      "title": "Refurbished 13-inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Midnight",
+      "family": "Air",
+      "model": "MacBook Air",
+      "screen": "13″",
+      "display": "Standard",
+      "chip": "M5",
+      "cpuCores": 10,
+      "gpuCores": 10,
+      "colour": "Midnight",
+      "releaseYear": 2026,
+      "memory": "24GB",
+      "storage": "512GB",
+      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-air/13-inch-midnight-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-512gb-storage",
+      "priceUsd": 1359,
+      "newPriceUsd": 1499,
+      "taxInclusivePriceUsd": 1505.7,
+      "taxInclusivePricing": {
+        "status": "estimated",
+        "amount": 1505.7,
+        "currency": "USD",
+        "preTaxAmount": 1359,
+        "salesTaxRate": 0.105,
+        "salesTaxAmount": 142.7,
+        "recyclingFeeAmount": 4,
+        "locationId": "apple-beverly-center",
+        "provenance": {
+          "provider": "Calculated estimate",
+          "method": "verified-fixed-location",
+          "sourceUrl": "https://www.apple.com/shop/help/payments",
+          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+        },
+        "reason": null
+      },
+      "newTaxInclusivePriceUsd": 1660.4,
+      "newTaxInclusivePricing": {
+        "status": "estimated",
+        "amount": 1660.4,
+        "currency": "USD",
+        "preTaxAmount": 1499,
+        "salesTaxRate": 0.105,
+        "salesTaxAmount": 157.4,
+        "recyclingFeeAmount": 4,
+        "locationId": "apple-beverly-center",
+        "provenance": {
+          "provider": "Calculated estimate",
+          "method": "verified-fixed-location",
+          "sourceUrl": "https://www.apple.com/shop/help/payments",
+          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
+          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
+        },
+        "reason": null
+      },
+      "configurationKey": "air|13|standard|m5|10|10|24gb|512gb"
+    },
+    {
       "productCode": "G1L91LL/A",
       "sourceUrl": "https://www.apple.com/shop/product/g1l91ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Sky-Blue",
       "title": "Refurbished 13-inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Sky Blue",
@@ -340,64 +398,6 @@
         "reason": null
       },
       "configurationKey": "air|13|standard|m5|10|10|16gb|2tb"
-    },
-    {
-      "productCode": "FDH84LL/A",
-      "sourceUrl": "https://www.apple.com/shop/product/fdh84ll/a/Refurbished-13-inch-MacBook-Air-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Silver",
-      "title": "Refurbished 13-inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Silver",
-      "family": "Air",
-      "model": "MacBook Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "colour": "Silver",
-      "releaseYear": 2026,
-      "memory": "16GB",
-      "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-air/13-inch-silver-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
-      "priceUsd": 1359,
-      "newPriceUsd": 1599,
-      "taxInclusivePriceUsd": 1505.7,
-      "taxInclusivePricing": {
-        "status": "estimated",
-        "amount": 1505.7,
-        "currency": "USD",
-        "preTaxAmount": 1359,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 142.7,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
-      "newTaxInclusivePriceUsd": 1770.9,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 1770.9,
-        "currency": "USD",
-        "preTaxAmount": 1599,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 167.9,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
-      "configurationKey": "air|13|standard|m5|10|10|16gb|1tb"
     },
     {
       "productCode": "FDHJ4LL/A",
@@ -5659,64 +5659,6 @@
         "reason": null
       },
       "configurationKey": "pro|16|nano-texture|m5-pro|18|20|24gb|4tb"
-    },
-    {
-      "productCode": "G1MV1LL/A",
-      "sourceUrl": "https://www.apple.com/shop/product/g1mv1ll/a/Refurbished-16-inch-MacBook-Pro-Apple-M5-Pro-chip-with-18%E2%80%91Core-CPU-and-20%E2%80%91Core-GPU-Silver",
-      "title": "Refurbished 16-inch MacBook Pro Apple M5 Pro chip with 18‑Core CPU and 20‑Core GPU - Silver",
-      "family": "Pro",
-      "model": "MacBook Pro",
-      "screen": "16″",
-      "display": "Standard",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "colour": "Silver",
-      "releaseYear": 2026,
-      "memory": "24GB",
-      "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-2tb-storage",
-      "priceUsd": 2969,
-      "newPriceUsd": 3499,
-      "taxInclusivePriceUsd": 3285.75,
-      "taxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3285.75,
-        "currency": "USD",
-        "preTaxAmount": 2969,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 311.75,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
-      "newTaxInclusivePriceUsd": 3871.4,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3871.4,
-        "currency": "USD",
-        "preTaxAmount": 3499,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 367.4,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
-      "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|2tb"
     },
     {
       "productCode": "G1MZ1LL/A",
