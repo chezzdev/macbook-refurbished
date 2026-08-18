@@ -786,6 +786,16 @@ export function validateMarketRegistry(registry) {
     }
     uniqueIds.add(marketId);
   }
+  const sortedMarketIds = [...registry.enabledMarkets].sort();
+  if (
+    registry.enabledMarkets.some(
+      (marketId, index) => marketId !== sortedMarketIds[index],
+    )
+  ) {
+    throw new Error(
+      "market registry enabledMarkets must be sorted by market id",
+    );
+  }
   if (!uniqueIds.has(registry.defaultMarket)) {
     throw new Error("market registry defaultMarket must be enabled");
   }

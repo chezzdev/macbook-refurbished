@@ -390,6 +390,7 @@ async function buildSyntheticMarketHtml({
     );
     const registry = JSON.parse(await readFile(registryPath, "utf8"));
     registry.enabledMarkets.push(profile.id);
+    registry.enabledMarkets.sort();
     await Promise.all([
       writeFile(
         registryPath,
@@ -538,6 +539,10 @@ test("enabled markets are equal first-class profiles with isolated state", () =>
   assert.deepEqual(
     enabledMarketState.profiles.map((profile) => profile.id),
     enabledMarketState.registry.enabledMarkets,
+  );
+  assert.deepEqual(
+    enabledMarketState.registry.enabledMarkets,
+    ["es", "sg", "us"],
   );
   assert.ok(enabledMarketState.registry.enabledMarkets.includes("sg"));
   assert.ok(enabledMarketState.registry.enabledMarkets.includes("us"));
@@ -775,6 +780,7 @@ test("identity tax-included market renders no conversion methodology", async () 
     );
     const registry = JSON.parse(await readFile(registryPath, "utf8"));
     registry.enabledMarkets.push("jp");
+    registry.enabledMarkets.sort();
     await writeFile(
       registryPath,
       `${JSON.stringify(registry, null, 2)}\n`,
@@ -929,6 +935,15 @@ test("enabled-market registry rejects ambiguous profile lists", () => {
         enabledMarkets: ["sg"],
       }),
     /defaultMarket must be enabled/,
+  );
+  assert.throws(
+    () =>
+      validateMarketRegistry({
+        schemaVersion: 1,
+        defaultMarket: "sg",
+        enabledMarkets: ["sg", "es"],
+      }),
+    /must be sorted by market id/,
   );
 });
 
@@ -1352,16 +1367,26 @@ test("publication manifest derives every market path from enabled profiles", () 
     "https://chezzdev.github.io/macbook-refurbished/markets/ca/";
   futureProfile.publication.canonicalUrl =
     "https://chezzdev.github.io/macbook-refurbished/markets/ca/";
-  const manifest = buildPublicationManifest([sg, us, es, futureProfile]);
+  const manifest = buildPublicationManifest([futureProfile, es, sg, us]);
 
-  assert.deepEqual(manifest.marketIds, ["sg", "us", "es", "ca"]);
+  assert.deepEqual(manifest.marketIds, ["ca", "es", "sg", "us"]);
   assert.deepEqual(manifest.marketArtifacts, [
+    { marketId: "ca", relativePath: "markets/ca/index.html" },
+    { marketId: "es", relativePath: "markets/es/index.html" },
     { marketId: "sg", relativePath: "markets/sg/index.html" },
     { marketId: "us", relativePath: "markets/us/index.html" },
-    { marketId: "es", relativePath: "markets/es/index.html" },
-    { marketId: "ca", relativePath: "markets/ca/index.html" },
   ]);
   assert.deepEqual(manifest.marketBuildArtifacts, [
+    {
+      marketId: "ca",
+      localRelativePath: "outputs/markets/ca/index.html",
+      publicationRelativePath: "markets/ca/index.html",
+    },
+    {
+      marketId: "es",
+      localRelativePath: "outputs/markets/es/index.html",
+      publicationRelativePath: "markets/es/index.html",
+    },
     {
       marketId: "sg",
       localRelativePath: "outputs/markets/sg/index.html",
@@ -1371,16 +1396,6 @@ test("publication manifest derives every market path from enabled profiles", () 
       marketId: "us",
       localRelativePath: "outputs/markets/us/index.html",
       publicationRelativePath: "markets/us/index.html",
-    },
-    {
-      marketId: "es",
-      localRelativePath: "outputs/markets/es/index.html",
-      publicationRelativePath: "markets/es/index.html",
-    },
-    {
-      marketId: "ca",
-      localRelativePath: "outputs/markets/ca/index.html",
-      publicationRelativePath: "markets/ca/index.html",
     },
   ]);
   assert.equal(

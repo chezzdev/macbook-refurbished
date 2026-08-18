@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "defaultMarket": "sg",
   "enabledMarkets": [
+    "es",
     "sg",
-    "us",
-    "es"
+    "us"
   ]
 }

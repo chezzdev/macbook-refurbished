@@ -3,18 +3,19 @@
 Общий детерминированный сайт каталогов восстановленных MacBook из региональных
 Apple Store. Рынок является частью URL одного GitHub Pages site:
 
+- **MacBook ES Refurbished**:
+  <https://chezzdev.github.io/macbook-refurbished/markets/es/>
 - **MacBook SG Refurbished**:
   <https://chezzdev.github.io/macbook-refurbished/markets/sg/>
 - **MacBook US Refurbished**:
-  <https://chezzdev.github.io/macbook-refurbished/markets/us/>
-- **MacBook ES Refurbished**:
-  <https://chezzdev.github.io/macbook-refurbished/markets/es/>.
+  <https://chezzdev.github.io/macbook-refurbished/markets/us/>.
 
 В интерфейсе есть переключатель рынков, построенный из
 `config/markets/registry.json`. Он меняет market path внутри общего сайта и не
 подмешивает данные другого рынка в текущую страницу. Новый enabled-профиль
 появляется в переключателе без отдельного UI-кода. Корень сайта перенаправляет
-на Singapore как default market.
+на Singapore как default market. Registry требует алфавитный порядок market id;
+текущий порядок переключателя и процессов — `ES → SG → US`.
 
 Выбранные фильтры и сортировка записываются в query parameters текущего URL.
 Скопированная ссылка открывает тот же рынок с тем же состоянием таблицы;
@@ -72,17 +73,17 @@ pipeline-owned `data/markets/<id>/changelog.json`, а состояние пос�
 - именем сайта, page title, общим GitHub Pages project и market-specific
   каноническим URL.
 
-Singapore, US и Spain проходят через одни и те же parser, exact-new matcher,
+Spain, Singapore и US проходят через одни и те же parser, exact-new matcher,
 tax adapter, validator, ranker, changelog, builder и publication workflow.
 Данные и выходные артефакты полностью симметричны:
-`data/markets/sg/*`, `data/markets/us/*` и `data/markets/es/*`,
-`outputs/markets/sg/index.html`, `outputs/markets/us/index.html` и
-`outputs/markets/es/index.html`.
+`data/markets/es/*`, `data/markets/sg/*` и `data/markets/us/*`,
+`outputs/markets/es/index.html`, `outputs/markets/sg/index.html` и
+`outputs/markets/us/index.html`.
 
 Текущий эталон всех трёх профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
-Политики изолированы: `config/ranking-policy.sg.json` для SG,
-`config/ranking-policy.us.json` для US и `config/ranking-policy.es.json` для
-ES. Текущая SG policy покрывает встречающийся в каталоге SSD 8 ТБ с оценкой
+Политики изолированы: `config/ranking-policy.es.json` для ES,
+`config/ranking-policy.sg.json` для SG и `config/ranking-policy.us.json` для
+US. Текущая SG policy покрывает встречающийся в каталоге SSD 8 ТБ с оценкой
 13000 milli-points; эталоном остаётся SSD 1 ТБ. Цветовые дубли одной точной
 `configurationKey` не занимают несколько featured-мест; различия display,
 CPU/GPU, памяти или SSD считаются отдельными конфигурациями. Порядок полностью
@@ -237,7 +238,7 @@ manifest. Устаревшие directory roots можно только удал�
 state неизменным и возвращает путь к проверенному временному артефакту и его
 SHA-256. Все рынки используют checkout `work/gh-pages-site`, один public remote
 и одну ветку GitHub Pages; публикуемые файлы изолированы как
-`markets/sg/index.html`, `markets/us/index.html` и `markets/es/index.html`. В отдельном outer worktree
+`markets/es/index.html`, `markets/sg/index.html` и `markets/us/index.html`. В отдельном outer worktree
 checkout можно передать через абсолютный `MACBOOK_PUBLISH_DIR`. Полный US
 workflow использует тот же общий путь без отдельного hosting-кода:
 
@@ -255,12 +256,12 @@ Spain использует тот же канонический workflow с ло
 разворачивается на обоих существующих Cloudflare Pages проектах. Каждый
 fallback-домен содержит все enabled-рынки:
 
+- <https://macbook-sg-refurbished.pages.dev/markets/es/>
 - <https://macbook-sg-refurbished.pages.dev/markets/sg/>
 - <https://macbook-sg-refurbished.pages.dev/markets/us/>
-- <https://macbook-sg-refurbished.pages.dev/markets/es/>
+- <https://macbook-us-refurbished.pages.dev/markets/es/>
 - <https://macbook-us-refurbished.pages.dev/markets/sg/>
 - <https://macbook-us-refurbished.pages.dev/markets/us/>
-- <https://macbook-us-refurbished.pages.dev/markets/es/>
 
 ```zsh
 MACBOOK_PUBLISH_DIR=/absolute/path/to/work/gh-pages-site \
@@ -280,7 +281,7 @@ dirty-checkout override не используется. Поэтому новый
 deploy-скрипта.
 
 Workflow выбирает артефакт и market URL только из выбранного профиля, поэтому
-данные SG, US и ES не смешиваются, хотя публикуются на одном сайте.
+данные ES, SG и US не смешиваются, хотя публикуются на одном сайте.
 Cross-rate adapter также берёт source/display валюты и имя поля результата из
 профиля; `identity` разрешён только при одинаковых source/display валютах, а
 cross-rate — только при разных. Новый рынок не требует валютного кода в общем
@@ -322,7 +323,8 @@ Europe/Minsk использует тот же registry-driven entrypoint и яв
 единственным scheduler. Добавление enabled market не требует отдельной
 scheduled-команды.
 All-market entrypoint фиксирует один Git HEAD, читает registry из его archive
-snapshot и передаёт тот же SHA каждому рынку; SG, US и ES в одном batch не
+snapshot и передаёт тот же SHA каждому рынку. Registry валидируется как
+алфавитный, поэтому текущий batch идёт `ES → SG → US`; рынки в одном batch не
 могут быть собраны из разных commits.
 
 Production UI существует в одном варианте:
@@ -333,19 +335,63 @@ manifest и обязательную stage-3 проверку каноничес
 
 ## Добавление следующего рынка
 
-Новый рынок добавляется конфигурацией, а не копированием pipeline или UI:
+Новый рынок добавляется профилем, а не копированием pipeline или UI. Рабочий
+порядок разделён на discovery, безопасный preview и активацию.
+
+Сначала нужно проверить реальный Apple storefront: refurbished JSON, buy-Mac
+URL и title для Air/Pro, всех цветов и Nano-texture при наличии. Для
+локализованных цен числовым источником служит `raw_amount`, а не отформатированная
+строка. Профиль явно выбирает грамматику exact-product URL. Сейчас общий
+adapter поддерживает `english` и `spanish`; новый языковой формат требует
+добавить именованный стиль, общий parser/URL builder и fixtures, но не ветвление
+по market id.
+
+Затем:
 
 1. Создать `config/markets/<id>.json` и
-   `config/ranking-policy.<id>.json`.
-2. Задать storefront, currency/tax policy, ranking reference, симметричные
-   `data/markets/<id>` и `outputs/markets/<id>` paths, а также
-   `markets/<id>/` внутри общего GitHub Pages site.
-3. До явного одобрения нового market URL оставить публикацию approval-gated.
-4. Добавить market id в `config/markets/registry.json`. После этого общий
-   switcher, build, daily batch и Cloudflare fallback подхватят рынок без
-   bespoke-кода.
-5. Покрыть специфичную currency/tax policy synthetic profile-тестом и
-   выполнить `npm test` и `npm run build` до канонического refresh.
+   `config/ranking-policy.<id>.json` с уникальными симметричными путями
+   `data/markets/<id>/*`, `outputs/markets/<id>` и `markets/<id>`.
+2. Оставить профиль в состоянии `approval-required`, добавить id в рабочий
+   `config/markets/registry.json` в алфавитном порядке и покрыть новые parser,
+   URL, currency/tax и profile-возможности тестами.
+3. Проверить, что `ranking.reference` совпадает с policy `ideal`, ценовые поля
+   policy соответствуют профилю, а score maps покрывают все найденные RAM,
+   SSD, form factors и поколения чипов. Неизвестное значение намеренно
+   останавливает ranking; score нельзя придумывать без явного одобрения.
+4. Настроить exact-match guards отдельно для конфигураций и цветовых вариантов
+   по реальному результату storefront, не ослабляя их ради обхода ошибки.
+5. Выполнить безопасный end-to-end preview без изменения canonical state и
+   публикации:
+
+   ```zsh
+   ./work/update-market-site.zsh --market <id> --prepare-only
+   ```
+
+До первого canonical refresh у enabled-рынка ещё нет локального catalog, поэтому
+на этой стадии используются `--prepare-only`, targeted tests и lint. Полные
+`npm test` и `npm run build` выполняются после первичного seed.
+
+После одобрения URL профиль переводится в `active`, immutable source/config,
+тесты и документация коммитятся. Первый live-запуск должен быть только для
+нового рынка:
+
+```zsh
+MACBOOK_PUBLISH_DIR=/Users/alexander/Documents/vibe/macbook-refurbished/work/gh-pages-site \
+  ./work/update-market-site.zsh --market <id>
+```
+
+Нельзя начинать с `update-all-markets.zsh`: рынок, стоящий раньше в registry,
+пересобирает HTML всех enabled-профилей и потребует ещё не созданные canonical
+данные нового рынка. После seed запускаются `npm test`, `npm run lint`,
+`npm run build`, затем полный `update-all-markets.zsh` и только после его
+успеха — unified Cloudflare fallback. Финальная проверка сравнивает HTTP 200 и
+точный hash каждого market artifact на GitHub Pages и обоих Cloudflare
+проектах.
+
+Само включение в registry автоматически добавляет рынок в switcher,
+all-enabled build, daily batch, publication manifest и оба Cloudflare mirror.
+Отдельная scheduled-команда, новый page builder, hardcoded fallback route и
+ручной baseline/changelog не нужны.
 
 README в publication checkout синхронизируется только общим каноническим
 workflow; его не нужно редактировать отдельно.

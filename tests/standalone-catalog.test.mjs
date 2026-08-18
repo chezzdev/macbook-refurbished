@@ -268,6 +268,16 @@ test("renders every enabled market as a portable sibling route", () => {
     (html.match(/class="market-option active"/g) ?? []).length,
     1,
   );
+  const renderedMarketIds = [
+    ...html.matchAll(
+      /class="market-option(?: active)?" href="\.\.\/([^/]+)\//g,
+    ),
+  ].map((match) => match[1]);
+  assert.deepEqual(
+    renderedMarketIds,
+    enabledMarketProfiles.map((marketProfile) => marketProfile.id),
+  );
+  assert.deepEqual(renderedMarketIds, [...renderedMarketIds].sort());
 });
 
 test("contains syntactically valid inline JavaScript", () => {
