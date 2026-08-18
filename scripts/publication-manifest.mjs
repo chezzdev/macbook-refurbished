@@ -80,6 +80,12 @@ export function buildPublicationManifest(profiles) {
       marketId: profile.id,
       relativePath: `${profile.publication.artifactDirectory}/index.html`,
     })),
+    marketBuildArtifacts: profiles.map((profile) => ({
+      marketId: profile.id,
+      localRelativePath: `${profile.namespace.artifactDirectory}/index.html`,
+      publicationRelativePath:
+        `${profile.publication.artifactDirectory}/index.html`,
+    })),
     repository: profiles[0].publication.repository,
     branch: profiles[0].publication.branch,
     sourcePaths,
@@ -118,16 +124,25 @@ if (process.argv[1] === import.meta.filename) {
           : mode === "--market-ids"
             ? manifest.marketIds
             : mode === "--market-artifacts"
-              ? manifest.marketArtifacts.map(
+            ? manifest.marketArtifacts.map(
                   ({ marketId, relativePath }) =>
                     `${marketId}\u001f${relativePath}`,
+                )
+            : mode === "--market-build-artifacts"
+              ? manifest.marketBuildArtifacts.map(
+                  ({
+                    marketId,
+                    localRelativePath,
+                    publicationRelativePath,
+                  }) =>
+                    `${marketId}\u001f${localRelativePath}\u001f${publicationRelativePath}`,
                 )
             : null;
   if (!values) {
     throw new Error(
       "Usage: publication-manifest.mjs " +
         "--source|--immutable-source|--publish|--retired|--market-ids|" +
-        "--market-artifacts|--repository|--branch",
+        "--market-artifacts|--market-build-artifacts|--repository|--branch",
     );
   }
   process.stdout.write(`${values.join("\n")}\n`);

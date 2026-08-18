@@ -1043,6 +1043,9 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
   assert.doesNotMatch(perMarketWorkflow, /npx --yes/);
   assert.match(perMarketWorkflow, /--immutable-source/);
   assert.match(perMarketWorkflow, /tests\/configuration-picker\.test\.mjs/);
+  assert.match(perMarketWorkflow, /--market-build-artifacts/);
+  assert.match(perMarketWorkflow, /scripts\/build-enabled-markets\.mjs/);
+  assert.match(perMarketWorkflow, /publication_artifact_paths/);
   assert.match(perMarketWorkflow, /--retired/);
   assert.match(perMarketWorkflow, /retired_publication_paths/);
   assert.match(perMarketWorkflow, /ls-files --error-unmatch/);
@@ -1357,6 +1360,28 @@ test("publication manifest derives every market path from enabled profiles", () 
     { marketId: "us", relativePath: "markets/us/index.html" },
     { marketId: "es", relativePath: "markets/es/index.html" },
     { marketId: "ca", relativePath: "markets/ca/index.html" },
+  ]);
+  assert.deepEqual(manifest.marketBuildArtifacts, [
+    {
+      marketId: "sg",
+      localRelativePath: "outputs/markets/sg/index.html",
+      publicationRelativePath: "markets/sg/index.html",
+    },
+    {
+      marketId: "us",
+      localRelativePath: "outputs/markets/us/index.html",
+      publicationRelativePath: "markets/us/index.html",
+    },
+    {
+      marketId: "es",
+      localRelativePath: "outputs/markets/es/index.html",
+      publicationRelativePath: "markets/es/index.html",
+    },
+    {
+      marketId: "ca",
+      localRelativePath: "outputs/markets/ca/index.html",
+      publicationRelativePath: "markets/ca/index.html",
+    },
   ]);
   assert.equal(
     manifest.repository,

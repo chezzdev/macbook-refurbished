@@ -211,6 +211,11 @@ validation, ranking, changelog, двойную детерминированну�
 verification.
 Новые данные сначала собираются в отдельном staging namespace; canonical JSON
 и HTML продвигаются только после успешных проверок и live verification.
+Per-market запуск обновляет catalog/state только выбранного рынка, но перед
+publication валидирует canonical данные и дважды детерминированно пересобирает
+HTML всех enabled-рынков. Поэтому изменение registry, switcher или общего UI
+атомарно попадает во все sibling routes, не переписывая историю чужих
+каталогов.
 Прямые per-market запуски и общий ежедневный запуск используют один
 publication lock, потому что все рынки синхронизируются через общий checkout.
 Перед live publication workflow требует, чтобы все общие scripts, tests,

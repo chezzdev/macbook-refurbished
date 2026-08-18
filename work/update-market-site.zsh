@@ -105,6 +105,7 @@ source_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifes
 immutable_source_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --immutable-source)}")
 publish_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --publish)}")
 retired_publication_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --retired)}")
+market_build_artifacts=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --market-build-artifacts)}")
 
 if [[ -n "${MACBOOK_PUBLISH_DIR:-}" ]]; then
   publish_dir="${MACBOOK_PUBLISH_DIR:A}"
@@ -124,6 +125,17 @@ canonical_output_relatives=(
   "$changelog_relative"
   "${artifact_directory_relative}/index.html"
 )
+typeset -A canonical_output_set
+for relative_file in "${canonical_output_relatives[@]}"; do
+  canonical_output_set[$relative_file]=true
+done
+for market_artifact in "${market_build_artifacts[@]}"; do
+  IFS=$'\x1f' read -r artifact_market_id local_artifact_relative publication_artifact_relative <<< "$market_artifact"
+  if [[ "${canonical_output_set[$local_artifact_relative]:-}" != "true" ]]; then
+    canonical_output_relatives+=("$local_artifact_relative")
+    canonical_output_set[$local_artifact_relative]=true
+  fi
+done
 typeset -A staged_output_by_relative
 typeset -A snapshot_by_relative
 typeset -A immutable_source_set
@@ -245,15 +257,24 @@ for relative_file in \
   "$update_status_relative" \
   "$update_delta_relative" \
   "$changelog_relative"; do
-  canonical_file="${workspace_dir}/${relative_file}"
-  staged_file="${staging_dir}/${relative_file}"
-  staged_output_by_relative[$relative_file]="$staged_file"
-  mkdir -p "${staged_file:h}"
-  if [[ -f "$canonical_file" ]]; then
-    cp "$canonical_file" "$staged_file"
-  fi
+  staged_output_by_relative[$relative_file]="${staging_dir}/${relative_file}"
 done
-staged_output_by_relative[${artifact_directory_relative}/index.html]="${staging_dir}/${artifact_directory_relative}/index.html"
+for relative_file in "${source_owned_paths[@]}"; do
+  case "$relative_file" in
+    data/markets/*/*.json)
+      canonical_file="${workspace_dir}/${relative_file}"
+      staged_file="${staging_dir}/${relative_file}"
+      if [[ -f "$canonical_file" ]]; then
+        mkdir -p "${staged_file:h}"
+        cp "$canonical_file" "$staged_file"
+      fi
+      ;;
+  esac
+done
+for market_artifact in "${market_build_artifacts[@]}"; do
+  IFS=$'\x1f' read -r artifact_market_id local_artifact_relative publication_artifact_relative <<< "$market_artifact"
+  staged_output_by_relative[$local_artifact_relative]="${staging_dir}/${local_artifact_relative}"
+done
 
 promote_staged_outputs() {
   for relative_file in "${canonical_output_relatives[@]}"; do
@@ -308,20 +329,42 @@ node --test \
   tests/market-engine.test.mjs \
   tests/rank-models.test.mjs
 
-print "4/8 Building the standalone page twice"
+print "4/8 Building every enabled market page twice"
+typeset -A first_hash_by_local_artifact
+publication_artifact_paths=()
 MACBOOK_NAMESPACE_ROOT="$staging_dir" \
-  node work/build-expanded-standalone.mjs --market "$market_id"
+  node scripts/build-enabled-markets.mjs
+for market_artifact in "${market_build_artifacts[@]}"; do
+  IFS=$'\x1f' read -r artifact_market_id local_artifact_relative publication_artifact_relative <<< "$market_artifact"
+  if [[ -z "$artifact_market_id" || -z "$local_artifact_relative" || \
+        -z "$publication_artifact_relative" ]]; then
+    print -u2 "Publication manifest contains an invalid market build artifact."
+    exit 1
+  fi
+  local_artifact_file="${staging_dir}/${local_artifact_relative}"
+  if [[ ! -f "$local_artifact_file" ]]; then
+    print -u2 "Enabled market build artifact is missing: $local_artifact_file"
+    exit 1
+  fi
+  first_hash_by_local_artifact[$local_artifact_relative]="$(
+    shasum -a 256 "$local_artifact_file" | awk '{print $1}'
+  )"
+  publication_artifact_paths+=("$publication_artifact_relative")
+done
+MACBOOK_NAMESPACE_ROOT="$staging_dir" \
+  node scripts/build-enabled-markets.mjs
+for market_artifact in "${market_build_artifacts[@]}"; do
+  IFS=$'\x1f' read -r artifact_market_id local_artifact_relative publication_artifact_relative <<< "$market_artifact"
+  local_artifact_file="${staging_dir}/${local_artifact_relative}"
+  first_hash="${first_hash_by_local_artifact[$local_artifact_relative]}"
+  rebuilt_hash="$(shasum -a 256 "$local_artifact_file" | awk '{print $1}')"
+  if [[ "$first_hash" != "$rebuilt_hash" ]]; then
+    print -u2 "${artifact_market_id} standalone build is not deterministic: $first_hash != $rebuilt_hash"
+    exit 1
+  fi
+done
 artifact_file="${staging_dir}/${artifact_directory_relative}/index.html"
-first_hash="$(shasum -a 256 "$artifact_file" | awk '{print $1}')"
-MACBOOK_NAMESPACE_ROOT="$staging_dir" \
-  node work/build-expanded-standalone.mjs --market "$market_id"
 second_hash="$(shasum -a 256 "$artifact_file" | awk '{print $1}')"
-if [[ "$first_hash" != "$second_hash" ]]; then
-  print -u2 "Standalone build is not deterministic: $first_hash != $second_hash"
-  exit 1
-fi
-MACBOOK_MARKET_ID="$market_id" MACBOOK_NAMESPACE_ROOT="$staging_dir" \
-  node --test tests/standalone-catalog.test.mjs
 
 print "5/8 Preparing the exact immutable deployment artifact"
 deployment_dir="$(mktemp -d "${temporary_root%/}/macbook-pages.XXXXXX")"
@@ -375,13 +418,17 @@ if [[ "$publish_dir" != "$workspace_dir" ]]; then
   done
 fi
 cp "${execution_root}/config/publish.gitignore" "${publish_dir}/.gitignore"
-mkdir -p "${publish_dir}/${publication_artifact_directory}"
-cp "$artifact_file" "${publish_dir}/${publication_artifact_directory}/index.html"
+for market_artifact in "${market_build_artifacts[@]}"; do
+  IFS=$'\x1f' read -r artifact_market_id local_artifact_relative publication_artifact_relative <<< "$market_artifact"
+  mkdir -p "${publish_dir}/${publication_artifact_relative:h}"
+  cp "${staging_dir}/${local_artifact_relative}" \
+    "${publish_dir}/${publication_artifact_relative}"
+done
 
 git -C "$publish_dir" add -A -- \
   ".gitignore" \
   "${source_owned_paths[@]}" \
-  "${publication_artifact_directory}/index.html"
+  "${publication_artifact_paths[@]}"
 for relative_file in "${retired_publication_paths[@]}"; do
   if git -C "$publish_dir" ls-files --error-unmatch -- \
       "$relative_file" >/dev/null 2>&1; then
