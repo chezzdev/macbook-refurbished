@@ -116,6 +116,32 @@ test("keeps the reasonable exact ideal above newer and more powerful models", ()
   }
 });
 
+test("scores current Singapore 8TB storage configurations", () => {
+  const featured = rankCatalog(
+    {
+      schemaVersion: 1,
+      products: [
+        product({
+          configurationKey: "pro-16-m5max-16-40-48-8tb",
+          productCode: "PRO-8TB",
+          family: "Pro",
+          screen: "16″",
+          chip: "M5 Max",
+          cpuCores: 16,
+          gpuCores: 40,
+          memory: "48GB",
+          storage: "8TB",
+          priceSgd: 4999,
+        }),
+      ],
+    },
+    { ...policy, shortlistSize: 1 },
+  );
+
+  assert.equal(featured.items[0].scoreBreakdown.storage, 13000);
+  assert.ok(featured.items[0].reasonCodes.includes("STORAGE_8TB"));
+});
+
 test("collapses colour duplicates and selects by price, then product code", () => {
   const catalog = representativeCatalog();
   catalog.products.push(

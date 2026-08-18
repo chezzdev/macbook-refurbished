@@ -82,7 +82,8 @@ tax adapter, validator, ranker, changelog, builder и publication workflow.
 Текущий эталон всех трёх профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
 Политики изолированы: `config/ranking-policy.sg.json` для SG,
 `config/ranking-policy.us.json` для US и `config/ranking-policy.es.json` для
-ES. Цветовые дубли одной точной
+ES. Текущая SG policy покрывает встречающийся в каталоге SSD 8 ТБ с оценкой
+13000 milli-points; эталоном остаётся SSD 1 ТБ. Цветовые дубли одной точной
 `configurationKey` не занимают несколько featured-мест; различия display,
 CPU/GPU, памяти или SSD считаются отдельными конфигурациями. Порядок полностью
 детерминирован.

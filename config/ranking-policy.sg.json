@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "policyVersion": "2026-07-26.2",
+  "policyVersion": "2026-08-19.sg.3",
   "scoreUnit": "milli-points",
   "shortlistSize": 3,
   "ideal": {
@@ -39,7 +39,8 @@
         "512GB": 16000,
         "1TB": 26000,
         "2TB": 21000,
-        "4TB": 17000
+        "4TB": 17000,
+        "8TB": 13000
       }
     },
     "formFactor": {
