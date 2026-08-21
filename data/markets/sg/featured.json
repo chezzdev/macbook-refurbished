@@ -61,29 +61,28 @@
     },
     {
       "rank": 3,
-      "recommendationKey": "air|13|standard|m5|10|10|16gb|1tb",
-      "configurationKey": "air|13|standard|m5|10|10|16gb|1tb",
-      "productCode": "FDHJ4ZP/A",
-      "score": 95804,
+      "recommendationKey": "air|13|standard|m4|10|10|24gb|2tb",
+      "configurationKey": "air|13|standard|m4|10|10|24gb|2tb",
+      "productCode": "G1H91ZP/A",
+      "score": 94915,
       "scoreBreakdown": {
-        "memory": 18000,
-        "storage": 26000,
+        "memory": 32000,
+        "storage": 21000,
         "formFactor": 24000,
-        "chipRecency": 10000,
-        "affordability": 13337,
-        "verifiedDiscount": 4467
+        "chipRecency": 8000,
+        "affordability": 9915,
+        "verifiedDiscount": 0
       },
       "reasonCodes": [
-        "MEMORY_16GB",
-        "STORAGE_IDEAL_1TB",
+        "MEMORY_IDEAL_24GB",
+        "STORAGE_2TB",
         "FORM_IDEAL_AIR_13",
-        "CHIP_GENERATION_M5",
-        "PRICE_HIGH_VALUE",
-        "DISCOUNT_VERIFIED"
+        "CHIP_GENERATION_M4",
+        "PRICE_BALANCED"
       ],
       "label": "Ещё один удачный вариант",
-      "headline": "MacBook Air 13″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 16 ГБ · 1 ТБ",
-      "reason": "16 ГБ памяти, SSD на 1 ТБ и чип M5 дают один из лучших вариантов рядом с целевой конфигурацией. Подтверждённая скидка усиливает ценность."
+      "headline": "MacBook Air 13″ · M4 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 2 ТБ",
+      "reason": "Соответствует целевым параметрам MacBook Air 13″ и 24 ГБ памяти; главный компромисс — SSD на 2 ТБ. Цена учтена в оценке ценности."
     }
   ]
 }
