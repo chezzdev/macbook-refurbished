@@ -1,93 +1,55 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-08-21T08:36:53.101Z",
+  "checkedAt": "2026-08-22T05:28:01.291Z",
   "hasChanges": true,
   "counts": {
-    "added": 17,
+    "added": 0,
     "removed": 4,
     "refurbPriceChanges": 0,
     "newPriceChanges": 0,
     "configurationChanges": 0,
     "featuredChanges": 1
   },
-  "added": [
+  "added": [],
+  "removed": [
     {
-      "productCode": "FDHD4Y/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "24GB",
-      "storage": "1TB",
-      "priceEur": 1679,
-      "newPriceEur": 1979
-    },
-    {
-      "productCode": "FDHE4Y/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 8,
-      "memory": "16GB",
-      "storage": "512GB",
-      "priceEur": 1209,
-      "newPriceEur": 1429
-    },
-    {
-      "productCode": "FDHF4Y/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "16GB",
-      "storage": "1TB",
-      "priceEur": 1489,
-      "newPriceEur": 1759
-    },
-    {
-      "productCode": "FW2X3Y/A",
+      "productCode": "FGDR4Y/A",
       "family": "Pro",
       "screen": "14″",
       "display": "Standard",
-      "chip": "M4",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "16GB",
+      "chip": "M5 Pro",
+      "cpuCores": 15,
+      "gpuCores": 16,
+      "memory": "24GB",
       "storage": "1TB",
-      "priceEur": 1789,
-      "newPriceEur": null
+      "priceEur": 2499,
+      "newPriceEur": 2949
     },
     {
-      "productCode": "G1JR4Y/A",
+      "productCode": "FGE74Y/A",
       "family": "Pro",
-      "screen": "14″",
-      "display": "Nano-texture",
-      "chip": "M4",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "24GB",
+      "screen": "16″",
+      "display": "Standard",
+      "chip": "M5 Max",
+      "cpuCores": 18,
+      "gpuCores": 32,
+      "memory": "36GB",
       "storage": "2TB",
-      "priceEur": 2589,
-      "newPriceEur": null
+      "priceEur": 4379,
+      "newPriceEur": 5149
     },
     {
-      "productCode": "G1L31Y/A",
-      "family": "Air",
-      "screen": "13″",
+      "productCode": "FW2W3Y/A",
+      "family": "Pro",
+      "screen": "14″",
       "display": "Standard",
-      "chip": "M5",
+      "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
-      "memory": "24GB",
+      "memory": "16GB",
       "storage": "512GB",
-      "priceEur": 1489,
-      "newPriceEur": 1649
+      "priceEur": 1519,
+      "newPriceEur": null
     },
     {
       "productCode": "G1L52Y/A",
@@ -101,190 +63,6 @@
       "storage": "1TB",
       "priceEur": 1869,
       "newPriceEur": 2199
-    },
-    {
-      "productCode": "G1L70Y/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "16GB",
-      "storage": "2TB",
-      "priceEur": 1959,
-      "newPriceEur": 2309
-    },
-    {
-      "productCode": "G1L91Y/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "24GB",
-      "storage": "512GB",
-      "priceEur": 1489,
-      "newPriceEur": 1649
-    },
-    {
-      "productCode": "G1MHEY/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5 Pro",
-      "cpuCores": 15,
-      "gpuCores": 16,
-      "memory": "48GB",
-      "storage": "1TB",
-      "priceEur": 3059,
-      "newPriceEur": 3609
-    },
-    {
-      "productCode": "G1MJ2Y/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "memory": "48GB",
-      "storage": "2TB",
-      "priceEur": 3749,
-      "newPriceEur": 4409
-    },
-    {
-      "productCode": "G1ML6Y/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "memory": "48GB",
-      "storage": "1TB",
-      "priceEur": 3249,
-      "newPriceEur": 3859
-    },
-    {
-      "productCode": "G1ML7Y/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Nano-texture",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "memory": "48GB",
-      "storage": "1TB",
-      "priceEur": 3389,
-      "newPriceEur": 4024
-    },
-    {
-      "productCode": "G1MLEY/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5 Pro",
-      "cpuCores": 15,
-      "gpuCores": 16,
-      "memory": "48GB",
-      "storage": "1TB",
-      "priceEur": 3059,
-      "newPriceEur": 3609
-    },
-    {
-      "productCode": "G1MY9Y/A",
-      "family": "Pro",
-      "screen": "16″",
-      "display": "Nano-texture",
-      "chip": "M5 Max",
-      "cpuCores": 18,
-      "gpuCores": 40,
-      "memory": "128GB",
-      "storage": "8TB",
-      "priceEur": 9699,
-      "newPriceEur": 11414
-    },
-    {
-      "productCode": "G1MYEY/A",
-      "family": "Pro",
-      "screen": "16″",
-      "display": "Standard",
-      "chip": "M5 Max",
-      "cpuCores": 18,
-      "gpuCores": 40,
-      "memory": "128GB",
-      "storage": "2TB",
-      "priceEur": 6759,
-      "newPriceEur": 7949
-    },
-    {
-      "productCode": "G1N24Y/A",
-      "family": "Pro",
-      "screen": "16″",
-      "display": "Nano-texture",
-      "chip": "M5 Max",
-      "cpuCores": 18,
-      "gpuCores": 40,
-      "memory": "64GB",
-      "storage": "2TB",
-      "priceEur": 5399,
-      "newPriceEur": 6354
-    }
-  ],
-  "removed": [
-    {
-      "productCode": "FDH94Y/A",
-      "family": "Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "24GB",
-      "storage": "1TB",
-      "priceEur": 1679,
-      "newPriceEur": 1979
-    },
-    {
-      "productCode": "FDVK4Y/A",
-      "family": "Air",
-      "screen": "15″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "16GB",
-      "storage": "1TB",
-      "priceEur": 1749,
-      "newPriceEur": 2059
-    },
-    {
-      "productCode": "FX2V3Y/A",
-      "family": "Pro",
-      "screen": "16″",
-      "display": "Standard",
-      "chip": "M4 Max",
-      "cpuCores": 14,
-      "gpuCores": 32,
-      "memory": "36GB",
-      "storage": "1TB",
-      "priceEur": 3779,
-      "newPriceEur": null
-    },
-    {
-      "productCode": "G1AG2Y/A",
-      "family": "Pro",
-      "screen": "16″",
-      "display": "Standard",
-      "chip": "M3 Pro",
-      "cpuCores": 12,
-      "gpuCores": 18,
-      "memory": "36GB",
-      "storage": "4TB",
-      "priceEur": 4439,
-      "newPriceEur": null
     }
   ],
   "refurbPriceChanges": [],
@@ -292,14 +70,14 @@
   "configurationChanges": [],
   "featured": {
     "before": [
-      "FDH94Y/A",
-      "G1L61Y/A",
-      "FDVF4Y/A"
-    ],
-    "after": [
       "FDHD4Y/A",
       "G1L52Y/A",
       "G1L31Y/A"
+    ],
+    "after": [
+      "FDHD4Y/A",
+      "G1L31Y/A",
+      "FDVF4Y/A"
     ]
   }
 }
