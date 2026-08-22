@@ -54,26 +54,6 @@
       "configurationKey": "air|13|standard|m4|10|10|24gb|1tb"
     },
     {
-      "productCode": "FDVC4ZP/A",
-      "sourceUrl": "https://www.apple.com/sg/shop/product/fdvc4zp/a",
-      "title": "Refurbished 15‑inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Silver",
-      "family": "Air",
-      "model": "MacBook Air",
-      "screen": "15″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "colour": "Silver",
-      "releaseYear": 2026,
-      "memory": "24GB",
-      "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/15-inch-silver-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
-      "priceSgd": 2509,
-      "newPriceSgd": 2949,
-      "configurationKey": "air|15|standard|m5|10|10|24gb|1tb"
-    },
-    {
       "productCode": "FDVF4ZP/A",
       "sourceUrl": "https://www.apple.com/sg/shop/product/fdvf4zp/a",
       "title": "Refurbished 15‑inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Starlight",
@@ -472,26 +452,6 @@
       "priceSgd": 2479,
       "newPriceSgd": 2924,
       "configurationKey": "pro|14|nano-texture|m5|10|10|16gb|1tb"
-    },
-    {
-      "productCode": "FDE44ZP/A",
-      "sourceUrl": "https://www.apple.com/sg/shop/product/fde44zp/a/Refurbished-14-inch-MacBook-Pro-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Silver",
-      "title": "Refurbished 14-inch MacBook Pro Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Silver",
-      "family": "Pro",
-      "model": "MacBook Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "colour": "Silver",
-      "releaseYear": 2025,
-      "memory": "16GB",
-      "storage": "512GB",
-      "newSourceUrl": null,
-      "priceSgd": 1939,
-      "newPriceSgd": null,
-      "configurationKey": "pro|14|standard|m5|10|10|16gb|512gb"
     },
     {
       "productCode": "FDE04ZP/A",
