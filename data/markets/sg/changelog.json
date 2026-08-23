@@ -2,62 +2,148 @@
   "schemaVersion": 1,
   "latestRun": {
     "schemaVersion": 1,
-    "checkedAt": "2026-08-22T05:29:13.534Z",
+    "checkedAt": "2026-08-23T05:02:32.055Z",
     "hasChanges": true,
     "counts": {
       "added": 0,
-      "removed": 2,
+      "removed": 4,
       "refurbPriceChanges": 0,
       "newPriceChanges": 0,
       "configurationChanges": 0,
-      "featuredChanges": 1
+      "featuredChanges": 0
     },
     "added": [],
     "removed": [
       {
-        "productCode": "FDE44ZP/A",
+        "productCode": "FCX04ZP/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Standard",
+        "chip": "M4",
+        "cpuCores": 10,
+        "gpuCores": 10,
+        "memory": "24GB",
+        "storage": "1TB",
+        "priceSgd": 2429,
+        "newPriceSgd": null
+      },
+      {
+        "productCode": "G1DS0ZP/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Standard",
+        "chip": "M4",
+        "cpuCores": 10,
+        "gpuCores": 10,
+        "memory": "24GB",
+        "storage": "512GB",
+        "priceSgd": 2079,
+        "newPriceSgd": null
+      },
+      {
+        "productCode": "G1KN4ZP/A",
         "family": "Pro",
         "screen": "14″",
         "display": "Standard",
         "chip": "M5",
         "cpuCores": 10,
         "gpuCores": 10,
-        "memory": "16GB",
-        "storage": "512GB",
-        "priceSgd": 1939,
-        "newPriceSgd": null
+        "memory": "32GB",
+        "storage": "4TB",
+        "priceSgd": 4719,
+        "newPriceSgd": 5549
       },
       {
-        "productCode": "FDVC4ZP/A",
-        "family": "Air",
-        "screen": "15″",
-        "display": "Standard",
-        "chip": "M5",
-        "cpuCores": 10,
-        "gpuCores": 10,
-        "memory": "24GB",
-        "storage": "1TB",
-        "priceSgd": 2509,
-        "newPriceSgd": 2949
+        "productCode": "G1MKNZP/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Nano-texture",
+        "chip": "M5 Max",
+        "cpuCores": 18,
+        "gpuCores": 40,
+        "memory": "64GB",
+        "storage": "4TB",
+        "priceSgd": 7659,
+        "newPriceSgd": 9024
       }
     ],
     "refurbPriceChanges": [],
     "newPriceChanges": [],
     "configurationChanges": [],
-    "featured": {
-      "before": [
-        "G1H90ZP/A",
-        "FDVC4ZP/A",
-        "G1H91ZP/A"
-      ],
-      "after": [
-        "G1H90ZP/A",
-        "FDVF4ZP/A",
-        "G1H91ZP/A"
-      ]
-    }
+    "featured": null
   },
   "entries": [
+    {
+      "type": "changes",
+      "checkedAt": "2026-08-23T05:02:32.055Z",
+      "counts": {
+        "added": 0,
+        "removed": 4,
+        "refurbPriceChanges": 0,
+        "newPriceChanges": 0,
+        "configurationChanges": 0,
+        "featuredChanges": 0
+      },
+      "added": [],
+      "removed": [
+        {
+          "productCode": "FCX04ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Standard",
+          "chip": "M4",
+          "cpuCores": 10,
+          "gpuCores": 10,
+          "memory": "24GB",
+          "storage": "1TB",
+          "priceSgd": 2429,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "G1DS0ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Standard",
+          "chip": "M4",
+          "cpuCores": 10,
+          "gpuCores": 10,
+          "memory": "24GB",
+          "storage": "512GB",
+          "priceSgd": 2079,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "G1KN4ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Standard",
+          "chip": "M5",
+          "cpuCores": 10,
+          "gpuCores": 10,
+          "memory": "32GB",
+          "storage": "4TB",
+          "priceSgd": 4719,
+          "newPriceSgd": 5549
+        },
+        {
+          "productCode": "G1MKNZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Nano-texture",
+          "chip": "M5 Max",
+          "cpuCores": 18,
+          "gpuCores": 40,
+          "memory": "64GB",
+          "storage": "4TB",
+          "priceSgd": 7659,
+          "newPriceSgd": 9024
+        }
+      ],
+      "refurbPriceChanges": [],
+      "newPriceChanges": [],
+      "configurationChanges": [],
+      "featured": null
+    },
     {
       "type": "changes",
       "checkedAt": "2026-08-22T05:29:13.534Z",
