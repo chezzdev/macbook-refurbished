@@ -1434,26 +1434,6 @@
       "configurationKey": "pro|16|standard|m5-pro|18|20|48gb|1tb"
     },
     {
-      "productCode": "G1N00Y/A",
-      "sourceUrl": "https://www.apple.com/es/shop/product/g1n00y/a/MacBook-Pro-reacondicionado-de-16-pulgadas-con-chip-M5-Pro-de-Apple-CPU-de-18-n%C3%BAcleos-GPU-de-20-n%C3%BAcleos-y-pantalla-nanotexturizada-Negro-espacial",
-      "title": "MacBook Pro reacondicionado de 16 pulgadas con chip M5 Pro de Apple, CPU de 18 núcleos, GPU de 20 núcleos y pantalla nanotexturizada - Negro espacial",
-      "family": "Pro",
-      "model": "MacBook Pro",
-      "screen": "16″",
-      "display": "Nano-texture",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "colour": "Space Black",
-      "releaseYear": 2026,
-      "memory": "48GB",
-      "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/es/shop/buy-mac/macbook-pro/16-pulgadas-space-black-pantalla-con-vidrio-nanotexturizado-chip-m5-pro-de-apple-cpu-de-18-n%C3%BAcleos-gpu-de-20-n%C3%BAcleos-48-gb-de-memoria-1tb-de-capacidad",
-      "priceEur": 3629,
-      "newPriceEur": 4274,
-      "configurationKey": "pro|16|nano-texture|m5-pro|18|20|48gb|1tb"
-    },
-    {
       "productCode": "FGE44Y/A",
       "sourceUrl": "https://www.apple.com/es/shop/product/fge44y/a/MacBook-Pro-reacondicionado-de-16-pulgadas-con-chip-M5-Pro-de-Apple-CPU-de-18-n%C3%BAcleos-y-GPU-de-20-n%C3%BAcleos-Plata",
       "title": "MacBook Pro reacondicionado de 16 pulgadas con chip M5 Pro de Apple, CPU de 18 núcleos y GPU de 20 núcleos - Plata",

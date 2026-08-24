@@ -2,24 +2,70 @@
   "schemaVersion": 1,
   "latestRun": {
     "schemaVersion": 1,
-    "checkedAt": "2026-08-23T05:01:18.822Z",
-    "hasChanges": false,
+    "checkedAt": "2026-08-24T05:01:38.911Z",
+    "hasChanges": true,
     "counts": {
       "added": 0,
-      "removed": 0,
+      "removed": 1,
       "refurbPriceChanges": 0,
       "newPriceChanges": 0,
       "configurationChanges": 0,
       "featuredChanges": 0
     },
     "added": [],
-    "removed": [],
+    "removed": [
+      {
+        "productCode": "G1N00Y/A",
+        "family": "Pro",
+        "screen": "16″",
+        "display": "Nano-texture",
+        "chip": "M5 Pro",
+        "cpuCores": 18,
+        "gpuCores": 20,
+        "memory": "48GB",
+        "storage": "1TB",
+        "priceEur": 3629,
+        "newPriceEur": 4274
+      }
+    ],
     "refurbPriceChanges": [],
     "newPriceChanges": [],
     "configurationChanges": [],
     "featured": null
   },
   "entries": [
+    {
+      "type": "changes",
+      "checkedAt": "2026-08-24T05:01:38.911Z",
+      "counts": {
+        "added": 0,
+        "removed": 1,
+        "refurbPriceChanges": 0,
+        "newPriceChanges": 0,
+        "configurationChanges": 0,
+        "featuredChanges": 0
+      },
+      "added": [],
+      "removed": [
+        {
+          "productCode": "G1N00Y/A",
+          "family": "Pro",
+          "screen": "16″",
+          "display": "Nano-texture",
+          "chip": "M5 Pro",
+          "cpuCores": 18,
+          "gpuCores": 20,
+          "memory": "48GB",
+          "storage": "1TB",
+          "priceEur": 3629,
+          "newPriceEur": 4274
+        }
+      ],
+      "refurbPriceChanges": [],
+      "newPriceChanges": [],
+      "configurationChanges": [],
+      "featured": null
+    },
     {
       "type": "changes",
       "checkedAt": "2026-08-22T05:28:01.291Z",
