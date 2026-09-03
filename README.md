@@ -90,8 +90,9 @@ tax adapter, validator, ranker, changelog, builder и publication workflow.
 Текущий эталон всех трёх профилей: MacBook Air 13″, 24 ГБ памяти, SSD 1 ТБ.
 Политики изолированы: `config/ranking-policy.es.json` для ES,
 `config/ranking-policy.sg.json` для SG и `config/ranking-policy.us.json` для
-US. Текущая SG policy покрывает встречающийся в каталоге SSD 8 ТБ с оценкой
-13000 milli-points; эталоном остаётся SSD 1 ТБ. Цветовые дубли одной точной
+US. Текущая SG policy покрывает встречающиеся в каталоге память 128 ГБ с
+оценкой 19000 milli-points и SSD 8 ТБ с оценкой 13000 milli-points; эталонами
+остаются память 24 ГБ и SSD 1 ТБ. Цветовые дубли одной точной
 `configurationKey` не занимают несколько featured-мест; различия display,
 CPU/GPU, памяти или SSD считаются отдельными конфигурациями. Порядок полностью
 детерминирован.
@@ -239,6 +240,12 @@ manifest. Устаревшие directory roots можно только удал�
 содержимым: staged additions или modifications под ними отклоняются. Поэтому
 локальный ahead-коммит или заранее подготовленный посторонний файл не может
 попасть в публичную ветку.
+После начала синхронизации ошибка до успешного push откатывает только пути из
+publication manifest к исходному `HEAD`. Поэтому оборванный fetch, commit или
+push не оставляет staged-файлы либо локальный ahead-коммит, которые заблокируют
+следующий ежедневный запуск. После успешного push публичный commit не
+откатывается; workflow требует чистую синхронизацию и проверяет точный hash на
+постоянном URL до продвижения canonical state.
 Для провайдера без автоматического deploy `--prepare-only` оставляет canonical
 state неизменным и возвращает путь к проверенному временному артефакту и его
 SHA-256. Все рынки используют checkout `work/gh-pages-site`, один public remote

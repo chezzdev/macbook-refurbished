@@ -142,6 +142,32 @@ test("scores current Singapore 8TB storage configurations", () => {
   assert.ok(featured.items[0].reasonCodes.includes("STORAGE_8TB"));
 });
 
+test("scores current Singapore 128GB memory configurations", () => {
+  const featured = rankCatalog(
+    {
+      schemaVersion: 1,
+      products: [
+        product({
+          configurationKey: "pro-16-m5max-16-40-128-2tb",
+          productCode: "PRO-128GB",
+          family: "Pro",
+          screen: "16″",
+          chip: "M5 Max",
+          cpuCores: 16,
+          gpuCores: 40,
+          memory: "128GB",
+          storage: "2TB",
+          priceSgd: 4999,
+        }),
+      ],
+    },
+    { ...policy, shortlistSize: 1 },
+  );
+
+  assert.equal(featured.items[0].scoreBreakdown.memory, 19000);
+  assert.ok(featured.items[0].reasonCodes.includes("MEMORY_128GB"));
+});
+
 test("collapses colour duplicates and selects by price, then product code", () => {
   const catalog = representativeCatalog();
   catalog.products.push(

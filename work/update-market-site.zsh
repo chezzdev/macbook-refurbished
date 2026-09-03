@@ -100,6 +100,9 @@ snapshot_dir=""
 staging_dir=""
 canonical_promotion_started=false
 workflow_succeeded=false
+publication_base_head=""
+publication_mutation_started=false
+publication_commit_pushed=false
 
 source_owned_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --source)}")
 immutable_source_paths=("${(@f)$(node "${execution_root}/scripts/publication-manifest.mjs" --immutable-source)}")
@@ -143,6 +146,15 @@ typeset -A immutable_source_set
 cleanup() {
   exit_code=$?
   set +e
+  if [[ "$publication_mutation_started" == "true" && \
+        "$publication_commit_pushed" != "true" ]]; then
+    publication_restore_precommit_checkout \
+      "$publish_dir" "$publication_base_head" "$publication_branch" \
+      "${publish_owned_paths[@]}" \
+      --retired \
+      "${retired_publication_paths[@]}" || \
+      print -u2 "Publication checkout recovery failed; manual inspection is required."
+  fi
   if [[ "$canonical_promotion_started" == "true" && \
         "$workflow_succeeded" != "true" ]]; then
     for relative_file in "${canonical_output_relatives[@]}"; do
@@ -390,6 +402,8 @@ fi
 print "6/8 Syncing the unified public GitHub repository"
 publication_require_clean_synced_checkout \
   "$publish_dir" "$repository_url" "$publication_branch"
+publication_base_head="$(git -C "$publish_dir" rev-parse HEAD)"
+publication_mutation_started=true
 
 if [[ "$publish_dir" != "$workspace_dir" ]]; then
   for relative_file in "${retired_publication_paths[@]}"; do
@@ -447,6 +461,7 @@ if ! git -C "$publish_dir" diff --cached --quiet; then
   git -C "$publish_dir" commit -m "Refresh ${site_name} catalog"
   git -C "$publish_dir" push origin "$publication_branch"
 fi
+publication_commit_pushed=true
 publication_require_clean_synced_checkout \
   "$publish_dir" "$repository_url" "$publication_branch"
 publish_commit="$(git -C "$publish_dir" rev-parse HEAD)"

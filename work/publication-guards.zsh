@@ -167,3 +167,92 @@ publication_require_cached_paths() {
     git -C "$checkout_dir" diff --cached --name-status -z --no-renames
   )
 }
+
+publication_restore_precommit_checkout() {
+  local checkout_dir="$1"
+  local base_head="$2"
+  local expected_branch="$3"
+  shift 3
+  local -a allowed_entries=()
+  local -a retired_entries=()
+  local -a untracked_files=()
+  local entry_group="allowed"
+  local manifest_entry
+  local relative_file
+  local current_branch
+  local current_head
+  local checkout_changes
+
+  for manifest_entry in "$@"; do
+    if [[ "$manifest_entry" == "--retired" ]]; then
+      entry_group="retired"
+    elif [[ "$entry_group" == "allowed" ]]; then
+      allowed_entries+=("$manifest_entry")
+    else
+      retired_entries+=("$manifest_entry")
+    fi
+  done
+
+  current_branch="$(git -C "$checkout_dir" branch --show-current)"
+  if [[ "$current_branch" != "$expected_branch" ]]; then
+    print -u2 \
+      "Cannot restore publication checkout on unexpected branch: ${current_branch:-detached HEAD}"
+    return 1
+  fi
+  git -C "$checkout_dir" rev-parse --verify "${base_head}^{commit}" \
+    >/dev/null
+  current_head="$(git -C "$checkout_dir" rev-parse HEAD)"
+
+  while IFS= read -r -d '' relative_file; do
+    if ! publication_cached_path_is_allowed \
+        "$relative_file" "${allowed_entries[@]}" && \
+       ! publication_cached_path_is_retired \
+        "$relative_file" "${retired_entries[@]}"; then
+      print -u2 \
+        "Refusing to restore a publication path outside the manifest: $relative_file"
+      return 1
+    fi
+  done < <(
+    {
+      git -C "$checkout_dir" diff --name-only -z
+      git -C "$checkout_dir" diff --cached --name-only -z
+      if [[ "$current_head" != "$base_head" ]]; then
+        git -C "$checkout_dir" diff --name-only -z \
+          "$base_head" "$current_head"
+      fi
+    }
+  )
+
+  while IFS= read -r -d '' relative_file; do
+    if ! publication_cached_path_is_allowed \
+        "$relative_file" "${allowed_entries[@]}" && \
+       ! publication_cached_path_is_retired \
+        "$relative_file" "${retired_entries[@]}"; then
+      print -u2 \
+        "Refusing to remove an untracked publication path outside the manifest: $relative_file"
+      return 1
+    fi
+    untracked_files+=("$relative_file")
+  done < <(
+    git -C "$checkout_dir" ls-files --others --exclude-standard -z
+  )
+
+  git -C "$checkout_dir" restore \
+    --source="$base_head" --staged --worktree -- .
+  if [[ "$current_head" != "$base_head" ]]; then
+    git -C "$checkout_dir" update-ref \
+      "refs/heads/${expected_branch}" "$base_head" "$current_head"
+  fi
+  for relative_file in "${untracked_files[@]}"; do
+    rm -f -- "${checkout_dir}/${relative_file}"
+  done
+
+  checkout_changes="$(
+    git -C "$checkout_dir" status --porcelain=v1 --untracked-files=all
+  )"
+  if [[ -n "$checkout_changes" ]]; then
+    print -u2 "Publication checkout recovery did not restore a clean state:"
+    print -u2 "$checkout_changes"
+    return 1
+  fi
+}

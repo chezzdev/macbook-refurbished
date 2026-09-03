@@ -61,29 +61,28 @@
     },
     {
       "rank": 3,
-      "recommendationKey": "pro|14|standard|m5-pro|15|16|24gb|1tb",
-      "configurationKey": "pro|14|standard|m5-pro|15|16|24gb|1tb",
-      "productCode": "FGDN4Y/A",
-      "score": 93076,
+      "recommendationKey": "pro|14|standard|m5|10|10|24gb|1tb",
+      "configurationKey": "pro|14|standard|m5|10|10|24gb|1tb",
+      "productCode": "FDE34Y/A",
+      "score": 94268,
       "scoreBreakdown": {
         "memory": 32000,
         "storage": 26000,
         "formFactor": 10000,
-        "chipRecency": 10800,
-        "affordability": 9701,
-        "verifiedDiscount": 4575
+        "chipRecency": 10000,
+        "affordability": 11738,
+        "verifiedDiscount": 4530
       },
       "reasonCodes": [
         "MEMORY_IDEAL_24GB",
         "STORAGE_IDEAL_1TB",
         "FORM_PRO_14",
         "CHIP_GENERATION_M5",
-        "CHIP_TIER_PRO",
         "PRICE_BALANCED",
         "DISCOUNT_VERIFIED"
       ],
       "label": "Ещё один удачный вариант",
-      "headline": "MacBook Pro 14″ · M5 Pro (15-ядерный CPU, 16-ядерный GPU) · 24 ГБ · 1 ТБ",
+      "headline": "MacBook Pro 14″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 1 ТБ",
       "reason": "24 ГБ памяти и SSD на 1 ТБ соответствуют цели; здесь они в корпусе MacBook Pro 14″. Подтверждённая скидка усиливает ценность."
     }
   ]

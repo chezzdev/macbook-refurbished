@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "policyVersion": "2026-08-19.sg.3",
+  "policyVersion": "2026-09-03.sg.4",
   "scoreUnit": "milli-points",
   "shortlistSize": 3,
   "ideal": {
@@ -30,7 +30,8 @@
         "32GB": 28000,
         "36GB": 26000,
         "48GB": 23000,
-        "64GB": 21000
+        "64GB": 21000,
+        "128GB": 19000
       }
     },
     "storage": {

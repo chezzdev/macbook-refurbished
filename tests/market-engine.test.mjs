@@ -181,6 +181,30 @@ async function runCachedPublicationGuard(
   );
 }
 
+async function runPublicationCheckoutRestore(
+  checkoutDirectory,
+  baseHead,
+  allowedEntries,
+  retiredEntries = [],
+) {
+  return execFileAsync(
+    "/bin/zsh",
+    [
+      "-c",
+      'source "$1"; shift; publication_restore_precommit_checkout "$@"',
+      "publication-restore-test",
+      publicationGuardScript,
+      checkoutDirectory,
+      baseHead,
+      "main",
+      ...allowedEntries,
+      "--retired",
+      ...retiredEntries,
+    ],
+    { cwd: projectRoot },
+  );
+}
+
 function tile({
   productCode,
   marketId,
@@ -1093,6 +1117,8 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
     /publication_fetch_and_require_remote_head/,
   );
   assert.match(publicationGuards, /status --porcelain=v1 --untracked-files=all/);
+  assert.match(perMarketWorkflow, /publication_restore_precommit_checkout/);
+  assert.match(perMarketWorkflow, /publication_commit_pushed/);
   assert.match(
     publicationGuards,
     /Publication HEAD must exactly match origin\//,
@@ -1125,6 +1151,139 @@ test("publication workflow shares one lock and keeps prepare-only non-canonical"
   assert.doesNotMatch(fallbackWorkflow, /--commit-dirty/);
   assert.match(fallbackWorkflow, /node_modules\/\.bin\/wrangler/);
   assert.doesNotMatch(fallbackWorkflow, /npx --yes/);
+});
+
+test("publication checkout recovery removes only an unpushed manifest transaction", async () => {
+  const fixtures = [];
+  try {
+    const stagedFixture = await createPublicationGuardFixture();
+    fixtures.push(stagedFixture.fixtureRoot);
+    const stagedBase = (
+      await runGit(stagedFixture.checkoutDirectory, ["rev-parse", "HEAD"])
+    ).stdout.trim();
+    await writeFile(
+      join(stagedFixture.checkoutDirectory, "allowed.txt"),
+      "staged transaction\n",
+      "utf8",
+    );
+    await writeFile(
+      join(stagedFixture.checkoutDirectory, "new.txt"),
+      "new staged file\n",
+      "utf8",
+    );
+    await writeFile(
+      join(stagedFixture.checkoutDirectory, "untracked.txt"),
+      "new untracked file\n",
+      "utf8",
+    );
+    await runGit(stagedFixture.checkoutDirectory, [
+      "add",
+      "allowed.txt",
+      "new.txt",
+    ]);
+    await assert.doesNotReject(() =>
+      runPublicationCheckoutRestore(
+        stagedFixture.checkoutDirectory,
+        stagedBase,
+        ["allowed.txt", "new.txt", "untracked.txt"],
+      ),
+    );
+    assert.equal(
+      (await runGit(stagedFixture.checkoutDirectory, ["status", "--short"]))
+        .stdout,
+      "",
+    );
+    assert.equal(
+      await readFile(
+        join(stagedFixture.checkoutDirectory, "allowed.txt"),
+        "utf8",
+      ),
+      "initial\n",
+    );
+    await assert.rejects(
+      () => readFile(join(stagedFixture.checkoutDirectory, "new.txt"), "utf8"),
+      (error) => error?.code === "ENOENT",
+    );
+    await assert.rejects(
+      () =>
+        readFile(
+          join(stagedFixture.checkoutDirectory, "untracked.txt"),
+          "utf8",
+        ),
+      (error) => error?.code === "ENOENT",
+    );
+
+    const committedFixture = await createPublicationGuardFixture();
+    fixtures.push(committedFixture.fixtureRoot);
+    const committedBase = (
+      await runGit(committedFixture.checkoutDirectory, ["rev-parse", "HEAD"])
+    ).stdout.trim();
+    await writeFile(
+      join(committedFixture.checkoutDirectory, "allowed.txt"),
+      "local commit before failed push\n",
+      "utf8",
+    );
+    await runGit(committedFixture.checkoutDirectory, ["add", "allowed.txt"]);
+    await runGit(committedFixture.checkoutDirectory, [
+      "commit",
+      "-m",
+      "Unpushed transaction",
+    ]);
+    await assert.doesNotReject(() =>
+      runPublicationCheckoutRestore(
+        committedFixture.checkoutDirectory,
+        committedBase,
+        ["allowed.txt"],
+      ),
+    );
+    assert.equal(
+      (
+        await runGit(committedFixture.checkoutDirectory, ["rev-parse", "HEAD"])
+      ).stdout.trim(),
+      committedBase,
+    );
+    assert.equal(
+      (await runGit(committedFixture.checkoutDirectory, ["status", "--short"]))
+        .stdout,
+      "",
+    );
+
+    const outsideFixture = await createPublicationGuardFixture();
+    fixtures.push(outsideFixture.fixtureRoot);
+    const outsideBase = (
+      await runGit(outsideFixture.checkoutDirectory, ["rev-parse", "HEAD"])
+    ).stdout.trim();
+    await writeFile(
+      join(outsideFixture.checkoutDirectory, "outside.txt"),
+      "must survive refusal\n",
+      "utf8",
+    );
+    await assert.rejects(
+      () =>
+        runPublicationCheckoutRestore(
+          outsideFixture.checkoutDirectory,
+          outsideBase,
+          ["allowed.txt"],
+        ),
+      (error) => {
+        assert.match(error.stderr, /outside the manifest: outside\.txt/);
+        return true;
+      },
+    );
+    assert.equal(
+      await readFile(
+        join(outsideFixture.checkoutDirectory, "outside.txt"),
+        "utf8",
+      ),
+      "must survive refusal\n",
+    );
+  } finally {
+    await Promise.all(
+      fixtures.map((fixtureRoot) =>
+        rm(fixtureRoot, { recursive: true, force: true }),
+      ),
+    );
+  }
 });
 
 test("publication checkout guards fail closed on dirty, ahead, and over-staged state", async () => {
