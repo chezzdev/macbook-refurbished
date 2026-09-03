@@ -10,82 +10,79 @@
   "items": [
     {
       "rank": 1,
-      "recommendationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb",
-      "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb",
-      "productCode": "FGE44LL/A",
-      "score": 87020,
+      "recommendationKey": "air|13|standard|m5|10|10|32gb|1tb",
+      "configurationKey": "air|13|standard|m5|10|10|32gb|1tb",
+      "productCode": "G1L22LL/A",
+      "score": 105077,
       "scoreBreakdown": {
-        "memory": 32000,
+        "memory": 28000,
         "storage": 26000,
-        "formFactor": 6000,
-        "chipRecency": 10800,
-        "affordability": 7720,
+        "formFactor": 24000,
+        "chipRecency": 10000,
+        "affordability": 12577,
         "verifiedDiscount": 4500
       },
       "reasonCodes": [
-        "MEMORY_IDEAL_24GB",
+        "MEMORY_32GB",
         "STORAGE_IDEAL_1TB",
-        "FORM_PRO_16",
+        "FORM_IDEAL_AIR_13",
         "CHIP_GENERATION_M5",
-        "CHIP_TIER_PRO",
-        "PRICE_PREMIUM",
+        "PRICE_HIGH_VALUE",
         "DISCOUNT_VERIFIED"
       ],
       "label": "Лучший выбор",
-      "headline": "MacBook Pro 16″ · M5 Pro (18-ядерный CPU, 20-ядерный GPU) · 24 ГБ · 1 ТБ",
-      "reason": "24 ГБ памяти и SSD на 1 ТБ соответствуют цели; здесь они в корпусе MacBook Pro 16″. Подтверждённая скидка усиливает ценность."
+      "headline": "MacBook Air 13″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 32 ГБ · 1 ТБ",
+      "reason": "32 ГБ памяти, SSD на 1 ТБ и чип M5 дают один из лучших вариантов рядом с целевой конфигурацией. Подтверждённая скидка усиливает ценность."
     },
     {
       "rank": 2,
-      "recommendationKey": "pro|16|nano-texture|m5-pro|18|20|24gb|1tb",
-      "configurationKey": "pro|16|nano-texture|m5-pro|18|20|24gb|1tb",
-      "productCode": "G1MV0LL/A",
-      "score": 86253,
+      "recommendationKey": "air|13|standard|m2|8|10|24gb|1tb",
+      "configurationKey": "air|13|standard|m2|8|10|24gb|1tb",
+      "productCode": "G15Z6LL/A",
+      "score": 100062,
       "scoreBreakdown": {
         "memory": 32000,
         "storage": 26000,
-        "formFactor": 6000,
-        "chipRecency": 10800,
-        "affordability": 6977,
-        "verifiedDiscount": 4476
+        "formFactor": 24000,
+        "chipRecency": 4000,
+        "affordability": 14062,
+        "verifiedDiscount": 0
       },
       "reasonCodes": [
         "MEMORY_IDEAL_24GB",
         "STORAGE_IDEAL_1TB",
-        "FORM_PRO_16",
-        "CHIP_GENERATION_M5",
-        "CHIP_TIER_PRO",
-        "PRICE_PREMIUM",
-        "DISCOUNT_VERIFIED"
+        "FORM_IDEAL_AIR_13",
+        "CHIP_GENERATION_M2",
+        "PRICE_HIGH_VALUE"
       ],
       "label": "Сильная альтернатива",
-      "headline": "MacBook Pro 16″ · Nano-texture display · M5 Pro (18-ядерный CPU, 20-ядерный GPU) · 24 ГБ · 1 ТБ",
-      "reason": "24 ГБ памяти и SSD на 1 ТБ соответствуют цели; здесь они в корпусе MacBook Pro 16″. Подтверждённая скидка усиливает ценность."
+      "headline": "MacBook Air 13″ · M2 (8-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 1 ТБ",
+      "reason": "Точно соответствует целевой конфигурации: MacBook Air 13″, 24 ГБ памяти и SSD на 1 ТБ. Цена учтена в оценке ценности."
     },
     {
       "rank": 3,
-      "recommendationKey": "air|15|standard|m5|10|10|16gb|1tb",
-      "configurationKey": "air|15|standard|m5|10|10|16gb|1tb",
-      "productCode": "FDVE4LL/A",
-      "score": 86048,
+      "recommendationKey": "air|13|standard|m5|10|10|16gb|1tb",
+      "configurationKey": "air|13|standard|m5|10|10|16gb|1tb",
+      "productCode": "FDHJ4LL/A",
+      "score": 97020,
       "scoreBreakdown": {
         "memory": 18000,
         "storage": 26000,
-        "formFactor": 14000,
+        "formFactor": 24000,
         "chipRecency": 10000,
-        "affordability": 13548,
+        "affordability": 14520,
         "verifiedDiscount": 4500
       },
       "reasonCodes": [
         "MEMORY_16GB",
         "STORAGE_IDEAL_1TB",
-        "FORM_AIR_15",
+        "FORM_IDEAL_AIR_13",
         "CHIP_GENERATION_M5",
         "PRICE_HIGH_VALUE",
         "DISCOUNT_VERIFIED"
       ],
       "label": "Ещё один удачный вариант",
-      "headline": "MacBook Air 15″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 16 ГБ · 1 ТБ",
+      "headline": "MacBook Air 13″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 16 ГБ · 1 ТБ",
       "reason": "16 ГБ памяти, SSD на 1 ТБ и чип M5 дают один из лучших вариантов рядом с целевой конфигурацией. Подтверждённая скидка усиливает ценность."
     }
   ]
