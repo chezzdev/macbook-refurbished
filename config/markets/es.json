@@ -42,6 +42,22 @@
     "model": "included-in-list-price",
     "acquisition": null,
     "referenceLocation": null,
+    "includedTaxBreakdown": {
+      "label": "IVA",
+      "currency": "EUR",
+      "taxRate": 0.21,
+      "rounding": "back-calculate-nearest-minor-unit",
+      "minorUnitDigits": 2,
+      "rateSourceUrl": "https://sede.agenciatributaria.gob.es/Sede/iva/calculo-iva-repercutido-clientes/tipos-impositivos-iva.html",
+      "refundInfoUrl": "https://www.apple.com/es/shop/help/payments",
+      "eligibilityNote": "Вычет или возврат IVA зависит от статуса покупателя, счёта и способа получения заказа. Для DIVA Apple указывает отдельные условия, включая самовывоз в Apple Store.",
+      "verifiedAt": "2026-09-03",
+      "verification": {
+        "taxInclusiveAmount": 121,
+        "preTaxAmount": 100,
+        "taxAmount": 21
+      }
+    },
     "availabilityPolicy": "catalog-wide",
     "filterByDeliveryOrPickup": false
   },

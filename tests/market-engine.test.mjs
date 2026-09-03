@@ -26,7 +26,10 @@ import {
   buildInitialSiteDocument,
   initializeMarketNamespace,
 } from "../scripts/initialize-market.mjs";
-import { calculateTaxLocationAmounts } from "../scripts/fixed-location-tax.mjs";
+import {
+  calculateIncludedTaxAmounts,
+  calculateTaxLocationAmounts,
+} from "../scripts/fixed-location-tax.mjs";
 import { buildMarketDisplayCopy } from "../scripts/market-display-copy.mjs";
 import {
   assertUniqueProfileOwnedPaths,
@@ -1904,6 +1907,30 @@ test("Spain parses localized Apple catalog data and exact-new URLs", () => {
 
   const ranked = rankCatalog(rankingCatalog(es), esPolicy, es);
   assert.equal(ranked.items.length, 3);
+});
+
+test("Spain back-calculates the included 21% IVA amount", () => {
+  assert.deepEqual(
+    calculateIncludedTaxAmounts({
+      taxInclusiveAmount: 2079,
+      taxRate: es.tax.includedTaxBreakdown.taxRate,
+      minorUnitDigits: es.tax.includedTaxBreakdown.minorUnitDigits,
+    }),
+    {
+      taxInclusiveAmount: 2079,
+      preTaxAmount: 1718.18,
+      taxRate: 0.21,
+      taxAmount: 360.82,
+    },
+  );
+  assert.doesNotThrow(() => validateMarketProfile(es));
+
+  const wrongVerification = structuredClone(es);
+  wrongVerification.tax.includedTaxBreakdown.verification.taxAmount = 20;
+  assert.throws(
+    () => validateMarketProfile(wrongVerification),
+    /does not reproduce its verification/,
+  );
 });
 
 test("US fixed-location estimate reproduces Apple checkout and screen fees", async () => {

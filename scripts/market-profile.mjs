@@ -3,6 +3,7 @@ import { isAbsolute, relative, resolve } from "node:path";
 import { isDeepStrictEqual, parseArgs } from "node:util";
 
 import {
+  calculateIncludedTaxAmounts,
   calculateFixedLocationTaxAmounts,
   calculateTaxLocationAmounts,
 } from "./fixed-location-tax.mjs";
@@ -82,6 +83,67 @@ function requireHttpsUrl(value, label) {
   const parsed = new URL(value);
   if (parsed.protocol !== "https:") {
     throw new Error(`${label} must be an HTTPS URL`);
+  }
+}
+
+function validateIncludedTaxBreakdown(profile) {
+  const breakdown = profile.tax.includedTaxBreakdown;
+  if (breakdown === undefined) return;
+  if (profile.tax.model !== "included-in-list-price") {
+    throw new Error(
+      "tax.includedTaxBreakdown requires included-in-list-price",
+    );
+  }
+  requireString(breakdown.label, "tax.includedTaxBreakdown.label");
+  requireString(
+    breakdown.verifiedAt,
+    "tax.includedTaxBreakdown.verifiedAt",
+  );
+  requireString(
+    breakdown.eligibilityNote,
+    "tax.includedTaxBreakdown.eligibilityNote",
+  );
+  requireHttpsUrl(
+    breakdown.rateSourceUrl,
+    "tax.includedTaxBreakdown.rateSourceUrl",
+  );
+  requireAppleUrl(
+    breakdown.refundInfoUrl,
+    "tax.includedTaxBreakdown.refundInfoUrl",
+  );
+  if (
+    breakdown.currency !== profile.currency.source ||
+    !Number.isFinite(breakdown.taxRate) ||
+    breakdown.taxRate <= 0 ||
+    breakdown.taxRate >= 1 ||
+    breakdown.rounding !== "back-calculate-nearest-minor-unit" ||
+    breakdown.minorUnitDigits !== profile.currency.sourceFractionDigits
+  ) {
+    throw new Error(
+      "tax.includedTaxBreakdown must declare a source-currency back-calculation policy",
+    );
+  }
+
+  const verification = breakdown.verification;
+  for (const field of ["taxInclusiveAmount", "preTaxAmount", "taxAmount"]) {
+    if (!Number.isFinite(verification?.[field]) || verification[field] < 0) {
+      throw new Error(
+        `tax.includedTaxBreakdown.verification.${field} must be non-negative`,
+      );
+    }
+  }
+  const calculated = calculateIncludedTaxAmounts({
+    taxInclusiveAmount: verification.taxInclusiveAmount,
+    taxRate: breakdown.taxRate,
+    minorUnitDigits: breakdown.minorUnitDigits,
+  });
+  if (
+    calculated.preTaxAmount !== verification.preTaxAmount ||
+    calculated.taxAmount !== verification.taxAmount
+  ) {
+    throw new Error(
+      "included tax policy does not reproduce its verification",
+    );
   }
 }
 
@@ -677,6 +739,7 @@ export function validateMarketProfile(profile) {
       "included-in-list-price markets must not declare tax-inclusive output fields",
     );
   }
+  validateIncludedTaxBreakdown(profile);
 
   requireString(profile.ranking?.policyPath, "ranking.policyPath");
   for (const field of ["family", "screen", "memory", "storage"]) {

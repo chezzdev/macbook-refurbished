@@ -415,7 +415,10 @@ test("renders explicit fixed-location tax estimates for the US market", () => {
 });
 
 test("keeps tax-included markets on the list-price display contract", () => {
-  if (profile.tax.model !== "included-in-list-price") return;
+  if (
+    profile.tax.model !== "included-in-list-price" ||
+    profile.tax.includedTaxBreakdown
+  ) return;
   assert.equal(profile.tax.model, "included-in-list-price");
   assert.equal(profile.currency.priceFields.taxInclusive, null);
   assert.equal(profile.currency.priceFields.newTaxInclusive, null);
@@ -431,6 +434,27 @@ test("keeps tax-included markets on the list-price display contract", () => {
   assert.doesNotMatch(html, /<th>Apple<\/th>|class="open"/);
   assert.match(shortlist, /refurb · налог включён/);
   assert.doesNotMatch(shortlist, /refurb до налога/);
+});
+
+test("shows the included Spanish IVA separately under every price", () => {
+  if (profile.id !== "es") return;
+  const breakdown = profile.tax.includedTaxBreakdown;
+  assert.equal(profile.tax.model, "included-in-list-price");
+  assert.equal(breakdown.taxRate, 0.21);
+  assert.equal(breakdown.currency, "EUR");
+  assert.match(html, /Цена refurb с IVA/);
+  assert.match(html, /Цена нового с IVA/);
+  assert.match(html, /диапазон цен с IVA/);
+  assert.match(html, /const includedTaxPricingFor=amount=>/);
+  assert.match(html, /amount\/\(1\+0\.21\)/);
+  assert.match(html, /Без IVA:/);
+  assert.match(html, /IVA 21%:/);
+  assert.match(shortlist, /refurb · IVA включён/);
+  assert.match(shortlist, /class="price-formula">Без IVA:/);
+  assert.match(html, new RegExp(escapeRegex(breakdown.rateSourceUrl)));
+  assert.match(html, new RegExp(escapeRegex(breakdown.refundInfoUrl)));
+  assert.match(html, /Вычет или возврат IVA зависит/);
+  assert.doesNotMatch(html, /data-tax-location=|header-tax-switcher/);
 });
 
 function escapeRegex(value) {

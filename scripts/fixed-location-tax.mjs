@@ -3,6 +3,41 @@ export function roundCurrency(value, minorUnitDigits = 2) {
   return Math.floor(value * factor + 0.5 + 1e-9) / factor;
 }
 
+export function calculateIncludedTaxAmounts({
+  taxInclusiveAmount,
+  taxRate,
+  minorUnitDigits,
+}) {
+  if (!Number.isFinite(taxInclusiveAmount) || taxInclusiveAmount < 0) {
+    throw new Error("taxInclusiveAmount must be a non-negative number");
+  }
+  if (!Number.isFinite(taxRate) || taxRate <= 0 || taxRate >= 1) {
+    throw new Error("taxRate must be a number in (0, 1)");
+  }
+  if (
+    !Number.isSafeInteger(minorUnitDigits) ||
+    minorUnitDigits < 0 ||
+    minorUnitDigits > 4
+  ) {
+    throw new Error("minorUnitDigits must be an integer from 0 to 4");
+  }
+
+  const preTaxAmount = roundCurrency(
+    taxInclusiveAmount / (1 + taxRate),
+    minorUnitDigits,
+  );
+  const taxAmount = roundCurrency(
+    taxInclusiveAmount - preTaxAmount,
+    minorUnitDigits,
+  );
+  return {
+    taxInclusiveAmount,
+    preTaxAmount,
+    taxRate,
+    taxAmount,
+  };
+}
+
 export function screenInchesFromLabel(value) {
   const match = String(value).match(/\d+/);
   const screenInches = match ? Number(match[0]) : Number.NaN;

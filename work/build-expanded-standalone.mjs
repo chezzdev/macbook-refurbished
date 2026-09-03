@@ -9,6 +9,7 @@ import {
 } from "../scripts/catalog-view-state.mjs";
 import { recommendConfigurations } from "../scripts/configuration-picker.mjs";
 import {
+  calculateIncludedTaxAmounts,
   calculateTaxLocationAmounts,
   screenInchesFromLabel,
 } from "../scripts/fixed-location-tax.mjs";
@@ -38,6 +39,10 @@ const hasReferenceLocationTax =
   ].includes(profile.tax.model);
 const hasVerifiedTaxEstimate =
   profile.tax.model === "verified-fixed-location-estimate";
+const includedTaxBreakdown = profile.tax.includedTaxBreakdown ?? null;
+const hasIncludedTaxBreakdown =
+  profile.tax.model === "included-in-list-price" &&
+  includedTaxBreakdown !== null;
 const taxLocationSwitcher = profile.tax.locationSwitcher ?? null;
 const hasTaxLocationSwitcher =
   hasVerifiedTaxEstimate &&
@@ -175,6 +180,17 @@ const taxFormula = (pricing) =>
     pricing.salesTaxAmount,
     pricing.recyclingFeeAmount,
   ].map(taxDisplayPrice).join(" + ");
+const includedTaxRatePercent = hasIncludedTaxBreakdown
+  ? Number((includedTaxBreakdown.taxRate * 100).toFixed(4))
+  : null;
+const includedTaxFormula = (amount) => {
+  const pricing = calculateIncludedTaxAmounts({
+    taxInclusiveAmount: amount,
+    taxRate: includedTaxBreakdown.taxRate,
+    minorUnitDigits: includedTaxBreakdown.minorUnitDigits,
+  });
+  return `Без ${includedTaxBreakdown.label}: ${displayPrice(pricing.preTaxAmount)} + ${includedTaxBreakdown.label} ${includedTaxRatePercent}%: ${displayPrice(pricing.taxAmount)}`;
+};
 const capacityNumber = (value) => Number(value.replace(/\D/g, "")) * (value.endsWith("TB") ? 1024 : 1);
 const chipNumber = (value) => Number(value.match(/\d+/)?.[0] || 0);
 const chipTier = (value) => (value.includes("Max") ? 2 : value.includes("Pro") ? 1 : 0);
@@ -368,6 +384,8 @@ const changelogHtml = changelogDocument.entries
 const cardPrice = (product) =>
   hasVerifiedTaxEstimate
     ? `<strong>${taxDisplayPrice(product[taxInclusivePriceField])}</strong><span>total · расчёт</span><small class="price-formula">${taxFormula(product.taxInclusivePricing)}</small>`
+    : hasIncludedTaxBreakdown
+      ? `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb · ${escapeHtml(includedTaxBreakdown.label)} включён</span><small class="price-formula">${escapeHtml(includedTaxFormula(product[refurbishedPriceField]))}</small>`
     : profile.tax.model === "included-in-list-price"
       ? `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb · налог включён</span>`
       : `<strong>${displayPrice(product[refurbishedPriceField])}</strong><span>refurb до налога</span>`;
@@ -531,6 +549,8 @@ const taxMethodCopy = hasVerifiedTaxEstimate
     : `<article><span>03</span><h3>Расчётный total</h3><p>Цена + налог ${escapeHtml(profile.tax.estimate.salesTaxRate * 100)}% + сбор. Ориентир: ${escapeHtml(taxReferenceLabel)}.${escapeHtml(conversionMethodDisclosure)}</p></article>`
   : hasReferenceLocationTax
     ? `<article><span>03</span><h3>Налоговый ориентир</h3><p>Итоговая цена запрашивается только из собственного checkout-потока Apple для ${escapeHtml(taxReferenceLabel)}. Доставка и самовывоз не фильтруют общенациональный каталог; недоступная котировка явно остаётся нерешённой.${escapeHtml(conversionMethodDisclosure)}</p></article>`
+    : hasIncludedTaxBreakdown
+      ? `<article><span>03</span><h3>${escapeHtml(includedTaxBreakdown.label)} в цене</h3><p>Цена Apple включает <a href="${escapeHtml(includedTaxBreakdown.rateSourceUrl)}" target="_blank" rel="noreferrer">${escapeHtml(includedTaxBreakdown.label)} ${escapeHtml(includedTaxRatePercent)}%</a>. Под каждой ценой показаны стоимость без ${escapeHtml(includedTaxBreakdown.label)} и сумма налога. ${escapeHtml(includedTaxBreakdown.eligibilityNote)} <a href="${escapeHtml(includedTaxBreakdown.refundInfoUrl)}" target="_blank" rel="noreferrer">Условия Apple ↗</a></p></article>`
     : `<article><span>03</span><h3>${escapeHtml(currencyMethodHeading)}</h3><p>${escapeHtml(currencyMethodBody)}</p></article>`;
 const clientPriceFormatterSource =
   sourceCurrency !== displayCurrency
@@ -554,7 +574,24 @@ const newSourceTaxFormulaCall =
   sourceCurrency !== displayCurrency
     ? "+sourcePriceFormula(p.newTaxInclusivePricing)"
     : "";
-const clientTaxFormatterSource = hasTaxLocationSwitcher
+const clientTaxFormatterSource = hasIncludedTaxBreakdown
+  ? `const includedTaxPricingFor=amount=>{
+      const digits=${includedTaxBreakdown.minorUnitDigits};
+      const factor=10**digits;
+      const roundIncludedTax=value=>Math.floor(value*factor+0.5+1e-9)/factor;
+      const preTaxAmount=roundIncludedTax(amount/(1+${includedTaxBreakdown.taxRate}));
+      return {preTaxAmount,taxAmount:roundIncludedTax(amount-preTaxAmount)};
+    };
+    const includedTaxFormula=amount=>{
+      const pricing=includedTaxPricingFor(amount);
+      return '<small class="price-formula">Без ${escapeHtml(includedTaxBreakdown.label)}: '+primaryCurrency.format(pricing.preTaxAmount*rate)+' + ${escapeHtml(includedTaxBreakdown.label)} ${includedTaxRatePercent}%: '+primaryCurrency.format(pricing.taxAmount*rate)+'</small>';
+    };
+    const refurbishedPrice=p=>'<a class="price-link" href="'+escapeHtml(p.sourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть refurbished у Apple">'+tablePrice(p[refurbishedPriceField])+includedTaxFormula(p[refurbishedPriceField])+'</a>';
+    const exactNewPrice=p=>p[newPriceField]?'<a class="price-link" href="'+escapeHtml(p.newSourceUrl)+'" target="_blank" rel="noreferrer" title="Открыть новую конфигурацию у Apple">'+tablePrice(p[newPriceField])+includedTaxFormula(p[newPriceField])+'</a>':'<span class="na">—</span>';
+    const comparableRefurbishedPrice=p=>p[refurbishedPriceField];
+    const comparableNewPrice=p=>p[newPriceField];
+    const comparisonPrice=tablePrice;`
+  : hasTaxLocationSwitcher
   ? `const requestedTaxState=new URLSearchParams(window.location.search).get("state")?.toUpperCase();
     let activeTaxLocation=taxLocations.find(location=>location.shortLabel===requestedTaxState)||
       taxLocations.find(location=>location.id===defaultTaxLocationId);
@@ -633,6 +670,8 @@ const clientPickerPriceSource = hasTaxLocationSwitcher
     };`
   : hasVerifiedTaxEstimate
     ? `const pickerPrice=p=>'<strong>'+taxCurrency.format(p[taxInclusivePriceField]*rate)+'</strong><span>total · расчёт</span>'+priceFormula(p.taxInclusivePricing);`
+  : hasIncludedTaxBreakdown
+    ? `const pickerPrice=p=>'<strong>'+primaryCurrency.format(p[refurbishedPriceField]*rate)+'</strong><span>refurb · ${escapeHtml(includedTaxBreakdown.label)} включён</span>'+includedTaxFormula(p[refurbishedPriceField]);`
   : profile.tax.model === "included-in-list-price"
     ? `const pickerPrice=p=>'<strong>'+primaryCurrency.format(p[refurbishedPriceField]*rate)+'</strong><span>refurb · налог включён</span>';`
     : `const pickerPrice=p=>'<strong>'+primaryCurrency.format(p[refurbishedPriceField]*rate)+'</strong><span>refurb до налога</span>';`;
@@ -640,11 +679,15 @@ const refurbishedHeader = hasVerifiedTaxEstimate
   ? "Refurb total · расчёт"
   : hasReferenceLocationTax
     ? "Цена refurb до налога"
+    : hasIncludedTaxBreakdown
+      ? `Цена refurb с ${includedTaxBreakdown.label}`
     : "Цена refurb";
 const newHeader = hasVerifiedTaxEstimate
   ? "Новый total · расчёт"
   : hasReferenceLocationTax
     ? "Цена нового до налога"
+    : hasIncludedTaxBreakdown
+      ? `Цена нового с ${includedTaxBreakdown.label}`
     : "Цена нового";
 const clientTaxLocationUiSource = hasTaxLocationSwitcher
   ? `const taxRatePercent=location=>Number((location.estimate.salesTaxRate*100).toFixed(4));
@@ -899,7 +942,7 @@ ${taxLocationHeaderHtml ? `      ${taxLocationHeaderHtml}\n` : ""}      <nav cla
       <div class="hero-stats">
         <div><strong>${configurationCount}</strong><span>конфигураций · ${products.length} цветовых вариантов</span></div>
         <div><strong>${airCount} Air · ${proCount} Pro</strong><span>конфигурации в каталоге</span></div>
-        <div class="price-range"><strong${hasTaxLocationSwitcher ? ' id="price-range-value"' : ""}>${mainPrice(minimumPrice)} – ${mainPrice(maximumPrice)}</strong><span>${hasVerifiedTaxEstimate ? "диапазон total · расчёт" : hasReferenceLocationTax ? "диапазон до налога" : "диапазон цен"}</span></div>
+        <div class="price-range"><strong${hasTaxLocationSwitcher ? ' id="price-range-value"' : ""}>${mainPrice(minimumPrice)} – ${mainPrice(maximumPrice)}</strong><span>${hasVerifiedTaxEstimate ? "диапазон total · расчёт" : hasReferenceLocationTax ? "диапазон до налога" : hasIncludedTaxBreakdown ? `диапазон цен с ${escapeHtml(includedTaxBreakdown.label)}` : "диапазон цен"}</span></div>
       </div>
     </section>
 
