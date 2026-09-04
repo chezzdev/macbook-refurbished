@@ -36,31 +36,6 @@
     },
     {
       "rank": 2,
-      "recommendationKey": "air|13|standard|m3|8|10|24gb|2tb",
-      "configurationKey": "air|13|standard|m3|8|10|24gb|2tb",
-      "productCode": "G1BB7Y/A",
-      "score": 94641,
-      "scoreBreakdown": {
-        "memory": 32000,
-        "storage": 21000,
-        "formFactor": 24000,
-        "chipRecency": 6000,
-        "affordability": 11641,
-        "verifiedDiscount": 0
-      },
-      "reasonCodes": [
-        "MEMORY_IDEAL_24GB",
-        "STORAGE_2TB",
-        "FORM_IDEAL_AIR_13",
-        "CHIP_GENERATION_M3",
-        "PRICE_BALANCED"
-      ],
-      "label": "Сильная альтернатива",
-      "headline": "MacBook Air 13″ · M3 (8-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 2 ТБ",
-      "reason": "Соответствует целевым параметрам MacBook Air 13″ и 24 ГБ памяти; главный компромисс — SSD на 2 ТБ. Цена учтена в оценке ценности."
-    },
-    {
-      "rank": 3,
       "recommendationKey": "pro|14|standard|m5|10|10|24gb|1tb",
       "configurationKey": "pro|14|standard|m5|10|10|24gb|1tb",
       "productCode": "FDE34Y/A",
@@ -81,8 +56,35 @@
         "PRICE_BALANCED",
         "DISCOUNT_VERIFIED"
       ],
-      "label": "Ещё один удачный вариант",
+      "label": "Сильная альтернатива",
       "headline": "MacBook Pro 14″ · M5 (10-ядерный CPU, 10-ядерный GPU) · 24 ГБ · 1 ТБ",
+      "reason": "24 ГБ памяти и SSD на 1 ТБ соответствуют цели; здесь они в корпусе MacBook Pro 14″. Подтверждённая скидка усиливает ценность."
+    },
+    {
+      "rank": 3,
+      "recommendationKey": "pro|14|standard|m5-pro|18|20|24gb|1tb",
+      "configurationKey": "pro|14|standard|m5-pro|18|20|24gb|1tb",
+      "productCode": "G1MH4Y/A",
+      "score": 92362,
+      "scoreBreakdown": {
+        "memory": 32000,
+        "storage": 26000,
+        "formFactor": 10000,
+        "chipRecency": 10800,
+        "affordability": 8780,
+        "verifiedDiscount": 4782
+      },
+      "reasonCodes": [
+        "MEMORY_IDEAL_24GB",
+        "STORAGE_IDEAL_1TB",
+        "FORM_PRO_14",
+        "CHIP_GENERATION_M5",
+        "CHIP_TIER_PRO",
+        "PRICE_BALANCED",
+        "DISCOUNT_VERIFIED"
+      ],
+      "label": "Ещё один удачный вариант",
+      "headline": "MacBook Pro 14″ · M5 Pro (18-ядерный CPU, 20-ядерный GPU) · 24 ГБ · 1 ТБ",
       "reason": "24 ГБ памяти и SSD на 1 ТБ соответствуют цели; здесь они в корпусе MacBook Pro 14″. Подтверждённая скидка усиливает ценность."
     }
   ]
