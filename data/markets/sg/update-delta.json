@@ -1,31 +1,17 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-06T15:45:42.358Z",
-  "hasChanges": true,
+  "checkedAt": "2026-09-06T21:02:00.112Z",
+  "hasChanges": false,
   "counts": {
     "added": 0,
-    "removed": 1,
+    "removed": 0,
     "refurbPriceChanges": 0,
     "newPriceChanges": 0,
     "configurationChanges": 0,
     "featuredChanges": 0
   },
   "added": [],
-  "removed": [
-    {
-      "productCode": "FC6K4ZP/A",
-      "family": "Air",
-      "screen": "15″",
-      "display": "Standard",
-      "chip": "M4",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "24GB",
-      "storage": "512GB",
-      "priceSgd": 1999,
-      "newPriceSgd": null
-    }
-  ],
+  "removed": [],
   "refurbPriceChanges": [],
   "newPriceChanges": [],
   "configurationChanges": [],
