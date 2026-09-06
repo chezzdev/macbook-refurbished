@@ -1,55 +1,28 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-06T05:03:00.369Z",
+  "checkedAt": "2026-09-06T15:45:42.358Z",
   "hasChanges": true,
   "counts": {
-    "added": 1,
-    "removed": 2,
+    "added": 0,
+    "removed": 1,
     "refurbPriceChanges": 0,
     "newPriceChanges": 0,
     "configurationChanges": 0,
     "featuredChanges": 0
   },
-  "added": [
-    {
-      "productCode": "G1FB4ZP/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M4 Pro",
-      "cpuCores": 12,
-      "gpuCores": 16,
-      "memory": "48GB",
-      "storage": "1TB",
-      "priceSgd": 3639,
-      "newPriceSgd": null
-    }
-  ],
+  "added": [],
   "removed": [
     {
-      "productCode": "FGDP4ZP/A",
-      "family": "Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "memory": "24GB",
-      "storage": "2TB",
-      "priceSgd": 3819,
-      "newPriceSgd": 4499
-    },
-    {
-      "productCode": "FW1J3ZP/A",
+      "productCode": "FC6K4ZP/A",
       "family": "Air",
       "screen": "15″",
       "display": "Standard",
       "chip": "M4",
       "cpuCores": 10,
       "gpuCores": 10,
-      "memory": "16GB",
-      "storage": "256GB",
-      "priceSgd": 1489,
+      "memory": "24GB",
+      "storage": "512GB",
+      "priceSgd": 1999,
       "newPriceSgd": null
     }
   ],
