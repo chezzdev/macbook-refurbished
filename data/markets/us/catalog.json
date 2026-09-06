@@ -298,9 +298,9 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-space-black-standard-display-apple-m5-max-chip-18-core-cpu-40-core-gpu-48gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 3989,
-      "newPriceUsd": 4699,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 4411.85,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -320,25 +320,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 5196.4,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 5196.4,
-        "currency": "USD",
-        "preTaxAmount": 4699,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 493.4,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|standard|m5-max|18|40|48gb|2tb"
     },
     {
@@ -762,9 +745,9 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-silver-nano-texture-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 3609,
-      "newPriceUsd": 4249,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 3991.95,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -784,25 +767,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 4699.15,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 4699.15,
-        "currency": "USD",
-        "preTaxAmount": 4249,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 446.15,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|nano-texture|m5-max|18|32|36gb|2tb"
     },
     {
@@ -1226,9 +1192,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-space-black-nano-texture-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 2419,
-      "newPriceUsd": 2849,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 2677,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -1248,25 +1214,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 3152.15,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3152.15,
-        "currency": "USD",
-        "preTaxAmount": 2849,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 299.15,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|nano-texture|m5-pro|18|20|24gb|1tb"
     },
     {
@@ -2038,9 +1987,9 @@
       "releaseYear": 2025,
       "memory": "32GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 2459,
-      "newPriceUsd": 2899,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 2721.2,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -2060,25 +2009,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 3207.4,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3207.4,
-        "currency": "USD",
-        "preTaxAmount": 2899,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 304.4,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|standard|m5|10|10|32gb|2tb"
     },
     {
@@ -2096,9 +2028,9 @@
       "releaseYear": 2025,
       "memory": "32GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-space-black-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 2459,
-      "newPriceUsd": 2899,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 2721.2,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -2118,25 +2050,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 3207.4,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3207.4,
-        "currency": "USD",
-        "preTaxAmount": 2899,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 304.4,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|standard|m5|10|10|32gb|2tb"
     },
     {
@@ -2328,9 +2243,9 @@
       "releaseYear": 2025,
       "memory": "24GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-silver-nano-texture-display-apple-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 2419,
-      "newPriceUsd": 2849,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 2677,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -2350,25 +2265,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 3152.15,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3152.15,
-        "currency": "USD",
-        "preTaxAmount": 2849,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 299.15,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|nano-texture|m5|10|10|24gb|2tb"
     },
     {
@@ -2560,9 +2458,9 @@
       "releaseYear": 2025,
       "memory": "24GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-silver-nano-texture-display-apple-m5-chip-10-core-cpu-10-core-gpu-24gb-memory-1tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 1999,
-      "newPriceUsd": 2349,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 2212.9,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -2582,25 +2480,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 2599.65,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 2599.65,
-        "currency": "USD",
-        "preTaxAmount": 2349,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 246.65,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|nano-texture|m5|10|10|24gb|1tb"
     },
     {
@@ -2792,9 +2673,9 @@
       "releaseYear": 2025,
       "memory": "16GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-space-black-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 2119,
-      "newPriceUsd": 2499,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 2345.5,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -2814,25 +2695,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 2765.4,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 2765.4,
-        "currency": "USD",
-        "preTaxAmount": 2499,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 262.4,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|standard|m5|10|10|16gb|2tb"
     },
     {
@@ -2908,9 +2772,9 @@
       "releaseYear": 2025,
       "memory": "16GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 1699,
-      "newPriceUsd": 1999,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 1881.4,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -2930,25 +2794,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 2212.9,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 2212.9,
-        "currency": "USD",
-        "preTaxAmount": 1999,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 209.9,
-        "recyclingFeeAmount": 4,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|14|standard|m5|10|10|16gb|1tb"
     },
     {
@@ -4669,9 +4516,9 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 3739,
-      "newPriceUsd": 4399,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 4136.6,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -4691,25 +4538,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 4865.9,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 4865.9,
-        "currency": "USD",
-        "preTaxAmount": 4399,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 461.9,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|16|standard|m5-max|18|32|36gb|2tb"
     },
     {
@@ -4785,9 +4615,9 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/16-inch-silver-nano-texture-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 3869,
-      "newPriceUsd": 4549,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 4280.25,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -4807,25 +4637,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 5031.65,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 5031.65,
-        "currency": "USD",
-        "preTaxAmount": 4549,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 477.65,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|16|nano-texture|m5-max|18|32|36gb|2tb"
     },
     {
@@ -4843,9 +4656,9 @@
       "releaseYear": 2026,
       "memory": "36GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/16-inch-space-black-nano-texture-display-apple-m5-max-chip-18-core-cpu-32-core-gpu-36gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 3869,
-      "newPriceUsd": 4549,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 4280.25,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -4865,25 +4678,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 5031.65,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 5031.65,
-        "currency": "USD",
-        "preTaxAmount": 4549,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 477.65,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|16|nano-texture|m5-max|18|32|36gb|2tb"
     },
     {
@@ -4945,64 +4741,6 @@
       "configurationKey": "pro|16|standard|m5-pro|18|20|64gb|4tb"
     },
     {
-      "productCode": "G1MW8LL/A",
-      "sourceUrl": "https://www.apple.com/shop/product/g1mw8ll/a/Refurbished-16-inch-MacBook-Pro-Apple-M5-Pro-chip-with-18%E2%80%91Core-CPU-and-20%E2%80%91Core-GPU-Nano-texture-display-Silver",
-      "title": "Refurbished 16-inch MacBook Pro Apple M5 Pro chip with 18‑Core CPU and 20‑Core GPU, Nano-texture display - Silver",
-      "family": "Pro",
-      "model": "MacBook Pro",
-      "screen": "16″",
-      "display": "Nano-texture",
-      "chip": "M5 Pro",
-      "cpuCores": 18,
-      "gpuCores": 20,
-      "colour": "Silver",
-      "releaseYear": 2026,
-      "memory": "64GB",
-      "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/16-inch-silver-nano-texture-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-64gb-memory-2tb-storage",
-      "priceUsd": 3949,
-      "newPriceUsd": 4649,
-      "taxInclusivePriceUsd": 4368.65,
-      "taxInclusivePricing": {
-        "status": "estimated",
-        "amount": 4368.65,
-        "currency": "USD",
-        "preTaxAmount": 3949,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 414.65,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
-      "newTaxInclusivePriceUsd": 5142.15,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 5142.15,
-        "currency": "USD",
-        "preTaxAmount": 4649,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 488.15,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
-      "configurationKey": "pro|16|nano-texture|m5-pro|18|20|64gb|2tb"
-    },
-    {
       "productCode": "G1N07LL/A",
       "sourceUrl": "https://www.apple.com/shop/product/g1n07ll/a/Refurbished-16-inch-MacBook-Pro-Apple-M5-Pro-chip-with-18%E2%80%91Core-CPU-and-20%E2%80%91Core-GPU-Nano-texture-display-Space-Black",
       "title": "Refurbished 16-inch MacBook Pro Apple M5 Pro chip with 18‑Core CPU and 20‑Core GPU, Nano-texture display - Space Black",
@@ -5017,9 +4755,9 @@
       "releaseYear": 2026,
       "memory": "64GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/16-inch-space-black-nano-texture-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-64gb-memory-1tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 3529,
-      "newPriceUsd": 4149,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 3904.55,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -5039,25 +4777,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 4589.65,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 4589.65,
-        "currency": "USD",
-        "preTaxAmount": 4149,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 435.65,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|16|nano-texture|m5-pro|18|20|64gb|1tb"
     },
     {
@@ -5075,9 +4796,9 @@
       "releaseYear": 2026,
       "memory": "48GB",
       "storage": "2TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/16-inch-space-black-nano-texture-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-48gb-memory-2tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 3609,
-      "newPriceUsd": 4249,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 3992.95,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -5097,25 +4818,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 4700.15,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 4700.15,
-        "currency": "USD",
-        "preTaxAmount": 4249,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 446.15,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|16|nano-texture|m5-pro|18|20|48gb|2tb"
     },
     {
@@ -5423,9 +5127,9 @@
       "releaseYear": 2026,
       "memory": "24GB",
       "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/shop/buy-mac/macbook-pro/16-inch-silver-standard-display-apple-m5-pro-chip-18-core-cpu-20-core-gpu-24gb-memory-1tb-storage",
+      "newSourceUrl": null,
       "priceUsd": 2549,
-      "newPriceUsd": 2999,
+      "newPriceUsd": null,
       "taxInclusivePriceUsd": 2821.65,
       "taxInclusivePricing": {
         "status": "estimated",
@@ -5445,25 +5149,8 @@
         },
         "reason": null
       },
-      "newTaxInclusivePriceUsd": 3318.9,
-      "newTaxInclusivePricing": {
-        "status": "estimated",
-        "amount": 3318.9,
-        "currency": "USD",
-        "preTaxAmount": 2999,
-        "salesTaxRate": 0.105,
-        "salesTaxAmount": 314.9,
-        "recyclingFeeAmount": 5,
-        "locationId": "apple-beverly-center",
-        "provenance": {
-          "provider": "Calculated estimate",
-          "method": "verified-fixed-location",
-          "sourceUrl": "https://www.apple.com/shop/help/payments",
-          "salesTaxSourceUrl": "https://maps.cdtfa.ca.gov/withtac",
-          "recyclingFeeSourceUrl": "https://calrecycle.ca.gov/electronics/recyclingfee/"
-        },
-        "reason": null
-      },
+      "newTaxInclusivePriceUsd": null,
+      "newTaxInclusivePricing": null,
       "configurationKey": "pro|16|standard|m5-pro|18|20|24gb|1tb"
     },
     {
