@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "latestRun": {
     "schemaVersion": 1,
-    "checkedAt": "2026-09-09T05:02:42.668Z",
+    "checkedAt": "2026-09-10T05:04:08.401Z",
     "hasChanges": true,
     "counts": {
       "added": 0,
-      "removed": 5,
+      "removed": 4,
       "refurbPriceChanges": 0,
       "newPriceChanges": 0,
       "configurationChanges": 0,
@@ -15,7 +15,7 @@
     "added": [],
     "removed": [
       {
-        "productCode": "FDE04ZP/A",
+        "productCode": "FDE44ZP/A",
         "family": "Pro",
         "screen": "14″",
         "display": "Standard",
@@ -28,33 +28,33 @@
         "newPriceSgd": null
       },
       {
-        "productCode": "FW1J3ZP/A",
-        "family": "Air",
-        "screen": "15″",
-        "display": "Standard",
-        "chip": "M4",
+        "productCode": "G1KH3ZP/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Nano-texture",
+        "chip": "M5",
         "cpuCores": 10,
         "gpuCores": 10,
-        "memory": "16GB",
-        "storage": "256GB",
-        "priceSgd": 1489,
+        "memory": "24GB",
+        "storage": "512GB",
+        "priceSgd": 2389,
         "newPriceSgd": null
       },
       {
-        "productCode": "G1FW4ZP/A",
+        "productCode": "G1MH4ZP/A",
         "family": "Pro",
-        "screen": "16″",
+        "screen": "14″",
         "display": "Standard",
-        "chip": "M4 Max",
-        "cpuCores": 16,
-        "gpuCores": 40,
-        "memory": "64GB",
-        "storage": "2TB",
-        "priceSgd": 6379,
-        "newPriceSgd": null
+        "chip": "M5 Pro",
+        "cpuCores": 18,
+        "gpuCores": 20,
+        "memory": "24GB",
+        "storage": "1TB",
+        "priceSgd": 3219,
+        "newPriceSgd": 3749
       },
       {
-        "productCode": "G1MH8ZP/A",
+        "productCode": "G1ML8ZP/A",
         "family": "Pro",
         "screen": "14″",
         "display": "Standard",
@@ -65,19 +65,6 @@
         "storage": "1TB",
         "priceSgd": 4499,
         "newPriceSgd": 5249
-      },
-      {
-        "productCode": "G1MLFZP/A",
-        "family": "Pro",
-        "screen": "14″",
-        "display": "Nano-texture",
-        "chip": "M5 Pro",
-        "cpuCores": 15,
-        "gpuCores": 16,
-        "memory": "48GB",
-        "storage": "1TB",
-        "priceSgd": 3929,
-        "newPriceSgd": 4624
       }
     ],
     "refurbPriceChanges": [],
@@ -86,6 +73,77 @@
     "featured": null
   },
   "entries": [
+    {
+      "type": "changes",
+      "checkedAt": "2026-09-10T05:04:08.401Z",
+      "counts": {
+        "added": 0,
+        "removed": 4,
+        "refurbPriceChanges": 0,
+        "newPriceChanges": 0,
+        "configurationChanges": 0,
+        "featuredChanges": 0
+      },
+      "added": [],
+      "removed": [
+        {
+          "productCode": "FDE44ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Standard",
+          "chip": "M5",
+          "cpuCores": 10,
+          "gpuCores": 10,
+          "memory": "16GB",
+          "storage": "512GB",
+          "priceSgd": 1939,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "G1KH3ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Nano-texture",
+          "chip": "M5",
+          "cpuCores": 10,
+          "gpuCores": 10,
+          "memory": "24GB",
+          "storage": "512GB",
+          "priceSgd": 2389,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "G1MH4ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Standard",
+          "chip": "M5 Pro",
+          "cpuCores": 18,
+          "gpuCores": 20,
+          "memory": "24GB",
+          "storage": "1TB",
+          "priceSgd": 3219,
+          "newPriceSgd": 3749
+        },
+        {
+          "productCode": "G1ML8ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Standard",
+          "chip": "M5 Pro",
+          "cpuCores": 18,
+          "gpuCores": 20,
+          "memory": "64GB",
+          "storage": "1TB",
+          "priceSgd": 4499,
+          "newPriceSgd": 5249
+        }
+      ],
+      "refurbPriceChanges": [],
+      "newPriceChanges": [],
+      "configurationChanges": [],
+      "featured": null
+    },
     {
       "type": "changes",
       "checkedAt": "2026-09-09T05:02:42.668Z",
@@ -5760,16 +5818,6 @@
           "G15Y9ZP/A",
           "G1L61ZP/A"
         ]
-      }
-    },
-    {
-      "type": "baseline",
-      "checkedAt": "2026-07-26T12:50:22.296Z",
-      "counts": {
-        "products": 92,
-        "air": 56,
-        "pro": 36,
-        "configurations": 52
       }
     }
   ]
