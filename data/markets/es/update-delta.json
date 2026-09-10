@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-09T05:01:27.735Z",
+  "checkedAt": "2026-09-10T05:03:02.972Z",
   "hasChanges": true,
   "counts": {
-    "added": 1,
+    "added": 2,
     "removed": 3,
     "refurbPriceChanges": 0,
     "newPriceChanges": 0,
@@ -11,6 +11,34 @@
     "featuredChanges": 1
   },
   "added": [
+    {
+      "productCode": "FGDR4Y/A",
+      "family": "Pro",
+      "screen": "14″",
+      "display": "Standard",
+      "chip": "M5 Pro",
+      "cpuCores": 15,
+      "gpuCores": 16,
+      "memory": "24GB",
+      "storage": "1TB",
+      "priceEur": 2499,
+      "newPriceEur": 2949
+    },
+    {
+      "productCode": "FW2X3Y/A",
+      "family": "Pro",
+      "screen": "14″",
+      "display": "Standard",
+      "chip": "M4",
+      "cpuCores": 10,
+      "gpuCores": 10,
+      "memory": "16GB",
+      "storage": "1TB",
+      "priceEur": 1789,
+      "newPriceEur": null
+    }
+  ],
+  "removed": [
     {
       "productCode": "FDVQ4Y/A",
       "family": "Air",
@@ -23,47 +51,32 @@
       "storage": "512GB",
       "priceEur": 1459,
       "newPriceEur": 1729
-    }
-  ],
-  "removed": [
+    },
     {
-      "productCode": "FDE34Y/A",
+      "productCode": "FGDN4Y/A",
       "family": "Pro",
       "screen": "14″",
       "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
+      "chip": "M5 Pro",
+      "cpuCores": 15,
+      "gpuCores": 16,
       "memory": "24GB",
       "storage": "1TB",
-      "priceEur": 2079,
-      "newPriceEur": 2449
+      "priceEur": 2499,
+      "newPriceEur": 2949
     },
     {
-      "productCode": "G1HF4Y/A",
-      "family": "Air",
-      "screen": "15″",
-      "display": "Standard",
-      "chip": "M4",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "32GB",
-      "storage": "2TB",
-      "priceEur": 2479,
-      "newPriceEur": null
-    },
-    {
-      "productCode": "G1KK8Y/A",
+      "productCode": "G1MW5Y/A",
       "family": "Pro",
-      "screen": "14″",
+      "screen": "16″",
       "display": "Nano-texture",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "memory": "32GB",
-      "storage": "1TB",
-      "priceEur": 2409,
-      "newPriceEur": 2834
+      "chip": "M5 Pro",
+      "cpuCores": 18,
+      "gpuCores": 20,
+      "memory": "48GB",
+      "storage": "2TB",
+      "priceEur": 4099,
+      "newPriceEur": 4824
     }
   ],
   "refurbPriceChanges": [],
@@ -71,12 +84,12 @@
   "configurationChanges": [],
   "featured": {
     "before": [
-      "FDE34Y/A",
       "FGDN4Y/A",
-      "G1H94Y/A"
+      "G1H94Y/A",
+      "G1MH5Y/A"
     ],
     "after": [
-      "FGDN4Y/A",
+      "FGDR4Y/A",
       "G1H94Y/A",
       "G1MH5Y/A"
     ]
