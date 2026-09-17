@@ -134,26 +134,6 @@
       "configurationKey": "air|13|standard|m5|10|10|16gb|1tb"
     },
     {
-      "productCode": "FDHC4ZP/A",
-      "sourceUrl": "https://www.apple.com/sg/shop/product/fdhc4zp/a",
-      "title": "Refurbished 13‑inch MacBook Air Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Starlight",
-      "family": "Air",
-      "model": "MacBook Air",
-      "screen": "13″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "colour": "Starlight",
-      "releaseYear": 2026,
-      "memory": "16GB",
-      "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-air/13-inch-starlight-m5-chip-10-core-cpu-10-core-gpu-16gb-memory-1tb-storage",
-      "priceSgd": 1999,
-      "newPriceSgd": 2349,
-      "configurationKey": "air|13|standard|m5|10|10|16gb|1tb"
-    },
-    {
       "productCode": "FDHE4ZP/A",
       "sourceUrl": "https://www.apple.com/sg/shop/product/fdhe4zp/a",
       "title": "Refurbished 13‑inch MacBook Air Apple M5 chip with 10‑Core CPU and 8‑Core GPU - Midnight",
