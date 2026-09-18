@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "latestRun": {
     "schemaVersion": 1,
-    "checkedAt": "2026-09-17T05:20:14.209Z",
+    "checkedAt": "2026-09-18T12:47:32.884Z",
     "hasChanges": true,
     "counts": {
       "added": 0,
-      "removed": 1,
+      "removed": 6,
       "refurbPriceChanges": 0,
       "newPriceChanges": 0,
       "configurationChanges": 0,
@@ -15,17 +15,82 @@
     "added": [],
     "removed": [
       {
-        "productCode": "FDHC4ZP/A",
+        "productCode": "FC654ZP/A",
         "family": "Air",
         "screen": "13″",
         "display": "Standard",
-        "chip": "M5",
+        "chip": "M4",
+        "cpuCores": 10,
+        "gpuCores": 10,
+        "memory": "24GB",
+        "storage": "512GB",
+        "priceSgd": 1749,
+        "newPriceSgd": null
+      },
+      {
+        "productCode": "FW133ZP/A",
+        "family": "Air",
+        "screen": "13″",
+        "display": "Standard",
+        "chip": "M4",
         "cpuCores": 10,
         "gpuCores": 10,
         "memory": "16GB",
+        "storage": "512GB",
+        "priceSgd": 1499,
+        "newPriceSgd": null
+      },
+      {
+        "productCode": "G1FB4ZP/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Standard",
+        "chip": "M4 Pro",
+        "cpuCores": 12,
+        "gpuCores": 16,
+        "memory": "48GB",
         "storage": "1TB",
-        "priceSgd": 1999,
-        "newPriceSgd": 2349
+        "priceSgd": 3639,
+        "newPriceSgd": null
+      },
+      {
+        "productCode": "G1FEDZP/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Nano-texture",
+        "chip": "M4 Pro",
+        "cpuCores": 12,
+        "gpuCores": 16,
+        "memory": "24GB",
+        "storage": "512GB",
+        "priceSgd": 2679,
+        "newPriceSgd": null
+      },
+      {
+        "productCode": "G1FG7ZP/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Standard",
+        "chip": "M4 Max",
+        "cpuCores": 16,
+        "gpuCores": 40,
+        "memory": "64GB",
+        "storage": "1TB",
+        "priceSgd": 5549,
+        "newPriceSgd": null
+      },
+      {
+        "productCode": "G1ML0ZP/A",
+        "family": "Pro",
+        "screen": "14″",
+        "display": "Nano-texture",
+        "chip": "M5 Pro",
+        "cpuCores": 15,
+        "gpuCores": 16,
+        "memory": "24GB",
+        "storage": "1TB",
+        "priceSgd": 3159,
+        "newPriceSgd": 3724
       }
     ],
     "refurbPriceChanges": [],
@@ -34,6 +99,103 @@
     "featured": null
   },
   "entries": [
+    {
+      "type": "changes",
+      "checkedAt": "2026-09-18T12:47:32.884Z",
+      "counts": {
+        "added": 0,
+        "removed": 6,
+        "refurbPriceChanges": 0,
+        "newPriceChanges": 0,
+        "configurationChanges": 0,
+        "featuredChanges": 0
+      },
+      "added": [],
+      "removed": [
+        {
+          "productCode": "FC654ZP/A",
+          "family": "Air",
+          "screen": "13″",
+          "display": "Standard",
+          "chip": "M4",
+          "cpuCores": 10,
+          "gpuCores": 10,
+          "memory": "24GB",
+          "storage": "512GB",
+          "priceSgd": 1749,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "FW133ZP/A",
+          "family": "Air",
+          "screen": "13″",
+          "display": "Standard",
+          "chip": "M4",
+          "cpuCores": 10,
+          "gpuCores": 10,
+          "memory": "16GB",
+          "storage": "512GB",
+          "priceSgd": 1499,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "G1FB4ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Standard",
+          "chip": "M4 Pro",
+          "cpuCores": 12,
+          "gpuCores": 16,
+          "memory": "48GB",
+          "storage": "1TB",
+          "priceSgd": 3639,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "G1FEDZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Nano-texture",
+          "chip": "M4 Pro",
+          "cpuCores": 12,
+          "gpuCores": 16,
+          "memory": "24GB",
+          "storage": "512GB",
+          "priceSgd": 2679,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "G1FG7ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Standard",
+          "chip": "M4 Max",
+          "cpuCores": 16,
+          "gpuCores": 40,
+          "memory": "64GB",
+          "storage": "1TB",
+          "priceSgd": 5549,
+          "newPriceSgd": null
+        },
+        {
+          "productCode": "G1ML0ZP/A",
+          "family": "Pro",
+          "screen": "14″",
+          "display": "Nano-texture",
+          "chip": "M5 Pro",
+          "cpuCores": 15,
+          "gpuCores": 16,
+          "memory": "24GB",
+          "storage": "1TB",
+          "priceSgd": 3159,
+          "newPriceSgd": 3724
+        }
+      ],
+      "refurbPriceChanges": [],
+      "newPriceChanges": [],
+      "configurationChanges": [],
+      "featured": null
+    },
     {
       "type": "changes",
       "checkedAt": "2026-09-17T05:20:14.209Z",
@@ -5411,127 +5573,6 @@
           "FDH94ZP/A",
           "G1L01ZP/A",
           "FDVC4ZP/A"
-        ]
-      }
-    },
-    {
-      "type": "changes",
-      "checkedAt": "2026-08-03T08:58:24.047Z",
-      "counts": {
-        "added": 0,
-        "removed": 7,
-        "refurbPriceChanges": 0,
-        "newPriceChanges": 0,
-        "configurationChanges": 0,
-        "featuredChanges": 1
-      },
-      "added": [],
-      "removed": [
-        {
-          "productCode": "FC7D4ZP/A",
-          "family": "Air",
-          "screen": "15″",
-          "display": "Standard",
-          "chip": "M4",
-          "cpuCores": 10,
-          "gpuCores": 10,
-          "memory": "24GB",
-          "storage": "512GB",
-          "priceSgd": 1999,
-          "newPriceSgd": null
-        },
-        {
-          "productCode": "FDV94ZP/A",
-          "family": "Air",
-          "screen": "15″",
-          "display": "Standard",
-          "chip": "M5",
-          "cpuCores": 10,
-          "gpuCores": 10,
-          "memory": "16GB",
-          "storage": "512GB",
-          "priceSgd": 1859,
-          "newPriceSgd": 2199
-        },
-        {
-          "productCode": "FDVK4ZP/A",
-          "family": "Air",
-          "screen": "15″",
-          "display": "Standard",
-          "chip": "M5",
-          "cpuCores": 10,
-          "gpuCores": 10,
-          "memory": "16GB",
-          "storage": "1TB",
-          "priceSgd": 2249,
-          "newPriceSgd": 2649
-        },
-        {
-          "productCode": "FDVN4ZP/A",
-          "family": "Air",
-          "screen": "15″",
-          "display": "Standard",
-          "chip": "M5",
-          "cpuCores": 10,
-          "gpuCores": 10,
-          "memory": "24GB",
-          "storage": "1TB",
-          "priceSgd": 2509,
-          "newPriceSgd": 2949
-        },
-        {
-          "productCode": "FGE74ZP/A",
-          "family": "Pro",
-          "screen": "16″",
-          "display": "Standard",
-          "chip": "M5 Max",
-          "cpuCores": 18,
-          "gpuCores": 32,
-          "memory": "36GB",
-          "storage": "2TB",
-          "priceSgd": 5099,
-          "newPriceSgd": 5999
-        },
-        {
-          "productCode": "FW1J3ZP/A",
-          "family": "Air",
-          "screen": "15″",
-          "display": "Standard",
-          "chip": "M4",
-          "cpuCores": 10,
-          "gpuCores": 10,
-          "memory": "16GB",
-          "storage": "256GB",
-          "priceSgd": 1489,
-          "newPriceSgd": null
-        },
-        {
-          "productCode": "G1LW0ZP/A",
-          "family": "Air",
-          "screen": "15″",
-          "display": "Standard",
-          "chip": "M5",
-          "cpuCores": 10,
-          "gpuCores": 10,
-          "memory": "24GB",
-          "storage": "512GB",
-          "priceSgd": 2109,
-          "newPriceSgd": 2499
-        }
-      ],
-      "refurbPriceChanges": [],
-      "newPriceChanges": [],
-      "configurationChanges": [],
-      "featured": {
-        "before": [
-          "FDVN4ZP/A",
-          "FDE34ZP/A",
-          "G1LW0ZP/A"
-        ],
-        "after": [
-          "FDVU4ZP/A",
-          "FDE34ZP/A",
-          "FGE44ZP/A"
         ]
       }
     }
