@@ -1134,26 +1134,6 @@
       "configurationKey": "pro|14|nano-texture|m5|10|10|32gb|2tb"
     },
     {
-      "productCode": "G1KN2ZP/A",
-      "sourceUrl": "https://www.apple.com/sg/shop/product/g1kn2zp/a/Refurbished-14-inch-MacBook-Pro-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Silver",
-      "title": "Refurbished 14-inch MacBook Pro Apple M5 chip with 10‑Core CPU and 10‑Core GPU - Silver",
-      "family": "Pro",
-      "model": "MacBook Pro",
-      "screen": "14″",
-      "display": "Standard",
-      "chip": "M5",
-      "cpuCores": 10,
-      "gpuCores": 10,
-      "colour": "Silver",
-      "releaseYear": 2025,
-      "memory": "32GB",
-      "storage": "1TB",
-      "newSourceUrl": "https://www.apple.com/sg/shop/buy-mac/macbook-pro/14-inch-silver-standard-display-apple-m5-chip-10-core-cpu-10-core-gpu-32gb-memory-1tb-storage",
-      "priceSgd": 2799,
-      "newPriceSgd": 3299,
-      "configurationKey": "pro|14|standard|m5|10|10|32gb|1tb"
-    },
-    {
       "productCode": "G1KK8ZP/A",
       "sourceUrl": "https://www.apple.com/sg/shop/product/g1kk8zp/a/Refurbished-14-inch-MacBook-Pro-Apple-M5-chip-with-10%E2%80%91Core-CPU-and-10%E2%80%91Core-GPU-Nano-texture-display-Space-Black",
       "title": "Refurbished 14-inch MacBook Pro Apple M5 chip with 10‑Core CPU and 10‑Core GPU, Nano-texture display - Space Black",
